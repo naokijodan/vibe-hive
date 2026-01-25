@@ -6,6 +6,12 @@ dist/
 release/
 *.tsbuildinfo
 
+# TypeScript build artifacts in src (keep only .ts files)
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
+
 # IDE
 .idea/
 .vscode/

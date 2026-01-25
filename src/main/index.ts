@@ -1,5 +1,9 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
+import { registerPtyHandlers } from './ipc/ptyHandlers';
+import { registerDbHandlers } from './ipc/dbHandlers';
+import { ptyService } from './services/PtyService';
+import { getDatabase, closeDatabase } from './services/db';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -39,17 +43,40 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  // Initialize database
+  getDatabase();
+
+  // Register IPC handlers
+  registerPtyHandlers();
+  registerDbHandlers();
+
   createWindow();
+
+  // Set main window for PTY service
+  if (mainWindow) {
+    ptyService.setMainWindow(mainWindow);
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+      if (mainWindow) {
+        ptyService.setMainWindow(mainWindow);
+      }
     }
   });
 });
 
 app.on('window-all-closed', () => {
+  // Close all PTY sessions
+  ptyService.closeAll();
+
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  ptyService.closeAll();
+  closeDatabase();
 });

@@ -9,7 +9,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listSessions: () => ipcRenderer.invoke('session:list'),
   deleteSession: (id: string) => ipcRenderer.invoke('session:delete', id),
 
-  // Terminal
+  // PTY (node-pty)
+  ptyCreate: (sessionId: string, cols?: number, rows?: number) =>
+    ipcRenderer.invoke('pty:create', sessionId, cols, rows),
+  ptyWrite: (sessionId: string, data: string) =>
+    ipcRenderer.invoke('pty:write', sessionId, data),
+  ptyResize: (sessionId: string, cols: number, rows: number) =>
+    ipcRenderer.invoke('pty:resize', sessionId, cols, rows),
+  ptyClose: (sessionId: string) =>
+    ipcRenderer.invoke('pty:close', sessionId),
+  ptyList: () => ipcRenderer.invoke('pty:list'),
+  onPtyData: (callback: (sessionId: string, data: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, sessionId: string, data: string) =>
+      callback(sessionId, data);
+    ipcRenderer.on('pty:data', listener);
+    return () => ipcRenderer.removeListener('pty:data', listener);
+  },
+  onPtyExit: (callback: (sessionId: string, exitCode: number) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, sessionId: string, exitCode: number) =>
+      callback(sessionId, exitCode);
+    ipcRenderer.on('pty:exit', listener);
+    return () => ipcRenderer.removeListener('pty:exit', listener);
+  },
+
+  // Terminal (legacy)
   terminalWrite: (sessionId: string, data: string) =>
     ipcRenderer.invoke('terminal:write', sessionId, data),
   terminalResize: (sessionId: string, cols: number, rows: number) =>
@@ -38,6 +61,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Git
   gitStatus: (path: string) => ipcRenderer.invoke('git:status', path),
   gitCommit: (path: string, message: string) => ipcRenderer.invoke('git:commit', path, message),
+
+  // Database - Sessions
+  dbSessionCreate: (config: unknown) => ipcRenderer.invoke('db:session:create', config),
+  dbSessionGet: (id: string) => ipcRenderer.invoke('db:session:get', id),
+  dbSessionGetAll: () => ipcRenderer.invoke('db:session:getAll'),
+  dbSessionUpdate: (id: string, updates: unknown) => ipcRenderer.invoke('db:session:update', id, updates),
+  dbSessionDelete: (id: string) => ipcRenderer.invoke('db:session:delete', id),
+  dbSessionUpdateStatus: (id: string, status: string) => ipcRenderer.invoke('db:session:updateStatus', id, status),
+
+  // Database - Tasks
+  dbTaskCreate: (input: unknown) => ipcRenderer.invoke('db:task:create', input),
+  dbTaskGet: (id: string) => ipcRenderer.invoke('db:task:get', id),
+  dbTaskGetBySession: (sessionId: string) => ipcRenderer.invoke('db:task:getBySession', sessionId),
+  dbTaskGetByStatus: (status: string) => ipcRenderer.invoke('db:task:getByStatus', status),
+  dbTaskGetAll: () => ipcRenderer.invoke('db:task:getAll'),
+  dbTaskUpdate: (id: string, updates: unknown) => ipcRenderer.invoke('db:task:update', id, updates),
+  dbTaskUpdateStatus: (id: string, status: string) => ipcRenderer.invoke('db:task:updateStatus', id, status),
+  dbTaskDelete: (id: string) => ipcRenderer.invoke('db:task:delete', id),
+
+  // Database - Terminal Logs
+  dbTerminalLogAppend: (sessionId: string, data: string) => ipcRenderer.invoke('db:terminalLog:append', sessionId, data),
+  dbTerminalLogGetBySession: (sessionId: string, limit?: number) => ipcRenderer.invoke('db:terminalLog:getBySession', sessionId, limit),
+  dbTerminalLogDeleteBySession: (sessionId: string) => ipcRenderer.invoke('db:terminalLog:deleteBySession', sessionId),
+  dbTerminalLogCleanup: (daysOld: number) => ipcRenderer.invoke('db:terminalLog:cleanup', daysOld),
 });
 
 // Type declarations for the exposed API
@@ -46,6 +93,15 @@ export interface ElectronAPI {
   getSession: (id: string) => Promise<unknown>;
   listSessions: () => Promise<unknown[]>;
   deleteSession: (id: string) => Promise<void>;
+  // PTY
+  ptyCreate: (sessionId: string, cols?: number, rows?: number) => Promise<string>;
+  ptyWrite: (sessionId: string, data: string) => Promise<void>;
+  ptyResize: (sessionId: string, cols: number, rows: number) => Promise<void>;
+  ptyClose: (sessionId: string) => Promise<void>;
+  ptyList: () => Promise<string[]>;
+  onPtyData: (callback: (sessionId: string, data: string) => void) => () => void;
+  onPtyExit: (callback: (sessionId: string, exitCode: number) => void) => () => void;
+  // Terminal (legacy)
   terminalWrite: (sessionId: string, data: string) => Promise<void>;
   terminalResize: (sessionId: string, cols: number, rows: number) => Promise<void>;
   onTerminalData: (callback: (sessionId: string, data: string) => void) => () => void;
@@ -55,6 +111,27 @@ export interface ElectronAPI {
   updateOrganization: (org: unknown) => Promise<void>;
   gitStatus: (path: string) => Promise<unknown>;
   gitCommit: (path: string, message: string) => Promise<void>;
+  // Database - Sessions
+  dbSessionCreate: (config: unknown) => Promise<unknown>;
+  dbSessionGet: (id: string) => Promise<unknown>;
+  dbSessionGetAll: () => Promise<unknown[]>;
+  dbSessionUpdate: (id: string, updates: unknown) => Promise<unknown>;
+  dbSessionDelete: (id: string) => Promise<boolean>;
+  dbSessionUpdateStatus: (id: string, status: string) => Promise<unknown>;
+  // Database - Tasks
+  dbTaskCreate: (input: unknown) => Promise<unknown>;
+  dbTaskGet: (id: string) => Promise<unknown>;
+  dbTaskGetBySession: (sessionId: string) => Promise<unknown[]>;
+  dbTaskGetByStatus: (status: string) => Promise<unknown[]>;
+  dbTaskGetAll: () => Promise<unknown[]>;
+  dbTaskUpdate: (id: string, updates: unknown) => Promise<unknown>;
+  dbTaskUpdateStatus: (id: string, status: string) => Promise<unknown>;
+  dbTaskDelete: (id: string) => Promise<boolean>;
+  // Database - Terminal Logs
+  dbTerminalLogAppend: (sessionId: string, data: string) => Promise<void>;
+  dbTerminalLogGetBySession: (sessionId: string, limit?: number) => Promise<unknown[]>;
+  dbTerminalLogDeleteBySession: (sessionId: string) => Promise<number>;
+  dbTerminalLogCleanup: (daysOld: number) => Promise<number>;
 }
 
 declare global {
