@@ -27,8 +27,8 @@ interface Column {
 }
 
 const columns: Column[] = [
-  { id: 'in_progress', title: '稼働中', type: 'running' },
   { id: 'todo', title: 'TODO', type: 'waiting' },
+  { id: 'in_progress', title: '稼働中', type: 'running' },
   { id: 'review', title: '確認待ち', type: 'waiting' },
   { id: 'done', title: '終了', type: 'done' },
 ];

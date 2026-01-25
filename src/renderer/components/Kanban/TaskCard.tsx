@@ -25,6 +25,8 @@ const statusBadgeColors: Record<AgentStatus, { bg: string; text: string; label: 
   running: { bg: 'bg-green-900', text: 'text-green-300', label: 'Running' },
   waiting_input: { bg: 'bg-yellow-900', text: 'text-yellow-300', label: 'Waiting' },
   error: { bg: 'bg-red-900', text: 'text-red-300', label: 'Error' },
+  blocked: { bg: 'bg-orange-900', text: 'text-orange-300', label: 'Blocked' },
+  failed: { bg: 'bg-red-900', text: 'text-red-300', label: 'Failed' },
 };
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay }) => {
@@ -47,6 +49,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
   };
 
   const assignedAgent = agents.find((a) => a.id === task.assignedAgentId);
+  const isAgentError = assignedAgent?.status === 'error' || assignedAgent?.status === 'failed';
+  const isAgentBlocked = assignedAgent?.status === 'blocked';
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -86,6 +90,34 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
     );
   }
 
+  // Determine card styling based on agent status
+  const getCardStyles = () => {
+    if (isAgentError) {
+      return {
+        bg: 'bg-red-950/50 border-red-500',
+        borderLeft: 'border-l-red-500',
+        hover: 'hover:border-red-400',
+        ring: 'ring-1 ring-red-500/30',
+      };
+    }
+    if (isAgentBlocked) {
+      return {
+        bg: 'bg-orange-950/50 border-orange-500',
+        borderLeft: 'border-l-orange-500',
+        hover: 'hover:border-orange-400',
+        ring: 'ring-1 ring-orange-500/30',
+      };
+    }
+    return {
+      bg: 'bg-hive-surface border-hive-border',
+      borderLeft: priorityColors[task.priority],
+      hover: 'hover:border-hive-accent/50',
+      ring: '',
+    };
+  };
+
+  const cardStyles = getCardStyles();
+
   return (
     <div
       ref={setNodeRef}
@@ -93,17 +125,31 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
       {...attributes}
       {...listeners}
       className={`
-        bg-hive-surface border border-hive-border rounded-lg p-3
-        border-l-4 ${priorityColors[task.priority]}
+        ${cardStyles.bg}
+        border rounded-lg p-3
+        border-l-4 ${cardStyles.borderLeft}
         cursor-grab active:cursor-grabbing
-        hover:border-hive-accent/50 transition-all
+        ${cardStyles.hover} transition-all
         ${isDragging ? 'opacity-30' : ''}
+        ${cardStyles.ring}
       `}
       onClick={() => !isDragging && onClick?.(task)}
     >
-      <h4 className="text-sm font-medium text-white mb-1">{task.title}</h4>
+      <div className="flex items-center gap-2 mb-1">
+        {isAgentError && <span className="text-red-400 text-sm">⚠</span>}
+        {isAgentBlocked && <span className="text-orange-400 text-sm">⏸</span>}
+        <h4 className={`text-sm font-medium ${
+          isAgentError ? 'text-red-300' :
+          isAgentBlocked ? 'text-orange-300' :
+          'text-white'
+        }`}>{task.title}</h4>
+      </div>
       {task.description && (
-        <p className="text-xs text-hive-muted line-clamp-2">{task.description}</p>
+        <p className={`text-xs line-clamp-2 ${
+          isAgentError ? 'text-red-400/70' :
+          isAgentBlocked ? 'text-orange-400/70' :
+          'text-hive-muted'
+        }`}>{task.description}</p>
       )}
       <div className="flex items-center justify-between mt-2">
         <div className="relative flex items-center gap-2">

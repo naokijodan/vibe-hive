@@ -169,7 +169,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 mb-8 text-xs">
+      <div className="flex flex-wrap gap-4 mb-8 text-xs">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-gray-500" />
           <span className="text-hive-muted">Idle</span>
@@ -191,8 +191,12 @@ export const OrgChart: React.FC<OrgChartProps> = ({
           <span className="text-hive-muted">Waiting Input</span>
         </div>
         <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-orange-500" />
+          <span className="text-hive-muted">Blocked</span>
+        </div>
+        <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-red-500" />
-          <span className="text-hive-muted">Error</span>
+          <span className="text-hive-muted">Error/Failed</span>
         </div>
       </div>
 

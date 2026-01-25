@@ -13,6 +13,8 @@ const statusColors: Record<AgentStatus, { bg: string; ring: string }> = {
   waiting_input: { bg: 'bg-yellow-500', ring: 'ring-yellow-500/30' },
   error: { bg: 'bg-red-500', ring: 'ring-red-500/30' },
   running: { bg: 'bg-green-500', ring: 'ring-green-500/30' },
+  blocked: { bg: 'bg-orange-500', ring: 'ring-orange-500/30' },
+  failed: { bg: 'bg-red-500', ring: 'ring-red-500/30' },
 };
 
 const roleIcons: Record<AgentRole, string> = {
