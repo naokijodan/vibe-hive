@@ -45,6 +45,31 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Agent
+  agentStart: (sessionId: string, type: 'claude' | 'codex', cwd: string) =>
+    ipcRenderer.invoke('agent:start', sessionId, type, cwd),
+  agentStop: (sessionId: string) =>
+    ipcRenderer.invoke('agent:stop', sessionId),
+  agentInput: (sessionId: string, data: string) =>
+    ipcRenderer.invoke('agent:input', sessionId, data),
+  agentList: () => ipcRenderer.invoke('agent:list'),
+  onAgentOutput: (callback: (sessionId: string, data: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, sessionId: string, data: string) =>
+      callback(sessionId, data);
+    ipcRenderer.on('agent:output', listener);
+    return () => ipcRenderer.removeListener('agent:output', listener);
+  },
+  onAgentExit: (callback: (sessionId: string, exitCode: number) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, sessionId: string, exitCode: number) =>
+      callback(sessionId, exitCode);
+    ipcRenderer.on('agent:exit', listener);
+    return () => ipcRenderer.removeListener('agent:exit', listener);
+  },
+  onAgentError: (callback: (sessionId: string, error: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, sessionId: string, error: string) =>
+      callback(sessionId, error);
+    ipcRenderer.on('agent:error', listener);
+    return () => ipcRenderer.removeListener('agent:error', listener);
+  },
   agentSendMessage: (sessionId: string, message: string) =>
     ipcRenderer.invoke('agent:send', sessionId, message),
   onAgentStatus: (callback: (sessionId: string, status: string) => void) => {
@@ -85,6 +110,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   dbTerminalLogGetBySession: (sessionId: string, limit?: number) => ipcRenderer.invoke('db:terminalLog:getBySession', sessionId, limit),
   dbTerminalLogDeleteBySession: (sessionId: string) => ipcRenderer.invoke('db:terminalLog:deleteBySession', sessionId),
   dbTerminalLogCleanup: (daysOld: number) => ipcRenderer.invoke('db:terminalLog:cleanup', daysOld),
+
+  // Database - Agents
+  dbAgentCreate: (config: unknown) => ipcRenderer.invoke('db:agent:create', config),
+  dbAgentGet: (id: string) => ipcRenderer.invoke('db:agent:get', id),
+  dbAgentGetAll: () => ipcRenderer.invoke('db:agent:getAll'),
+  dbAgentGetBySession: (sessionId: string) => ipcRenderer.invoke('db:agent:getBySession', sessionId),
+  dbAgentUpdate: (id: string, updates: unknown) => ipcRenderer.invoke('db:agent:update', id, updates),
+  dbAgentUpdateStatus: (id: string, status: string) => ipcRenderer.invoke('db:agent:updateStatus', id, status),
+  dbAgentDelete: (id: string) => ipcRenderer.invoke('db:agent:delete', id),
 });
 
 // Type declarations for the exposed API
@@ -105,6 +139,14 @@ export interface ElectronAPI {
   terminalWrite: (sessionId: string, data: string) => Promise<void>;
   terminalResize: (sessionId: string, cols: number, rows: number) => Promise<void>;
   onTerminalData: (callback: (sessionId: string, data: string) => void) => () => void;
+  // Agent
+  agentStart: (sessionId: string, type: 'claude' | 'codex', cwd: string) => Promise<string>;
+  agentStop: (sessionId: string) => Promise<void>;
+  agentInput: (sessionId: string, data: string) => Promise<void>;
+  agentList: () => Promise<Array<{ id: string; type: 'claude' | 'codex'; cwd: string }>>;
+  onAgentOutput: (callback: (sessionId: string, data: string) => void) => () => void;
+  onAgentExit: (callback: (sessionId: string, exitCode: number) => void) => () => void;
+  onAgentError: (callback: (sessionId: string, error: string) => void) => () => void;
   agentSendMessage: (sessionId: string, message: string) => Promise<void>;
   onAgentStatus: (callback: (sessionId: string, status: string) => void) => () => void;
   getOrganization: () => Promise<unknown>;
@@ -132,6 +174,14 @@ export interface ElectronAPI {
   dbTerminalLogGetBySession: (sessionId: string, limit?: number) => Promise<unknown[]>;
   dbTerminalLogDeleteBySession: (sessionId: string) => Promise<number>;
   dbTerminalLogCleanup: (daysOld: number) => Promise<number>;
+  // Database - Agents
+  dbAgentCreate: (config: unknown) => Promise<unknown>;
+  dbAgentGet: (id: string) => Promise<unknown>;
+  dbAgentGetAll: () => Promise<unknown[]>;
+  dbAgentGetBySession: (sessionId: string) => Promise<unknown[]>;
+  dbAgentUpdate: (id: string, updates: unknown) => Promise<unknown>;
+  dbAgentUpdateStatus: (id: string, status: string) => Promise<unknown>;
+  dbAgentDelete: (id: string) => Promise<boolean>;
 }
 
 declare global {

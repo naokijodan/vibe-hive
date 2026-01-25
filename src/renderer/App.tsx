@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { KanbanBoard } from './components/Kanban';
 import { TerminalPanel, TerminalTabs } from './components/Terminal';
 import { OrgChart } from './components/Organization';
 import { Task, TaskStatus, Agent } from '../shared/types';
+import { useTaskStore } from './stores/taskStore';
+import { useAgentStore } from './stores/agentStore';
 
 type ViewType = 'kanban' | 'organization' | 'history' | 'settings';
 
@@ -20,68 +22,26 @@ const initialAgentTabs: AgentTab[] = [
   { id: 'claude-3', name: 'Engineer-1', isActive: false, status: 'idle' },
 ];
 
-// デモ用のサンプルタスク
-const sampleTasks: Task[] = [
-  {
-    id: '1',
-    sessionId: 'session-1',
-    title: 'Electronプロジェクト初期化',
-    description: 'package.json, tsconfig, 基本構成を作成',
-    status: 'done',
-    priority: 'high',
-    assignedAgentId: 'claude-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    sessionId: 'session-1',
-    title: 'Kanban UIコンポーネント',
-    description: 'TaskCard, KanbanColumn, KanbanBoardを実装',
-    status: 'in_progress',
-    priority: 'high',
-    assignedAgentId: 'claude-2',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '3',
-    sessionId: 'session-1',
-    title: 'ターミナル統合',
-    description: 'xterm.js + node-ptyでターミナル機能を実装',
-    status: 'todo',
-    priority: 'medium',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '4',
-    sessionId: 'session-1',
-    title: '組織構造ビュー',
-    description: 'CEO→CTO→エンジニアのツリー表示',
-    status: 'review',
-    priority: 'medium',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
 function App(): React.ReactElement {
-  const [tasks, setTasks] = useState<Task[]>(sampleTasks);
+  const { tasks, loadTasks, updateTaskStatus } = useTaskStore();
+  const { agents, loadAgents } = useAgentStore();
   const [agentTabs, setAgentTabs] = useState<AgentTab[]>(initialAgentTabs);
   const [activeTabId, setActiveTabId] = useState('claude-1');
   const [currentView, setCurrentView] = useState<ViewType>('kanban');
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+
+  // Load tasks and agents from DB on mount
+  useEffect(() => {
+    loadTasks();
+    loadAgents();
+  }, [loadTasks, loadAgents]);
 
   const handleTaskClick = (task: Task) => {
     console.log('Task clicked:', task);
   };
 
-  const handleTaskMove = (taskId: string, newStatus: TaskStatus) => {
-    setTasks(prev => prev.map(task =>
-      task.id === taskId
-        ? { ...task, status: newStatus, updatedAt: new Date() }
-        : task
-    ));
+  const handleTaskMove = async (taskId: string, newStatus: TaskStatus) => {
+    await updateTaskStatus(taskId, newStatus);
   };
 
   const handleTabSelect = (tabId: string) => {
@@ -111,6 +71,8 @@ function App(): React.ReactElement {
 
   const handleAgentClick = (agent: Agent) => {
     console.log('Agent clicked:', agent);
+    setSelectedAgentId(agent.id);
+    setCurrentView('kanban'); // Switch to kanban view to show tasks
   };
 
   const renderNavButton = (view: ViewType, icon: string, label: string) => (
@@ -127,11 +89,42 @@ function App(): React.ReactElement {
   );
 
   const renderMainContent = () => {
+    // Filter tasks if an agent is selected
+    const filteredTasks = selectedAgentId
+      ? tasks.filter(task => task.assignedAgentId === selectedAgentId)
+      : tasks;
+
+    const selectedAgent = selectedAgentId ? agents.find(a => a.id === selectedAgentId) : null;
+
     switch (currentView) {
       case 'kanban':
-        return <KanbanBoard tasks={tasks} onTaskClick={handleTaskClick} onTaskMove={handleTaskMove} />;
+        return (
+          <div className="h-full flex flex-col">
+            {selectedAgent && (
+              <div className="px-4 py-3 border-b border-hive-border bg-hive-surface">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-hive-muted">フィルター:</span>
+                    <span className="text-sm font-medium text-hive-accent">
+                      🤖 {selectedAgent.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedAgentId(null)}
+                    className="text-xs text-hive-muted hover:text-white"
+                  >
+                    クリア
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="flex-1 overflow-hidden">
+              <KanbanBoard tasks={filteredTasks} onTaskClick={handleTaskClick} onTaskMove={handleTaskMove} />
+            </div>
+          </div>
+        );
       case 'organization':
-        return <OrgChart onAgentClick={handleAgentClick} />;
+        return <OrgChart organization={{ name: 'Vibe Hive Organization', agents }} onAgentClick={handleAgentClick} />;
       case 'history':
         return (
           <div className="flex items-center justify-center h-full text-hive-muted">
@@ -153,8 +146,8 @@ function App(): React.ReactElement {
     <div className="flex h-screen w-screen bg-hive-bg text-hive-text">
       {/* Sidebar */}
       <aside className="w-64 border-r border-hive-border bg-hive-surface flex flex-col">
-        <div className="p-4 border-b border-hive-border">
-          <h1 className="text-xl font-bold text-hive-accent flex items-center gap-2">
+        <div className="p-4 border-b border-hive-border drag-region" style={{ paddingTop: '28px' }}>
+          <h1 className="text-xl font-bold text-hive-accent flex items-center gap-2 no-drag">
             <span>🐝</span> Vibe Hive
           </h1>
           <p className="text-sm text-hive-muted mt-1">AI Swarm Manager</p>
@@ -176,13 +169,13 @@ function App(): React.ReactElement {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-12 border-b border-hive-border bg-hive-surface flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
+        {/* Header - Draggable region for window movement */}
+        <header className="h-12 border-b border-hive-border bg-hive-surface flex items-center justify-between px-4 drag-region">
+          <div className="flex items-center gap-4 no-drag">
             <span className="font-medium">Session: Vibe Hive 開発</span>
             <span className="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded">Active</span>
           </div>
-          <span className="text-hive-muted text-sm">⌘K でコマンドパレット</span>
+          <span className="text-hive-muted text-sm no-drag">⌘K でコマンドパレット</span>
         </header>
 
         {/* Content Area */}

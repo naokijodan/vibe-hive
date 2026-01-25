@@ -12,6 +12,13 @@ export const IPC_CHANNELS = {
   TERMINAL_DATA: 'terminal:data',
 
   // Agent channels
+  AGENT_START: 'agent:start',
+  AGENT_STOP: 'agent:stop',
+  AGENT_INPUT: 'agent:input',
+  AGENT_LIST: 'agent:list',
+  AGENT_OUTPUT: 'agent:output',
+  AGENT_EXIT: 'agent:exit',
+  AGENT_ERROR: 'agent:error',
   AGENT_SEND: 'agent:send',
   AGENT_STATUS: 'agent:status',
 

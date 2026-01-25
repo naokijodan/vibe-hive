@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '../../../shared/types';
+import { useAgentStore } from '../../stores/agentStore';
+import { useTaskStore } from '../../stores/taskStore';
 
 interface TaskCardProps {
   task: Task;
@@ -26,9 +28,35 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
     isDragging,
   } = useSortable({ id: task.id });
 
+  const { agents, assignTaskToAgent } = useAgentStore();
+  const { updateTask } = useTaskStore();
+  const [showAgentDropdown, setShowAgentDropdown] = useState(false);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  };
+
+  const assignedAgent = agents.find((a) => a.id === task.assignedAgentId);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    if (showAgentDropdown) {
+      const handleClickOutside = () => setShowAgentDropdown(false);
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showAgentDropdown]);
+
+  const handleAssignAgent = async (agentId: string | null, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await assignTaskToAgent(task.id, agentId);
+      await updateTask(task.id, { assignedAgentId: agentId });
+      setShowAgentDropdown(false);
+    } catch (error) {
+      console.error('Failed to assign agent:', error);
+    }
   };
 
   // DragOverlay用のシンプルなレンダリング
@@ -69,9 +97,38 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
         <p className="text-xs text-hive-muted line-clamp-2">{task.description}</p>
       )}
       <div className="flex items-center justify-between mt-2">
-        <span className="text-xs text-hive-muted">
-          {task.assignedAgentId ? `🤖 ${task.assignedAgentId}` : '未割当'}
-        </span>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAgentDropdown(!showAgentDropdown);
+            }}
+            className="text-xs text-hive-muted hover:text-hive-accent transition-colors"
+          >
+            {assignedAgent ? `🤖 ${assignedAgent.name}` : '未割当'}
+          </button>
+          {showAgentDropdown && (
+            <div className="absolute z-10 mt-1 w-40 bg-hive-surface border border-hive-border rounded shadow-lg">
+              <button
+                onClick={(e) => handleAssignAgent(null, e)}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-hive-accent/20 text-hive-muted"
+              >
+                未割当
+              </button>
+              {agents.map((agent) => (
+                <button
+                  key={agent.id}
+                  onClick={(e) => handleAssignAgent(agent.id, e)}
+                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-hive-accent/20 ${
+                    agent.id === task.assignedAgentId ? 'bg-hive-accent/10 text-hive-accent' : 'text-white'
+                  }`}
+                >
+                  🤖 {agent.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <span
           className={`text-xs px-1.5 py-0.5 rounded ${
             task.priority === 'urgent'

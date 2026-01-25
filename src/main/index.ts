@@ -2,7 +2,9 @@ import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import { registerPtyHandlers } from './ipc/ptyHandlers';
 import { registerDbHandlers } from './ipc/dbHandlers';
+import { registerAgentHandlers } from './ipc/agentHandlers';
 import { ptyService } from './services/PtyService';
+import { agentService } from './services/AgentService';
 import { getDatabase, closeDatabase } from './services/db';
 
 let mainWindow: BrowserWindow | null = null;
@@ -49,12 +51,14 @@ app.whenReady().then(() => {
   // Register IPC handlers
   registerPtyHandlers();
   registerDbHandlers();
+  registerAgentHandlers();
 
   createWindow();
 
-  // Set main window for PTY service
+  // Set main window for PTY service and Agent service
   if (mainWindow) {
     ptyService.setMainWindow(mainWindow);
+    agentService.setMainWindow(mainWindow);
   }
 
   app.on('activate', () => {
@@ -62,14 +66,16 @@ app.whenReady().then(() => {
       createWindow();
       if (mainWindow) {
         ptyService.setMainWindow(mainWindow);
+        agentService.setMainWindow(mainWindow);
       }
     }
   });
 });
 
 app.on('window-all-closed', () => {
-  // Close all PTY sessions
+  // Close all PTY sessions and Agent sessions
   ptyService.closeAll();
+  agentService.stopAll();
 
   if (process.platform !== 'darwin') {
     app.quit();
@@ -78,5 +84,6 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   ptyService.closeAll();
+  agentService.stopAll();
   closeDatabase();
 });

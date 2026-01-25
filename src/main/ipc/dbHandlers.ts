@@ -1,7 +1,8 @@
 import { ipcMain } from 'electron';
-import { sessionRepository, taskRepository, terminalLogRepository } from '../services/db';
+import { sessionRepository, taskRepository, terminalLogRepository, agentRepository } from '../services/db';
 import type { SessionConfig } from '../../shared/types/session';
 import type { TaskCreateInput, TaskStatus } from '../../shared/types/task';
+import type { AgentConfig, AgentStatus } from '../../shared/types/agent';
 
 export function registerDbHandlers(): void {
   // Session handlers
@@ -79,6 +80,35 @@ export function registerDbHandlers(): void {
     const olderThan = new Date();
     olderThan.setDate(olderThan.getDate() - daysOld);
     return terminalLogRepository.cleanup(olderThan);
+  });
+
+  // Agent handlers
+  ipcMain.handle('db:agent:create', (_event, config: AgentConfig) => {
+    return agentRepository.create(config);
+  });
+
+  ipcMain.handle('db:agent:get', (_event, id: string) => {
+    return agentRepository.getById(id);
+  });
+
+  ipcMain.handle('db:agent:getAll', () => {
+    return agentRepository.getAll();
+  });
+
+  ipcMain.handle('db:agent:getBySession', (_event, sessionId: string) => {
+    return agentRepository.getBySessionId(sessionId);
+  });
+
+  ipcMain.handle('db:agent:update', (_event, id: string, updates: Record<string, unknown>) => {
+    return agentRepository.update(id, updates);
+  });
+
+  ipcMain.handle('db:agent:updateStatus', (_event, id: string, status: AgentStatus) => {
+    return agentRepository.updateStatus(id, status);
+  });
+
+  ipcMain.handle('db:agent:delete', (_event, id: string) => {
+    return agentRepository.delete(id);
   });
 
   console.log('Database IPC handlers registered');

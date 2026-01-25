@@ -25,6 +25,18 @@ export function getDatabase(): Database.Database {
   // Run migrations
   runMigrations(db);
 
+  // Seed demo agents on first run
+  // This is done after migrations to ensure tables exist
+  // The seed function will check if agents already exist
+  setTimeout(() => {
+    try {
+      const { seedDemoAgents } = require('./seedAgents');
+      seedDemoAgents();
+    } catch (error) {
+      console.error('Failed to seed demo agents:', error);
+    }
+  }, 100);
+
   console.log(`Database initialized at: ${dbPath}`);
   return db;
 }
@@ -95,6 +107,33 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
         CREATE INDEX IF NOT EXISTS idx_terminal_logs_session_id ON terminal_logs(session_id);
         CREATE INDEX IF NOT EXISTS idx_terminal_logs_timestamp ON terminal_logs(timestamp);
+      `,
+    },
+    {
+      name: '002_update_agents_schema',
+      sql: `
+        -- Drop old agents table if exists
+        DROP TABLE IF EXISTS agents;
+
+        -- Create new agents table with proper schema
+        CREATE TABLE agents (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          role TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'idle',
+          session_id TEXT,
+          parent_agent_id TEXT,
+          capabilities TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE SET NULL,
+          FOREIGN KEY (parent_agent_id) REFERENCES agents(id) ON DELETE SET NULL
+        );
+
+        -- Create indexes for agents
+        CREATE INDEX IF NOT EXISTS idx_agents_session_id ON agents(session_id);
+        CREATE INDEX IF NOT EXISTS idx_agents_parent_id ON agents(parent_agent_id);
+        CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
       `,
     },
   ];
