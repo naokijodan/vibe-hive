@@ -12,7 +12,7 @@ export interface Agent {
 
 export type AgentRole = 'orchestrator' | 'developer' | 'reviewer' | 'tester' | 'custom';
 
-export type AgentStatus = 'idle' | 'thinking' | 'executing' | 'waiting_input' | 'error';
+export type AgentStatus = 'idle' | 'thinking' | 'executing' | 'waiting_input' | 'error' | 'running';
 
 export interface AgentConfig {
   name: string;

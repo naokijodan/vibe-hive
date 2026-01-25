@@ -180,6 +180,10 @@ export const OrgChart: React.FC<OrgChartProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-hive-muted">Running</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-green-500" />
           <span className="text-hive-muted">Executing</span>
         </div>
         <div className="flex items-center gap-2">

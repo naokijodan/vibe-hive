@@ -12,6 +12,7 @@ const statusColors: Record<AgentStatus, { bg: string; ring: string }> = {
   executing: { bg: 'bg-green-500', ring: 'ring-green-500/30' },
   waiting_input: { bg: 'bg-yellow-500', ring: 'ring-yellow-500/30' },
   error: { bg: 'bg-red-500', ring: 'ring-red-500/30' },
+  running: { bg: 'bg-green-500', ring: 'ring-green-500/30' },
 };
 
 const roleIcons: Record<AgentRole, string> = {
@@ -32,7 +33,7 @@ const roleLabels: Record<AgentRole, string> = {
 
 export const AgentNode: React.FC<AgentNodeProps> = ({ agent, onClick }) => {
   const statusStyle = statusColors[agent.status];
-  const isActive = agent.status === 'executing' || agent.status === 'thinking';
+  const isActive = agent.status === 'executing' || agent.status === 'thinking' || agent.status === 'running';
 
   return (
     <div

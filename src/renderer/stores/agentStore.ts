@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Agent, AgentConfig } from '../../shared/types/agent';
+import type { Agent, AgentConfig, AgentStatus } from '../../shared/types/agent';
 
 interface AgentStore {
   agents: Agent[];
@@ -12,6 +12,8 @@ interface AgentStore {
   updateAgent: (id: string, updates: Partial<Agent>) => Promise<Agent | null>;
   deleteAgent: (id: string) => Promise<boolean>;
   assignTaskToAgent: (taskId: string, agentId: string | null) => Promise<void>;
+  updateAgentStatus: (sessionId: string, status: AgentStatus) => void;
+  initStatusListener: () => () => void;
 }
 
 export const useAgentStore = create<AgentStore>((set, get) => ({
@@ -86,5 +88,22 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
       set({ error: 'Failed to assign task to agent' });
       throw error;
     }
+  },
+
+  updateAgentStatus: (sessionId: string, status: AgentStatus) => {
+    set((state) => ({
+      agents: state.agents.map((agent) =>
+        agent.sessionId === sessionId
+          ? { ...agent, status }
+          : agent
+      ),
+    }));
+  },
+
+  initStatusListener: () => {
+    const cleanup = window.electronAPI.onAgentStatus((sessionId: string, status: string) => {
+      get().updateAgentStatus(sessionId, status as AgentStatus);
+    });
+    return cleanup;
   },
 }));
