@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task, AgentStatus } from '../../../shared/types';
@@ -9,6 +9,13 @@ interface TaskCardProps {
   task: Task;
   onClick?: (task: Task) => void;
   isDragOverlay?: boolean;
+}
+
+interface DependencyInfo {
+  met: boolean;
+  completed: number;
+  total: number;
+  blocking: Task[];
 }
 
 const priorityColors = {
@@ -40,8 +47,24 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
   } = useSortable({ id: task.id });
 
   const { agents, assignTaskToAgent } = useAgentStore();
-  const { updateTask } = useTaskStore();
+  const { updateTask, tasks, checkDependencies, setReviewFeedback, createSubtasks, setDependencies } = useTaskStore();
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showSubtaskModal, setShowSubtaskModal] = useState(false);
+  const [showDependencyModal, setShowDependencyModal] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [subtaskText, setSubtaskText] = useState('');
+  const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task.dependsOn || []);
+  const [depInfo, setDepInfo] = useState<DependencyInfo | null>(null);
+
+  // Check dependencies on mount and when task changes
+  useEffect(() => {
+    if (task.dependsOn && task.dependsOn.length > 0) {
+      checkDependencies(task.id).then(setDepInfo);
+    } else {
+      setDepInfo(null);
+    }
+  }, [task.id, task.dependsOn, checkDependencies]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -51,6 +74,40 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
   const assignedAgent = agents.find((a) => a.id === task.assignedAgentId);
   const isAgentError = assignedAgent?.status === 'error' || assignedAgent?.status === 'failed';
   const isAgentBlocked = assignedAgent?.status === 'blocked';
+  const hasDependencyBlock = depInfo && !depInfo.met;
+  const isReviewStatus = task.status === 'review';
+  const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+
+  // Handle feedback submission
+  const handleFeedbackSubmit = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (feedbackText.trim()) {
+      await setReviewFeedback(task.id, feedbackText.trim());
+      setFeedbackText('');
+      setShowFeedbackModal(false);
+    }
+  };
+
+  // Handle subtask creation
+  const handleSubtaskSubmit = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const titles = subtaskText.split('\n').map(t => t.trim()).filter(t => t);
+    if (titles.length > 0) {
+      await createSubtasks(task.id, titles);
+      setSubtaskText('');
+      setShowSubtaskModal(false);
+    }
+  };
+
+  // Handle dependency update
+  const handleDependencySubmit = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await setDependencies(task.id, selectedDependencies);
+    setShowDependencyModal(false);
+  };
+
+  // Available tasks for dependency selection (exclude self and children)
+  const availableTasks = tasks.filter(t => t.id !== task.id && t.parentTaskId !== task.id);
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -90,7 +147,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
     );
   }
 
-  // Determine card styling based on agent status
+  // Determine card styling based on agent status and dependency blocks
   const getCardStyles = () => {
     if (isAgentError) {
       return {
@@ -100,7 +157,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
         ring: 'ring-1 ring-red-500/30',
       };
     }
-    if (isAgentBlocked) {
+    if (isAgentBlocked || hasDependencyBlock) {
       return {
         bg: 'bg-orange-950/50 border-orange-500',
         borderLeft: 'border-l-orange-500',
@@ -138,12 +195,32 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
       <div className="flex items-center gap-2 mb-1">
         {isAgentError && <span className="text-red-400 text-sm">⚠</span>}
         {isAgentBlocked && <span className="text-orange-400 text-sm">⏸</span>}
-        <h4 className={`text-sm font-medium ${
+        {hasDependencyBlock && <span className="text-orange-400 text-sm" title="依存タスクが未完了">🔒</span>}
+        {task.reviewFeedback && <span className="text-purple-400 text-sm" title="レビューフィードバックあり">💬</span>}
+        {hasSubtasks && <span className="text-blue-400 text-sm" title={`サブタスク: ${task.subtasks?.length}`}>📋</span>}
+        <h4 className={`text-sm font-medium flex-1 ${
           isAgentError ? 'text-red-300' :
-          isAgentBlocked ? 'text-orange-300' :
+          isAgentBlocked || hasDependencyBlock ? 'text-orange-300' :
           'text-white'
         }`}>{task.title}</h4>
       </div>
+
+      {/* Dependency progress indicator */}
+      {depInfo && depInfo.total > 0 && (
+        <div className="mb-2">
+          <div className="flex items-center gap-2 text-[10px]">
+            <span className={depInfo.met ? 'text-green-400' : 'text-orange-400'}>
+              依存: {depInfo.completed}/{depInfo.total}
+            </span>
+            <div className="flex-1 h-1 bg-gray-700 rounded overflow-hidden">
+              <div
+                className={`h-full ${depInfo.met ? 'bg-green-500' : 'bg-orange-500'}`}
+                style={{ width: `${(depInfo.completed / depInfo.total) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       {task.description && (
         <p className={`text-xs line-clamp-2 ${
           isAgentError ? 'text-red-400/70' :
@@ -203,6 +280,200 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
           {task.priority}
         </span>
       </div>
+
+      {/* Action buttons row */}
+      <div className="flex items-center gap-1 mt-2 pt-2 border-t border-hive-border/50">
+        {/* Review feedback button (only for review status) */}
+        {isReviewStatus && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowFeedbackModal(true);
+            }}
+            className="text-[10px] px-1.5 py-0.5 bg-purple-900/50 text-purple-300 rounded hover:bg-purple-800/50 transition-colors"
+            title="レビューフィードバックを追加"
+          >
+            💬 FB
+          </button>
+        )}
+
+        {/* Subtask decompose button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowSubtaskModal(true);
+          }}
+          className="text-[10px] px-1.5 py-0.5 bg-blue-900/50 text-blue-300 rounded hover:bg-blue-800/50 transition-colors"
+          title="サブタスクに分解"
+        >
+          📋 分解
+        </button>
+
+        {/* Dependency button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedDependencies(task.dependsOn || []);
+            setShowDependencyModal(true);
+          }}
+          className="text-[10px] px-1.5 py-0.5 bg-gray-700/50 text-gray-300 rounded hover:bg-gray-600/50 transition-colors"
+          title="依存関係を設定"
+        >
+          🔗 依存
+        </button>
+      </div>
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowFeedbackModal(false);
+          }}
+        >
+          <div
+            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-96 max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-white font-medium mb-3">レビューフィードバック</h3>
+            <textarea
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="フィードバックを入力..."
+              className="w-full h-32 bg-hive-bg border border-hive-border rounded p-2 text-white text-sm resize-none focus:outline-none focus:border-hive-accent"
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowFeedbackModal(false);
+                }}
+                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleFeedbackSubmit}
+                className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-500 transition-colors"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Subtask Modal */}
+      {showSubtaskModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowSubtaskModal(false);
+          }}
+        >
+          <div
+            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-96 max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-white font-medium mb-3">サブタスク作成</h3>
+            <p className="text-hive-muted text-xs mb-2">1行に1つのサブタスクを入力</p>
+            <textarea
+              value={subtaskText}
+              onChange={(e) => setSubtaskText(e.target.value)}
+              placeholder="サブタスク1&#10;サブタスク2&#10;サブタスク3"
+              className="w-full h-32 bg-hive-bg border border-hive-border rounded p-2 text-white text-sm resize-none focus:outline-none focus:border-hive-accent"
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSubtaskModal(false);
+                }}
+                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSubtaskSubmit}
+                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+              >
+                作成
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dependency Modal */}
+      {showDependencyModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDependencyModal(false);
+          }}
+        >
+          <div
+            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-96 max-w-[90vw] max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-white font-medium mb-3">依存関係設定</h3>
+            <p className="text-hive-muted text-xs mb-3">このタスクの開始前に完了が必要なタスクを選択</p>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {availableTasks.length === 0 ? (
+                <p className="text-hive-muted text-sm">他のタスクがありません</p>
+              ) : (
+                availableTasks.map((t) => (
+                  <label
+                    key={t.id}
+                    className="flex items-center gap-2 p-2 bg-hive-bg rounded hover:bg-hive-accent/10 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDependencies.includes(t.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedDependencies([...selectedDependencies, t.id]);
+                        } else {
+                          setSelectedDependencies(selectedDependencies.filter((id) => id !== t.id));
+                        }
+                      }}
+                      className="rounded border-hive-border"
+                    />
+                    <span className="text-white text-sm flex-1">{t.title}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      t.status === 'done' ? 'bg-green-900 text-green-300' :
+                      t.status === 'in_progress' ? 'bg-blue-900 text-blue-300' :
+                      'bg-gray-800 text-gray-400'
+                    }`}>
+                      {t.status}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDependencyModal(false);
+                }}
+                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDependencySubmit}
+                className="px-3 py-1.5 text-sm bg-hive-accent text-white rounded hover:bg-hive-accent/80 transition-colors"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

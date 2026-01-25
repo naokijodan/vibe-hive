@@ -11,6 +11,8 @@ interface TaskRow {
   priority: string;
   assigned_agent_id: string | null;
   parent_task_id: string | null;
+  review_feedback: string | null;
+  depends_on: string | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -32,6 +34,8 @@ function rowToTask(row: TaskRow): Task {
     assignedAgentId: row.assigned_agent_id || undefined,
     parentTaskId: row.parent_task_id || undefined,
     subtasks: subtaskRows.length > 0 ? subtaskRows.map((r) => r.id) : undefined,
+    reviewFeedback: row.review_feedback || undefined,
+    dependsOn: row.depends_on ? JSON.parse(row.depends_on) : undefined,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
@@ -128,6 +132,14 @@ export class TaskRepository {
       updateFields.push('parent_task_id = ?');
       values.push(updates.parentTaskId || null);
     }
+    if (updates.reviewFeedback !== undefined) {
+      updateFields.push('review_feedback = ?');
+      values.push(updates.reviewFeedback || null);
+    }
+    if (updates.dependsOn !== undefined) {
+      updateFields.push('depends_on = ?');
+      values.push(updates.dependsOn ? JSON.stringify(updates.dependsOn) : null);
+    }
 
     if (updateFields.length > 0) {
       updateFields.push('updated_at = ?');
@@ -156,6 +168,69 @@ export class TaskRepository {
     const db = getDatabase();
     const result = db.prepare('DELETE FROM tasks WHERE session_id = ?').run(sessionId);
     return result.changes;
+  }
+
+  getSubtasks(parentId: string): Task[] {
+    const db = getDatabase();
+    const rows = db
+      .prepare('SELECT * FROM tasks WHERE parent_task_id = ? ORDER BY created_at ASC')
+      .all(parentId) as TaskRow[];
+    return rows.map(rowToTask);
+  }
+
+  createSubtasks(parentId: string, titles: string[]): Task[] {
+    const parent = this.getById(parentId);
+    if (!parent) return [];
+
+    const tasks: Task[] = [];
+    for (const title of titles) {
+      const task = this.create({
+        sessionId: parent.sessionId,
+        title: title.trim(),
+        priority: parent.priority,
+        parentTaskId: parentId,
+      });
+      tasks.push(task);
+    }
+    return tasks;
+  }
+
+  /**
+   * Check if all dependencies are completed (done status)
+   */
+  areDependenciesMet(taskId: string): { met: boolean; completed: number; total: number; blocking: Task[] } {
+    const task = this.getById(taskId);
+    if (!task || !task.dependsOn || task.dependsOn.length === 0) {
+      return { met: true, completed: 0, total: 0, blocking: [] };
+    }
+
+    const blocking: Task[] = [];
+    let completed = 0;
+
+    for (const depId of task.dependsOn) {
+      const depTask = this.getById(depId);
+      if (depTask) {
+        if (depTask.status === 'done') {
+          completed++;
+        } else {
+          blocking.push(depTask);
+        }
+      }
+    }
+
+    return {
+      met: blocking.length === 0,
+      completed,
+      total: task.dependsOn.length,
+      blocking,
+    };
+  }
+
+  /**
+   * Clear review feedback after it's been applied
+   */
+  clearReviewFeedback(taskId: string): Task | null {
+    return this.update(taskId, { reviewFeedback: undefined });
   }
 }
 

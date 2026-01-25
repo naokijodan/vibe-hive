@@ -104,6 +104,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   dbTaskUpdate: (id: string, updates: unknown) => ipcRenderer.invoke('db:task:update', id, updates),
   dbTaskUpdateStatus: (id: string, status: string) => ipcRenderer.invoke('db:task:updateStatus', id, status),
   dbTaskDelete: (id: string) => ipcRenderer.invoke('db:task:delete', id),
+  // Task - Subtasks
+  dbTaskGetSubtasks: (parentId: string) => ipcRenderer.invoke('db:task:getSubtasks', parentId),
+  dbTaskCreateSubtasks: (parentId: string, titles: string[]) => ipcRenderer.invoke('db:task:createSubtasks', parentId, titles),
+  // Task - Dependencies
+  dbTaskCheckDependencies: (taskId: string) => ipcRenderer.invoke('db:task:checkDependencies', taskId),
+  // Task - Review Feedback
+  dbTaskClearReviewFeedback: (taskId: string) => ipcRenderer.invoke('db:task:clearReviewFeedback', taskId),
 
   // Database - Terminal Logs
   dbTerminalLogAppend: (sessionId: string, data: string) => ipcRenderer.invoke('db:terminalLog:append', sessionId, data),
@@ -169,6 +176,13 @@ export interface ElectronAPI {
   dbTaskUpdate: (id: string, updates: unknown) => Promise<unknown>;
   dbTaskUpdateStatus: (id: string, status: string) => Promise<unknown>;
   dbTaskDelete: (id: string) => Promise<boolean>;
+  // Task - Subtasks
+  dbTaskGetSubtasks: (parentId: string) => Promise<unknown[]>;
+  dbTaskCreateSubtasks: (parentId: string, titles: string[]) => Promise<unknown[]>;
+  // Task - Dependencies
+  dbTaskCheckDependencies: (taskId: string) => Promise<{ met: boolean; completed: number; total: number; blocking: unknown[] }>;
+  // Task - Review Feedback
+  dbTaskClearReviewFeedback: (taskId: string) => Promise<unknown>;
   // Database - Terminal Logs
   dbTerminalLogAppend: (sessionId: string, data: string) => Promise<void>;
   dbTerminalLogGetBySession: (sessionId: string, limit?: number) => Promise<unknown[]>;

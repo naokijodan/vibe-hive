@@ -138,6 +138,16 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
       `,
     },
+    {
+      name: '003_add_task_feedback_and_dependencies',
+      sql: `
+        -- Add review_feedback column for feedback injection
+        ALTER TABLE tasks ADD COLUMN review_feedback TEXT;
+
+        -- Add depends_on column for task dependencies (JSON array of task IDs)
+        ALTER TABLE tasks ADD COLUMN depends_on TEXT;
+      `,
+    },
   ];
 
   const appliedMigrations = database

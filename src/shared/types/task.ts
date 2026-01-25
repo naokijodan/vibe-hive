@@ -8,6 +8,10 @@ export interface Task {
   assignedAgentId?: string;
   parentTaskId?: string;
   subtasks?: string[];
+  // Review feedback injection
+  reviewFeedback?: string;
+  // Task dependencies for Ready check
+  dependsOn?: string[];
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date;
