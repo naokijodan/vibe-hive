@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Vibe Hive Organization Schema",
+  "description": "階層型マルチエージェント組織の定義スキーマ",
+  "type": "object",
+  "required": ["id", "name", "agents"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "組織の一意識別子"
+    },
+
+    "name": {
+      "type": "string",
+      "description": "組織名"
+    },
+
+    "description": {
+      "type": "string",
+      "description": "組織の説明"
+    },
+
+    "agents": {
+      "type": "object",
+      "description": "エージェント定義（キーがエージェントID）",
+      "additionalProperties": {
+        "$ref": "#/definitions/Agent"
+      }
+    },
+
+    "communication": {
+      "type": "object",
+      "description": "コミュニケーション設定",
+      "properties": {
+        "downward": { "$ref": "#/definitions/MessageTemplate" },
+        "upward": { "$ref": "#/definitions/MessageTemplate" },
+        "lateral": { "$ref": "#/definitions/MessageTemplate" }
+      }
+    },
+
+    "whiteboard": {
+      "type": "object",
+      "description": "共有コンテキスト（ホワイトボード）の初期値",
+      "additionalProperties": true
+    },
+
+    "rules": {
+      "type": "object",
+      "description": "組織ルール",
+      "properties": {
+        "escalation": { "$ref": "#/definitions/EscalationRule" },
+        "approval": { "$ref": "#/definitions/ApprovalRule" }
+      }
+    }
+  },
+
+  "definitions": {
+    "Agent": {
+      "type": "object",
+      "required": ["name", "role", "systemPrompt", "permissions"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "エージェントの表示名"
+        },
+        "role": {
+          "type": "string",
+          "description": "役割の説明"
+        },
+        "systemPrompt": {
+          "type": "string",
+          "description": "エージェントのシステムプロンプト"
+        },
+        "permissions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "許可された操作のリスト"
+        },
+        "supervisor": {
+          "type": "string",
+          "description": "上司のエージェントID"
+        },
+        "subordinates": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "部下のエージェントIDリスト"
+        },
+        "agentType": {
+          "type": "string",
+          "enum": ["claude-code", "codex-cli", "terminal"],
+          "default": "claude-code",
+          "description": "使用するエージェントタイプ"
+        },
+        "autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "組織起動時に自動的に開始するか"
+        }
+      }
+    },
+
+    "MessageTemplate": {
+      "type": "object",
+      "required": ["template"],
+      "properties": {
+        "template": {
+          "type": "string",
+          "description": "メッセージテンプレート（{変数}形式）"
+        },
+        "required_fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "必須フィールド"
+        }
+      }
+    },
+
+    "EscalationRule": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "severity": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"]
+              },
+              "handler": { "type": "string" },
+              "timeout_minutes": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+
+    "ApprovalRule": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "requires_approval": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action": { "type": "string" },
+              "approver": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

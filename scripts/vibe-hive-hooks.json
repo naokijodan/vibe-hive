@@ -1,0 +1,56 @@
+{
+  "$schema": "https://claude.ai/schemas/hooks.json",
+  "description": "Vibe Hive用のClaude Code hooks設定。~/.claude/settings.jsonにマージして使用。",
+
+  "hooks": {
+    "preToolUse": [
+      {
+        "description": "ツール使用開始をVibe Hiveに通知",
+        "command": "echo 'VIBE_HIVE_EVENT:{\"type\":\"tool_start\",\"tool\":\"$TOOL_NAME\",\"timestamp\":'$(date +%s)'}' >&2"
+      }
+    ],
+
+    "postToolUse": [
+      {
+        "description": "ツール使用完了をVibe Hiveに通知",
+        "command": "echo 'VIBE_HIVE_EVENT:{\"type\":\"tool_complete\",\"tool\":\"$TOOL_NAME\",\"timestamp\":'$(date +%s)'}' >&2"
+      }
+    ],
+
+    "onPrompt": [
+      {
+        "description": "ユーザー入力待ちをVibe Hiveに通知（ステータス: waiting_input）",
+        "command": "echo 'VIBE_HIVE_EVENT:{\"type\":\"waiting_input\",\"timestamp\":'$(date +%s)'}' >&2"
+      }
+    ],
+
+    "onResponse": [
+      {
+        "description": "応答開始をVibe Hiveに通知（ステータス: running）",
+        "command": "echo 'VIBE_HIVE_EVENT:{\"type\":\"response_start\",\"timestamp\":'$(date +%s)'}' >&2"
+      }
+    ]
+  },
+
+  "_installation_guide": {
+    "step1": "~/.claude/settings.json を開く（なければ作成）",
+    "step2": "このファイルの hooks セクションをマージ",
+    "step3": "Claude Codeを再起動",
+    "example": {
+      "hooks": {
+        "postToolUse": [
+          "echo 'VIBE_HIVE_EVENT:{\"type\":\"tool_complete\"}' >&2"
+        ]
+      }
+    }
+  },
+
+  "_event_types": {
+    "tool_start": "ツール実行開始",
+    "tool_complete": "ツール実行完了",
+    "waiting_input": "ユーザー入力待ち",
+    "response_start": "応答生成開始",
+    "session_start": "セッション開始",
+    "session_end": "セッション終了"
+  }
+}

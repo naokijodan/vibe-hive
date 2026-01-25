@@ -1,0 +1,14 @@
+{
+  "id": "default-org",
+  "name": "Default Organization",
+  "rootAgentId": null,
+  "agents": [],
+  "connections": [],
+  "whiteboard": {
+    "id": "default-whiteboard",
+    "organizationId": "default-org",
+    "entries": []
+  },
+  "createdAt": null,
+  "updatedAt": null
+}
