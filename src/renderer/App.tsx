@@ -8,7 +8,7 @@ import { useAgentStore } from './stores/agentStore';
 
 type ViewType = 'kanban' | 'organization' | 'history' | 'settings';
 
-// デモ用のエージェントタブ
+// ターミナルタブ用の型
 interface AgentTab {
   id: string;
   name: string;
@@ -16,17 +16,26 @@ interface AgentTab {
   status: 'running' | 'waiting' | 'idle' | 'error';
 }
 
-const initialAgentTabs: AgentTab[] = [
-  { id: 'claude-1', name: 'CEO', isActive: true, status: 'running' },
-  { id: 'claude-2', name: 'CTO', isActive: false, status: 'waiting' },
-  { id: 'claude-3', name: 'Engineer-1', isActive: false, status: 'idle' },
-];
+// AgentStatusをタブステータスに変換
+const mapAgentStatusToTabStatus = (agentStatus: Agent['status']): AgentTab['status'] => {
+  switch (agentStatus) {
+    case 'executing':
+      return 'running';
+    case 'thinking':
+    case 'waiting_input':
+      return 'waiting';
+    case 'error':
+      return 'error';
+    case 'idle':
+    default:
+      return 'idle';
+  }
+};
 
 function App(): React.ReactElement {
   const { tasks, loadTasks, updateTaskStatus } = useTaskStore();
   const { agents, loadAgents } = useAgentStore();
-  const [agentTabs, setAgentTabs] = useState<AgentTab[]>(initialAgentTabs);
-  const [activeTabId, setActiveTabId] = useState('claude-1');
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>('kanban');
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
@@ -35,6 +44,29 @@ function App(): React.ReactElement {
     loadTasks();
     loadAgents();
   }, [loadTasks, loadAgents]);
+
+  // エージェントからタブを生成
+  const agentTabs: AgentTab[] = agents.map(agent => ({
+    id: agent.id,
+    name: agent.name,
+    isActive: agent.id === activeTabId,
+    status: mapAgentStatusToTabStatus(agent.status),
+  }));
+
+  // 初期アクティブタブの設定
+  useEffect(() => {
+    if (agents.length > 0 && !activeTabId) {
+      setActiveTabId(agents[0].id);
+    }
+  }, [agents, activeTabId]);
+
+  // エージェントが実行中になったら自動的にそのタブに切り替え
+  useEffect(() => {
+    const executingAgent = agents.find(a => a.status === 'executing');
+    if (executingAgent) {
+      setActiveTabId(executingAgent.id);
+    }
+  }, [agents]);
 
   const handleTaskClick = (task: Task) => {
     console.log('Task clicked:', task);
@@ -46,25 +78,6 @@ function App(): React.ReactElement {
 
   const handleTabSelect = (tabId: string) => {
     setActiveTabId(tabId);
-  };
-
-  const handleTabClose = (tabId: string) => {
-    setAgentTabs(prev => prev.filter(t => t.id !== tabId));
-    if (activeTabId === tabId && agentTabs.length > 1) {
-      const remaining = agentTabs.filter(t => t.id !== tabId);
-      setActiveTabId(remaining[0].id);
-    }
-  };
-
-  const handleNewTab = () => {
-    const newId = `claude-${Date.now()}`;
-    setAgentTabs(prev => [...prev, {
-      id: newId,
-      name: `Agent-${prev.length + 1}`,
-      isActive: false,
-      status: 'idle' as const,
-    }]);
-    setActiveTabId(newId);
   };
 
   const activeAgent = agentTabs.find(t => t.id === activeTabId);
@@ -124,7 +137,24 @@ function App(): React.ReactElement {
           </div>
         );
       case 'organization':
-        return <OrgChart organization={{ name: 'Vibe Hive Organization', agents }} onAgentClick={handleAgentClick} />;
+        return (
+          <OrgChart
+            organization={{
+              id: 'default-org',
+              name: 'Vibe Hive Organization',
+              agents,
+              connections: [],
+              whiteboard: {
+                id: 'default-whiteboard',
+                organizationId: 'default-org',
+                entries: [],
+              },
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }}
+            onAgentClick={handleAgentClick}
+          />
+        );
       case 'history':
         return (
           <div className="flex items-center justify-center h-full text-hive-muted">
@@ -187,22 +217,31 @@ function App(): React.ReactElement {
 
           {/* Terminal Panel Area */}
           <div className="w-96 border-l border-hive-border bg-hive-surface flex flex-col">
-            <TerminalTabs
-              tabs={agentTabs}
-              activeTabId={activeTabId}
-              onTabSelect={handleTabSelect}
-              onTabClose={handleTabClose}
-              onNewTab={handleNewTab}
-            />
-            <div className="flex-1">
-              {activeAgent && (
-                <TerminalPanel
-                  agentId={activeAgent.id}
-                  agentName={activeAgent.name}
-                  isActive={activeAgent.status === 'running'}
+            {agents.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center p-4">
+                <div className="text-center text-hive-muted">
+                  <p className="text-lg mb-2">エージェントがありません</p>
+                  <p className="text-sm">組織構造画面からエージェントを作成してください</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <TerminalTabs
+                  tabs={agentTabs}
+                  activeTabId={activeTabId || ''}
+                  onTabSelect={handleTabSelect}
                 />
-              )}
-            </div>
+                <div className="flex-1">
+                  {activeAgent && (
+                    <TerminalPanel
+                      agentId={activeAgent.id}
+                      agentName={activeAgent.name}
+                      isActive={activeAgent.status === 'running'}
+                    />
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </main>

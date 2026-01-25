@@ -11,8 +11,6 @@ interface TerminalTabsProps {
   tabs: Tab[];
   activeTabId: string;
   onTabSelect: (tabId: string) => void;
-  onTabClose?: (tabId: string) => void;
-  onNewTab?: () => void;
 }
 
 const statusColors = {
@@ -26,8 +24,6 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
   tabs,
   activeTabId,
   onTabSelect,
-  onTabClose,
-  onNewTab,
 }) => {
   return (
     <div className="flex items-center bg-gray-900 border-b border-gray-800 overflow-x-auto">
@@ -50,28 +46,8 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
             }`}
           />
           <span className="truncate max-w-[100px]">{tab.name}</span>
-          {onTabClose && (
-            <span
-              onClick={(e) => {
-                e.stopPropagation();
-                onTabClose(tab.id);
-              }}
-              className="ml-1 text-gray-500 hover:text-red-400 cursor-pointer"
-            >
-              ×
-            </span>
-          )}
         </button>
       ))}
-
-      {onNewTab && (
-        <button
-          onClick={onNewTab}
-          className="px-3 py-2 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
-        >
-          +
-        </button>
-      )}
     </div>
   );
 };

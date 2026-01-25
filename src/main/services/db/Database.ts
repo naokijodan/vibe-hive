@@ -25,15 +25,17 @@ export function getDatabase(): Database.Database {
   // Run migrations
   runMigrations(db);
 
-  // Seed demo agents on first run
+  // Seed demo data on first run
   // This is done after migrations to ensure tables exist
-  // The seed function will check if agents already exist
+  // The seed functions will check if data already exists
   setTimeout(() => {
     try {
       const { seedDemoAgents } = require('./seedAgents');
       seedDemoAgents();
+      const { seedDemoTasks } = require('./seedTasks');
+      seedDemoTasks();
     } catch (error) {
-      console.error('Failed to seed demo agents:', error);
+      console.error('Failed to seed demo data:', error);
     }
   }, 100);
 
