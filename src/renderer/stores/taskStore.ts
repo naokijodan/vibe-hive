@@ -90,6 +90,27 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set(state => ({
         tasks: state.tasks.map(t => t.id === id ? parsedTask : t)
       }));
+
+      // Auto-start Claude Code agent when task moves to in_progress
+      if (status === 'in_progress' && parsedTask.assignedAgentId) {
+        try {
+          const agentSessionId = `agent-${parsedTask.id}`;
+          const cwd = '/Users/naokijodan/Desktop/vibe-hive';
+
+          // Start the agent
+          await window.electronAPI.agentStart(agentSessionId, 'claude', cwd);
+
+          // Send task information to the agent
+          const taskPrompt = `# タスク: ${parsedTask.title}\n\n${parsedTask.description || ''}\n\n上記のタスクを実行してください。\n`;
+          await window.electronAPI.agentInput(agentSessionId, taskPrompt);
+
+          console.log(`Auto-started agent for task: ${parsedTask.id}`);
+        } catch (error) {
+          console.error('Failed to auto-start agent:', error);
+          // Don't fail the task update if agent start fails
+        }
+      }
+
       return parsedTask;
     } catch (error) {
       console.error('Failed to update task status:', error);

@@ -17,6 +17,11 @@ export function registerAgentHandlers(): void {
     agentService.input(sessionId, data);
   });
 
+  // Send message to an agent session (alias for agent:input for compatibility)
+  ipcMain.handle('agent:send', (_event, sessionId: string, message: string) => {
+    agentService.input(sessionId, message + '\n');
+  });
+
   // List all agent sessions
   ipcMain.handle('agent:list', () => {
     return agentService.getAllSessions();
