@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { KanbanBoard } from './components/Kanban';
-import { TerminalPanel, TerminalTabs } from './components/Terminal';
+import { TerminalPanel, TerminalTabs, AgentOutputPanel } from './components/Terminal';
 import { OrgChart } from './components/Organization';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
@@ -38,6 +38,19 @@ function App(): React.ReactElement {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>('kanban');
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+  const [newSessionName, setNewSessionName] = useState('');
+  const [newSessionCwd, setNewSessionCwd] = useState('');
+
+  // Get tasks that are currently running (in_progress)
+  const runningTasks = tasks.filter(t => t.status === 'in_progress');
+
+  // Handle agent exit - move task to review
+  const handleAgentExit = useCallback(async (taskId: string, exitCode: number) => {
+    console.log(`Agent for task ${taskId} exited with code ${exitCode}`);
+    // Move task to review status regardless of exit code
+    await updateTaskStatus(taskId, 'review');
+  }, [updateTaskStatus]);
 
   // Load tasks and agents from DB on mount
   useEffect(() => {
@@ -86,6 +99,28 @@ function App(): React.ReactElement {
     console.log('Agent clicked:', agent);
     setSelectedAgentId(agent.id);
     setCurrentView('kanban'); // Switch to kanban view to show tasks
+  };
+
+  // Handle new session creation
+  const handleCreateSession = async () => {
+    if (!newSessionName.trim()) return;
+
+    try {
+      await window.electronAPI.dbSessionCreate({
+        name: newSessionName,
+        workingDirectory: newSessionCwd || '.',
+        status: 'idle',
+      });
+
+      // Reset form and close modal
+      setNewSessionName('');
+      setNewSessionCwd('');
+      setIsSessionModalOpen(false);
+
+      console.log('Session created:', newSessionName);
+    } catch (error) {
+      console.error('Failed to create session:', error);
+    }
   };
 
   const renderNavButton = (view: ViewType, icon: string, label: string) => (
@@ -191,7 +226,10 @@ function App(): React.ReactElement {
           </div>
         </nav>
         <div className="p-4 border-t border-hive-border">
-          <button className="w-full bg-hive-accent text-black font-medium py-2 px-4 rounded hover:bg-hive-accent/80 text-sm">
+          <button
+            onClick={() => setIsSessionModalOpen(true)}
+            className="w-full bg-hive-accent text-black font-medium py-2 px-4 rounded hover:bg-hive-accent/80 text-sm"
+          >
             + 新規セッション
           </button>
         </div>
@@ -217,7 +255,31 @@ function App(): React.ReactElement {
 
           {/* Terminal Panel Area */}
           <div className="w-96 border-l border-hive-border bg-hive-surface flex flex-col">
-            {agents.length === 0 ? (
+            {/* Show running task agent output if any */}
+            {runningTasks.length > 0 ? (
+              <>
+                <div className="px-3 py-2 border-b border-hive-border bg-green-900/20">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-sm font-medium text-green-400">
+                      稼働中タスク ({runningTasks.length})
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-auto">
+                  {runningTasks.map(task => (
+                    <div key={task.id} className="h-full">
+                      <AgentOutputPanel
+                        taskId={task.id}
+                        taskTitle={task.title}
+                        isActive={true}
+                        onAgentExit={handleAgentExit}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : agents.length === 0 ? (
               <div className="flex-1 flex items-center justify-center p-4">
                 <div className="text-center text-hive-muted">
                   <p className="text-lg mb-2">エージェントがありません</p>
@@ -245,6 +307,61 @@ function App(): React.ReactElement {
           </div>
         </div>
       </main>
+
+      {/* New Session Modal */}
+      {isSessionModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-hive-surface border border-hive-border rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">新規セッション作成</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">セッション名 *</label>
+                <input
+                  type="text"
+                  value={newSessionName}
+                  onChange={(e) => setNewSessionName(e.target.value)}
+                  className="w-full px-3 py-2 bg-hive-bg border border-hive-border rounded text-hive-text focus:outline-none focus:ring-2 focus:ring-hive-accent"
+                  placeholder="例: 新規プロジェクト開発"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">作業ディレクトリ</label>
+                <input
+                  type="text"
+                  value={newSessionCwd}
+                  onChange={(e) => setNewSessionCwd(e.target.value)}
+                  className="w-full px-3 py-2 bg-hive-bg border border-hive-border rounded text-hive-text focus:outline-none focus:ring-2 focus:ring-hive-accent"
+                  placeholder="例: /Users/name/projects/my-app"
+                />
+                <p className="text-xs text-hive-muted mt-1">空の場合はカレントディレクトリが使用されます</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={handleCreateSession}
+                disabled={!newSessionName.trim()}
+                className="flex-1 px-4 py-2 bg-hive-accent text-black font-medium rounded hover:bg-hive-accent/80 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                作成
+              </button>
+              <button
+                onClick={() => {
+                  setNewSessionName('');
+                  setNewSessionCwd('');
+                  setIsSessionModalOpen(false);
+                }}
+                className="flex-1 px-4 py-2 bg-hive-bg border border-hive-border text-hive-text rounded hover:bg-hive-surface"
+              >
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
