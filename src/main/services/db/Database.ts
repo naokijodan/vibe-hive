@@ -148,6 +148,14 @@ function runMigrations(database: Database.Database): void {
         ALTER TABLE tasks ADD COLUMN depends_on TEXT;
       `,
     },
+    {
+      name: '004_create_default_session',
+      sql: `
+        -- Create a default session if it doesn't exist
+        INSERT OR IGNORE INTO sessions (id, name, working_directory, status, created_at, updated_at)
+        VALUES ('default-session', 'Default Session', '.', 'idle', datetime('now'), datetime('now'));
+      `,
+    },
   ];
 
   const appliedMigrations = database

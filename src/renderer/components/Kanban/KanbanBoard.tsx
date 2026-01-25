@@ -90,8 +90,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
 
+    // Use the session ID from existing tasks, or create without session for now
+    const existingSessionId = tasks.length > 0 ? tasks[0].sessionId : undefined;
+
     await createTask({
-      sessionId: 'session-1', // TODO: Get from actual session context
+      sessionId: existingSessionId || 'default-session',
       title: newTaskTitle,
       description: newTaskDescription || undefined,
       priority: newTaskPriority,
