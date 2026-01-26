@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
+import { useTerminalOutputStore } from '../../stores/terminalOutputStore';
 
 interface AgentOutputPanelProps {
   taskId: string;
   taskTitle: string;
   isActive?: boolean;
+  isReadOnly?: boolean; // For viewing completed task output
   onAgentExit?: (taskId: string, exitCode: number) => void;
   onTaskComplete?: (taskId: string) => void;
 }
@@ -15,6 +17,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
   taskId,
   taskTitle,
   isActive = false,
+  isReadOnly = false,
   onAgentExit,
   onTaskComplete,
 }) => {
@@ -24,19 +27,27 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
   const cleanupRef = useRef<(() => void)[]>([]);
   const initializedRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isReadOnly);
   const sessionId = `agent-${taskId}`;
+
+  const { appendOutput, getOutput } = useTerminalOutputStore();
 
   const handleResize = useCallback(() => {
     if (fitAddonRef.current && terminalRef.current) {
-      fitAddonRef.current.fit();
-      // Sync PTY size with xterm size
-      const { cols, rows } = terminalRef.current;
-      if (window.electronAPI?.agentResize) {
-        window.electronAPI.agentResize(sessionId, cols, rows);
+      try {
+        fitAddonRef.current.fit();
+        // Sync PTY size with xterm size (only if not read-only)
+        if (!isReadOnly) {
+          const { cols, rows } = terminalRef.current;
+          if (window.electronAPI?.agentResize) {
+            window.electronAPI.agentResize(sessionId, cols, rows);
+          }
+        }
+      } catch (e) {
+        // Ignore fit errors during unmount
       }
     }
-  }, [sessionId]);
+  }, [sessionId, isReadOnly]);
 
   useEffect(() => {
     // Prevent double initialization (React StrictMode)
@@ -70,12 +81,12 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       fontSize: 13,
       lineHeight: 1.2,
-      cursorBlink: true,
+      cursorBlink: !isReadOnly,
       cursorStyle: 'block',
       allowTransparency: true,
-      disableStdin: false, // Enable stdin for user input
+      disableStdin: isReadOnly, // Disable input for read-only mode
       convertEol: false, // Keep CR handling as-is for proper spinner behavior
-      scrollback: 1000,
+      scrollback: 5000, // Increased scrollback buffer
     });
 
     const fitAddon = new FitAddon();
@@ -83,31 +94,57 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
 
     terminal.open(containerRef.current);
 
+    // Initial fit with delay to ensure container is sized
     setTimeout(() => {
-      fitAddon.fit();
-      // Initial PTY size sync
-      const { cols, rows } = terminal;
-      if (window.electronAPI?.agentResize) {
-        window.electronAPI.agentResize(sessionId, cols, rows);
+      try {
+        fitAddon.fit();
+        // Initial PTY size sync (only if not read-only)
+        if (!isReadOnly) {
+          const { cols, rows } = terminal;
+          if (window.electronAPI?.agentResize) {
+            window.electronAPI.agentResize(sessionId, cols, rows);
+          }
+        }
+      } catch (e) {
+        // Ignore errors
       }
     }, 100);
 
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
 
-    // Handle user input - send to agent
-    terminal.onData((data: string) => {
-      if (window.electronAPI?.agentInput) {
-        window.electronAPI.agentInput(sessionId, data);
-      }
-    });
+    // Restore previous output from store
+    const previousOutput = getOutput(sessionId);
+    if (previousOutput.length > 0) {
+      setIsConnected(true);
+      setIsLoading(false);
+      previousOutput.forEach(data => {
+        terminal.write(data);
+      });
+      // Scroll to bottom after restoring
+      terminal.scrollToBottom();
+    }
+
+    // Handle user input - send to agent (only if not read-only)
+    if (!isReadOnly) {
+      terminal.onData((data: string) => {
+        if (window.electronAPI?.agentInput) {
+          window.electronAPI.agentInput(sessionId, data);
+        }
+      });
+    }
 
     // Listen for agent output
     if (typeof window !== 'undefined' && window.electronAPI?.onAgentOutput) {
       const unsubscribeOutput = window.electronAPI.onAgentOutput((sid: string, data: string) => {
         if (sid === sessionId && terminalRef.current) {
           setIsConnected(true);
+          setIsLoading(false);
           terminalRef.current.write(data);
+          // Save to store for persistence
+          appendOutput(sessionId, data);
+          // Auto-scroll to bottom
+          terminalRef.current.scrollToBottom();
         }
       });
 
@@ -115,7 +152,9 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
         if (sid === sessionId && terminalRef.current) {
           const statusColor = exitCode === 0 ? '\x1b[32m' : '\x1b[31m';
           const statusText = exitCode === 0 ? '完了' : 'エラー';
-          terminalRef.current.write(`\r\n\r\n${statusColor}[Agent ${statusText} - Exit Code: ${exitCode}]\x1b[0m\r\n`);
+          const exitMessage = `\r\n\r\n${statusColor}[Agent ${statusText} - Exit Code: ${exitCode}]\x1b[0m\r\n`;
+          terminalRef.current.write(exitMessage);
+          appendOutput(sessionId, exitMessage);
 
           // Notify parent component
           onAgentExit?.(taskId, exitCode);
@@ -124,7 +163,9 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
 
       const unsubscribeError = window.electronAPI.onAgentError((sid: string, error: string) => {
         if (sid === sessionId && terminalRef.current) {
-          terminalRef.current.write(`\r\n\x1b[31m[Error: ${error}]\x1b[0m\r\n`);
+          const errorMessage = `\r\n\x1b[31m[Error: ${error}]\x1b[0m\r\n`;
+          terminalRef.current.write(errorMessage);
+          appendOutput(sessionId, errorMessage);
         }
       });
 
@@ -138,7 +179,9 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       // Listen for task completion
       const unsubscribeTaskComplete = window.electronAPI.onAgentTaskComplete((sid: string) => {
         if (sid === sessionId && terminalRef.current) {
-          terminalRef.current.write('\r\n\x1b[33m[タスク完了 - 確認待ちに移動します]\x1b[0m\r\n');
+          const completeMessage = '\r\n\x1b[33m[タスク完了 - 確認待ちに移動します]\x1b[0m\r\n';
+          terminalRef.current.write(completeMessage);
+          appendOutput(sessionId, completeMessage);
           onTaskComplete?.(taskId);
         }
       });
@@ -167,25 +210,41 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       }
       initializedRef.current = false;
     };
-  }, [taskId, taskTitle, sessionId, onAgentExit, onTaskComplete, handleResize]);
+  }, [taskId, sessionId, isReadOnly, onAgentExit, onTaskComplete, handleResize, appendOutput, getOutput]);
 
   const handleClick = () => {
     terminalRef.current?.focus();
   };
 
+  const handleScrollToBottom = () => {
+    terminalRef.current?.scrollToBottom();
+  };
+
   return (
     <div className="h-full flex flex-col bg-[#0d1117]">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800 bg-gray-900">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800 bg-gray-900 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span
             className={`w-2 h-2 rounded-full ${
               isActive ? 'bg-green-500 animate-pulse' : isConnected ? 'bg-blue-500' : 'bg-gray-500'
             }`}
           />
-          <span className="text-sm font-medium text-gray-300">🤖 {taskTitle}</span>
+          <span className="text-sm font-medium text-gray-300">
+            {isReadOnly ? '📄' : '🤖'} {taskTitle}
+          </span>
+          {isReadOnly && (
+            <span className="text-xs bg-gray-700 text-gray-400 px-1.5 py-0.5 rounded">読み取り専用</span>
+          )}
         </div>
         <div className="flex gap-1">
+          <button
+            onClick={handleScrollToBottom}
+            className="p-1 hover:bg-gray-800 rounded text-gray-500 hover:text-gray-300"
+            title="最下部へスクロール"
+          >
+            <span className="text-xs">↓</span>
+          </button>
           <button
             onClick={() => terminalRef.current?.clear()}
             className="p-1 hover:bg-gray-800 rounded text-gray-500 hover:text-gray-300"
@@ -196,15 +255,14 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       </div>
 
       {/* Terminal Container */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         <div
           ref={containerRef}
           className="absolute inset-0 p-1"
           onClick={handleClick}
-          style={{ minHeight: '200px' }}
         />
         {/* Loading Overlay */}
-        {isLoading && (
+        {isLoading && !isReadOnly && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#0d1117]/80 z-10">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-2 border-hive-accent border-t-transparent rounded-full animate-spin" />

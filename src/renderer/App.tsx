@@ -47,6 +47,12 @@ function App(): React.ReactElement {
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
 
+  // Get tasks that need review (have terminal output to show)
+  const reviewTasks = tasks.filter(t => t.status === 'review');
+
+  // Selected review task for viewing output
+  const [selectedReviewTaskId, setSelectedReviewTaskId] = useState<string | null>(null);
+
   // Auto-select first running task if none selected
   useEffect(() => {
     if (runningTasks.length > 0 && (!activeRunningTaskId || !runningTasks.find(t => t.id === activeRunningTaskId))) {
@@ -304,41 +310,101 @@ function App(): React.ReactElement {
             ) : (
               <>
                 {/* Show running task agent output if any */}
-                {runningTasks.length > 0 ? (
+                {runningTasks.length > 0 || reviewTasks.length > 0 ? (
                   <>
-                    {/* Running tasks tab header */}
-                    <div className="border-b border-hive-border bg-green-900/20">
-                      <div className="px-3 py-2 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-sm font-medium text-green-400">
-                          並列実行中 ({runningTasks.length})
-                        </span>
+                    {/* Running tasks section */}
+                    {runningTasks.length > 0 && (
+                      <div className="border-b border-hive-border bg-green-900/20">
+                        <div className="px-3 py-2 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                          <span className="text-sm font-medium text-green-400">
+                            稼働中 ({runningTasks.length})
+                          </span>
+                        </div>
+                        {/* Task tabs for switching between parallel running tasks */}
+                        <div className="flex overflow-x-auto px-2 pb-1 gap-1">
+                          {runningTasks.map(task => (
+                            <button
+                              key={task.id}
+                              onClick={() => {
+                                setActiveRunningTaskId(task.id);
+                                setSelectedReviewTaskId(null);
+                              }}
+                              className={`px-3 py-1.5 text-xs rounded-t whitespace-nowrap transition-colors ${
+                                activeRunningTaskId === task.id && !selectedReviewTaskId
+                                  ? 'bg-hive-surface text-white border-t border-x border-hive-border'
+                                  : 'bg-transparent text-hive-muted hover:text-white hover:bg-hive-surface/50'
+                              }`}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block mr-1.5 animate-pulse" />
+                              {task.title.length > 15 ? task.title.substring(0, 15) + '...' : task.title}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      {/* Task tabs for switching between parallel running tasks */}
-                      <div className="flex overflow-x-auto px-2 pb-1 gap-1">
-                        {runningTasks.map(task => (
-                          <button
-                            key={task.id}
-                            onClick={() => setActiveRunningTaskId(task.id)}
-                            className={`px-3 py-1.5 text-xs rounded-t whitespace-nowrap transition-colors ${
-                              activeRunningTaskId === task.id
-                                ? 'bg-hive-surface text-white border-t border-x border-hive-border'
-                                : 'bg-transparent text-hive-muted hover:text-white hover:bg-hive-surface/50'
-                            }`}
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block mr-1.5 animate-pulse" />
-                            {task.title.length > 15 ? task.title.substring(0, 15) + '...' : task.title}
-                          </button>
-                        ))}
+                    )}
+
+                    {/* Review tasks section */}
+                    {reviewTasks.length > 0 && (
+                      <div className="border-b border-hive-border bg-yellow-900/20">
+                        <div className="px-3 py-2 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                          <span className="text-sm font-medium text-yellow-400">
+                            確認待ち ({reviewTasks.length})
+                          </span>
+                        </div>
+                        {/* Review task tabs */}
+                        <div className="flex overflow-x-auto px-2 pb-1 gap-1">
+                          {reviewTasks.map(task => (
+                            <button
+                              key={task.id}
+                              onClick={() => {
+                                setSelectedReviewTaskId(task.id);
+                                setActiveRunningTaskId(null);
+                              }}
+                              className={`px-3 py-1.5 text-xs rounded-t whitespace-nowrap transition-colors ${
+                                selectedReviewTaskId === task.id
+                                  ? 'bg-hive-surface text-white border-t border-x border-hive-border'
+                                  : 'bg-transparent text-hive-muted hover:text-white hover:bg-hive-surface/50'
+                              }`}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block mr-1.5" />
+                              {task.title.length > 15 ? task.title.substring(0, 15) + '...' : task.title}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
+
                     {/* Active task terminal */}
                     <div className="flex-1 overflow-hidden">
-                      {activeRunningTaskId && runningTasks.find(t => t.id === activeRunningTaskId) && (
+                      {/* Show running task output */}
+                      {activeRunningTaskId && !selectedReviewTaskId && runningTasks.find(t => t.id === activeRunningTaskId) && (
                         <AgentOutputPanel
                           key={activeRunningTaskId}
                           taskId={activeRunningTaskId}
                           taskTitle={runningTasks.find(t => t.id === activeRunningTaskId)?.title || ''}
+                          isActive={true}
+                          onAgentExit={handleAgentExit}
+                          onTaskComplete={handleTaskComplete}
+                        />
+                      )}
+                      {/* Show review task output (read-only) */}
+                      {selectedReviewTaskId && reviewTasks.find(t => t.id === selectedReviewTaskId) && (
+                        <AgentOutputPanel
+                          key={`review-${selectedReviewTaskId}`}
+                          taskId={selectedReviewTaskId}
+                          taskTitle={reviewTasks.find(t => t.id === selectedReviewTaskId)?.title || ''}
+                          isActive={false}
+                          isReadOnly={true}
+                        />
+                      )}
+                      {/* No task selected - show first available */}
+                      {!activeRunningTaskId && !selectedReviewTaskId && runningTasks.length > 0 && (
+                        <AgentOutputPanel
+                          key={runningTasks[0].id}
+                          taskId={runningTasks[0].id}
+                          taskTitle={runningTasks[0].title}
                           isActive={true}
                           onAgentExit={handleAgentExit}
                           onTaskComplete={handleTaskComplete}
