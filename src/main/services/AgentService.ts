@@ -8,6 +8,7 @@ interface AgentSession {
   type: AgentType;
   ptyProcess: pty.IPty;
   cwd: string;
+  taskExecutionState: 'idle' | 'executing' | 'completed';
 }
 
 class AgentService {
@@ -31,11 +32,12 @@ class AgentService {
     // - exec replaces bash with the actual command (no extra process)
     const READY_SIGNAL = 'VIBE_HIVE_READY';
     const claudePath = '/Users/naokijodan/.local/bin/claude';
+    const codexPath = '/opt/homebrew/bin/codex';
 
     const command = 'bash';
     const args = type === 'claude'
       ? ['-c', `echo "${READY_SIGNAL}"; exec ${claudePath}`]
-      : ['-c', `echo "${READY_SIGNAL}"; exec codex`];
+      : ['-c', `echo "${READY_SIGNAL}"; exec ${codexPath}`];
 
     console.log(`Starting ${type} agent session ${sessionId} in ${cwd}`);
 
@@ -66,6 +68,9 @@ class AgentService {
     let initialPromptSent = false;
     let readySignalReceived = false;
     let claudeCliReady = false;
+    let taskExecutionStarted = false;
+    let lastActivityTime = Date.now();
+    let promptCheckTimer: NodeJS.Timeout | null = null;
 
 
     // Handle output
@@ -112,12 +117,50 @@ class AgentService {
           // Send initial prompt now that Claude CLI is ready
           if (initialPrompt && !initialPromptSent) {
             initialPromptSent = true;
+            taskExecutionStarted = true;
             console.log(`Sending initial prompt to session ${sessionId}`);
             // Small delay to ensure input is accepted
             setTimeout(() => {
               ptyProcess.write(initialPrompt + '\n');
             }, 200);
           }
+        }
+      }
+
+      // Update last activity time
+      lastActivityTime = Date.now();
+
+      // Task completion detection:
+      // After initial prompt is sent, if Claude CLI returns to prompt state (showing ">")
+      // and remains idle for a period, consider the task complete
+      if (taskExecutionStarted && claudeCliReady) {
+        // Check for prompt indicator after task started
+        // Claude shows ">" or the input box when waiting for input
+        const hasPromptIndicator = data.includes('>') ||
+                                   data.includes('╭') ||
+                                   data.includes('Try "') ||
+                                   data.includes('? for shortcuts');
+
+        if (hasPromptIndicator) {
+          // Clear any existing timer
+          if (promptCheckTimer) {
+            clearTimeout(promptCheckTimer);
+          }
+
+          // Set a timer to check if we're really back at prompt (idle for 2 seconds)
+          promptCheckTimer = setTimeout(() => {
+            const idleTime = Date.now() - lastActivityTime;
+            // If idle for more than 2 seconds and prompt indicator was shown, task is complete
+            if (idleTime >= 2000) {
+              console.log(`Task completion detected for session ${sessionId}`);
+              taskExecutionStarted = false; // Reset for next task
+
+              // Send task complete event
+              if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+                this.mainWindow.webContents.send('agent:taskComplete', sessionId);
+              }
+            }
+          }, 2500);
         }
       }
     });
@@ -136,6 +179,7 @@ class AgentService {
       type,
       ptyProcess,
       cwd,
+      taskExecutionState: initialPrompt ? 'executing' : 'idle',
     });
 
     return sessionId;

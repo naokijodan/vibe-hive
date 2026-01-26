@@ -8,6 +8,7 @@ interface AgentOutputPanelProps {
   taskTitle: string;
   isActive?: boolean;
   onAgentExit?: (taskId: string, exitCode: number) => void;
+  onTaskComplete?: (taskId: string) => void;
 }
 
 export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
@@ -15,6 +16,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
   taskTitle,
   isActive = false,
   onAgentExit,
+  onTaskComplete,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -133,8 +135,16 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
         }
       });
 
+      // Listen for task completion
+      const unsubscribeTaskComplete = window.electronAPI.onAgentTaskComplete((sid: string) => {
+        if (sid === sessionId && terminalRef.current) {
+          terminalRef.current.write('\r\n\x1b[33m[タスク完了 - 確認待ちに移動します]\x1b[0m\r\n');
+          onTaskComplete?.(taskId);
+        }
+      });
+
       // Store cleanup functions
-      cleanupRef.current = [unsubscribeOutput, unsubscribeExit, unsubscribeError, unsubscribeLoading];
+      cleanupRef.current = [unsubscribeOutput, unsubscribeExit, unsubscribeError, unsubscribeLoading, unsubscribeTaskComplete];
     }
 
     const resizeObserver = new ResizeObserver(() => {
@@ -157,7 +167,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       }
       initializedRef.current = false;
     };
-  }, [taskId, taskTitle, sessionId, onAgentExit, handleResize]);
+  }, [taskId, taskTitle, sessionId, onAgentExit, onTaskComplete, handleResize]);
 
   const handleClick = () => {
     terminalRef.current?.focus();

@@ -78,6 +78,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('agent:loading', listener);
     return () => ipcRenderer.removeListener('agent:loading', listener);
   },
+  onAgentTaskComplete: (callback: (sessionId: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, sessionId: string) =>
+      callback(sessionId);
+    ipcRenderer.on('agent:taskComplete', listener);
+    return () => ipcRenderer.removeListener('agent:taskComplete', listener);
+  },
   agentSendMessage: (sessionId: string, message: string) =>
     ipcRenderer.invoke('agent:send', sessionId, message),
   onAgentStatus: (callback: (sessionId: string, status: string) => void) => {
@@ -164,6 +170,7 @@ export interface ElectronAPI {
   onAgentExit: (callback: (sessionId: string, exitCode: number) => void) => () => void;
   onAgentError: (callback: (sessionId: string, error: string) => void) => () => void;
   onAgentLoading: (callback: (sessionId: string, isLoading: boolean) => void) => () => void;
+  onAgentTaskComplete: (callback: (sessionId: string) => void) => () => void;
   agentSendMessage: (sessionId: string, message: string) => Promise<void>;
   onAgentStatus: (callback: (sessionId: string, status: string) => void) => () => void;
   getOrganization: () => Promise<unknown>;
