@@ -51,6 +51,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('agent:stop', sessionId),
   agentInput: (sessionId: string, data: string) =>
     ipcRenderer.invoke('agent:input', sessionId, data),
+  agentResize: (sessionId: string, cols: number, rows: number) =>
+    ipcRenderer.invoke('agent:resize', sessionId, cols, rows),
   agentList: () => ipcRenderer.invoke('agent:list'),
   onAgentOutput: (callback: (sessionId: string, data: string) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, sessionId: string, data: string) =>
@@ -156,6 +158,7 @@ export interface ElectronAPI {
   agentStart: (sessionId: string, type: 'claude' | 'codex', cwd: string, initialPrompt?: string) => Promise<string>;
   agentStop: (sessionId: string) => Promise<void>;
   agentInput: (sessionId: string, data: string) => Promise<void>;
+  agentResize: (sessionId: string, cols: number, rows: number) => Promise<void>;
   agentList: () => Promise<Array<{ id: string; type: 'claude' | 'codex'; cwd: string }>>;
   onAgentOutput: (callback: (sessionId: string, data: string) => void) => () => void;
   onAgentExit: (callback: (sessionId: string, exitCode: number) => void) => () => void;

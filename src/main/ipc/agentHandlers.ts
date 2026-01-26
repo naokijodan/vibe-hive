@@ -27,5 +27,10 @@ export function registerAgentHandlers(): void {
     return agentService.getAllSessions();
   });
 
+  // Resize an agent session
+  ipcMain.handle('agent:resize', (_event, sessionId: string, cols: number, rows: number) => {
+    agentService.resize(sessionId, cols, rows);
+  });
+
   console.log('Agent IPC handlers registered');
 }

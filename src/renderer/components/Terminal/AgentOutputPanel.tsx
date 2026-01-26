@@ -26,10 +26,15 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
   const sessionId = `agent-${taskId}`;
 
   const handleResize = useCallback(() => {
-    if (fitAddonRef.current) {
+    if (fitAddonRef.current && terminalRef.current) {
       fitAddonRef.current.fit();
+      // Sync PTY size with xterm size
+      const { cols, rows } = terminalRef.current;
+      if (window.electronAPI?.agentResize) {
+        window.electronAPI.agentResize(sessionId, cols, rows);
+      }
     }
-  }, []);
+  }, [sessionId]);
 
   useEffect(() => {
     // Prevent double initialization (React StrictMode)
@@ -67,6 +72,8 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       cursorStyle: 'block',
       allowTransparency: true,
       disableStdin: false, // Enable stdin for user input
+      convertEol: false, // Keep CR handling as-is for proper spinner behavior
+      scrollback: 1000,
     });
 
     const fitAddon = new FitAddon();
@@ -76,14 +83,15 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
 
     setTimeout(() => {
       fitAddon.fit();
+      // Initial PTY size sync
+      const { cols, rows } = terminal;
+      if (window.electronAPI?.agentResize) {
+        window.electronAPI.agentResize(sessionId, cols, rows);
+      }
     }, 100);
 
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
-
-    // Welcome message
-    terminal.write(`\x1b[32m🤖 タスク実行中: ${taskTitle}\x1b[0m\r\n`);
-    terminal.write('\x1b[90m' + '─'.repeat(50) + '\x1b[0m\r\n\r\n');
 
     // Handle user input - send to agent
     terminal.onData((data: string) => {

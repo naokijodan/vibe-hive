@@ -67,21 +67,6 @@ class AgentService {
     let readySignalReceived = false;
     let claudeCliReady = false;
 
-    // Claude CLI loading spinner phrases to filter out during startup
-    const loadingPhrases = [
-      'Jitterbugging', 'Gallivanting', 'Skedaddling', 'Moseying',
-      'Perambulating', 'Meandering', 'Traipsing', 'Sauntering',
-      'Ambling', 'Strolling', 'Wandering', 'Roaming',
-      '✻', '∙', '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'
-    ];
-
-    // Check if output is just a loading spinner line
-    const isLoadingOutput = (text: string): boolean => {
-      const trimmed = text.trim();
-      if (!trimmed) return true; // Empty lines during loading
-      // Check if it's a loading phrase or spinner character
-      return loadingPhrases.some(phrase => trimmed.includes(phrase));
-    };
 
     // Handle output
     ptyProcess.onData((data: string) => {
@@ -93,19 +78,16 @@ class AgentService {
         outputData = data.replace(READY_SIGNAL, '').replace(/^\n/, '');
       }
 
-      // Filter out loading spinner output during startup
-      // Once Claude CLI is ready, show all output
-      if (!claudeCliReady && isLoadingOutput(outputData)) {
-        // Send loading status instead of the actual loading text
-        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-          this.mainWindow.webContents.send('agent:loading', sessionId, true);
-        }
-        // Don't send the actual loading text to renderer
-      } else if (outputData && this.mainWindow && !this.mainWindow.isDestroyed()) {
-        // Send loading complete status
-        if (!claudeCliReady) {
-          this.mainWindow.webContents.send('agent:loading', sessionId, false);
-        }
+      // Process \r (carriage return) to add line clear escape code
+      // This ensures spinners don't leave artifacts when overwriting
+      // \x1b[2K clears the entire current line
+      if (outputData.includes('\r') && !outputData.includes('\n')) {
+        // Replace lone \r with clear-line + \r for proper overwrite behavior
+        outputData = outputData.replace(/\r/g, '\x1b[2K\r');
+      }
+
+      // Send output to renderer
+      if (outputData && this.mainWindow && !this.mainWindow.isDestroyed()) {
         this.mainWindow.webContents.send('agent:output', sessionId, outputData);
       }
 
@@ -174,6 +156,16 @@ class AgentService {
       session.ptyProcess.write(data);
     } else {
       console.warn(`Agent session ${sessionId} not found`);
+    }
+  }
+
+  resize(sessionId: string, cols: number, rows: number): void {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      console.log(`Resizing agent session ${sessionId} to ${cols}x${rows}`);
+      session.ptyProcess.resize(cols, rows);
+    } else {
+      console.warn(`Agent session ${sessionId} not found for resize`);
     }
   }
 
