@@ -36,6 +36,7 @@ function App(): React.ReactElement {
   const { tasks, loadTasks, updateTaskStatus } = useTaskStore();
   const { agents, loadAgents } = useAgentStore();
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [activeRunningTaskId, setActiveRunningTaskId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>('kanban');
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
@@ -44,6 +45,15 @@ function App(): React.ReactElement {
 
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
+
+  // Auto-select first running task if none selected
+  useEffect(() => {
+    if (runningTasks.length > 0 && (!activeRunningTaskId || !runningTasks.find(t => t.id === activeRunningTaskId))) {
+      setActiveRunningTaskId(runningTasks[0].id);
+    } else if (runningTasks.length === 0) {
+      setActiveRunningTaskId(null);
+    }
+  }, [runningTasks, activeRunningTaskId]);
 
   // Handle agent exit - move task to review
   const handleAgentExit = useCallback(async (taskId: string, exitCode: number) => {
@@ -258,51 +268,59 @@ function App(): React.ReactElement {
             {/* Show running task agent output if any */}
             {runningTasks.length > 0 ? (
               <>
-                <div className="px-3 py-2 border-b border-hive-border bg-green-900/20">
-                  <div className="flex items-center gap-2">
+                {/* Running tasks tab header */}
+                <div className="border-b border-hive-border bg-green-900/20">
+                  <div className="px-3 py-2 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                     <span className="text-sm font-medium text-green-400">
-                      稼働中タスク ({runningTasks.length})
+                      並列実行中 ({runningTasks.length})
                     </span>
                   </div>
+                  {/* Task tabs for switching between parallel running tasks */}
+                  <div className="flex overflow-x-auto px-2 pb-1 gap-1">
+                    {runningTasks.map(task => (
+                      <button
+                        key={task.id}
+                        onClick={() => setActiveRunningTaskId(task.id)}
+                        className={`px-3 py-1.5 text-xs rounded-t whitespace-nowrap transition-colors ${
+                          activeRunningTaskId === task.id
+                            ? 'bg-hive-surface text-white border-t border-x border-hive-border'
+                            : 'bg-transparent text-hive-muted hover:text-white hover:bg-hive-surface/50'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block mr-1.5 animate-pulse" />
+                        {task.title.length > 15 ? task.title.substring(0, 15) + '...' : task.title}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex-1 overflow-auto">
-                  {runningTasks.map(task => (
-                    <div key={task.id} className="h-full">
-                      <AgentOutputPanel
-                        taskId={task.id}
-                        taskTitle={task.title}
-                        isActive={true}
-                        onAgentExit={handleAgentExit}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : agents.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center p-4">
-                <div className="text-center text-hive-muted">
-                  <p className="text-lg mb-2">エージェントがありません</p>
-                  <p className="text-sm">組織構造画面からエージェントを作成してください</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <TerminalTabs
-                  tabs={agentTabs}
-                  activeTabId={activeTabId || ''}
-                  onTabSelect={handleTabSelect}
-                />
-                <div className="flex-1">
-                  {activeAgent && (
-                    <TerminalPanel
-                      agentId={activeAgent.id}
-                      agentName={activeAgent.name}
-                      isActive={activeAgent.status === 'running'}
+                {/* Active task terminal */}
+                <div className="flex-1 overflow-hidden">
+                  {activeRunningTaskId && runningTasks.find(t => t.id === activeRunningTaskId) && (
+                    <AgentOutputPanel
+                      key={activeRunningTaskId}
+                      taskId={activeRunningTaskId}
+                      taskTitle={runningTasks.find(t => t.id === activeRunningTaskId)?.title || ''}
+                      isActive={true}
+                      onAgentExit={handleAgentExit}
                     />
                   )}
                 </div>
               </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center p-4">
+                <div className="text-center text-hive-muted">
+                  <p className="text-lg mb-2">稼働中のタスクがありません</p>
+                  <p className="text-sm mb-4">タスクカードの「▶ 実行」ボタンをクリックして開始</p>
+                  <div className="text-xs text-left bg-hive-bg rounded p-3 space-y-2">
+                    <p className="text-hive-accent font-medium">使い方:</p>
+                    <p>1. タスクボードでタスクを作成</p>
+                    <p>2. 🎭役割 ボタンでAIの役割を設定（任意）</p>
+                    <p>3. ▶実行 ボタンでClaude Codeを起動</p>
+                    <p>4. 複数タスクを同時に実行可能</p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

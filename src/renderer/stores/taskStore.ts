@@ -122,25 +122,33 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
 
       // Auto-start Claude Code agent when task moves to in_progress
-      if (status === 'in_progress' && parsedTask.assignedAgentId) {
+      // No longer requires assignedAgentId - automatically starts an agent for any task
+      if (status === 'in_progress') {
         try {
           const agentSessionId = `agent-${parsedTask.id}`;
+          // Use task's working directory or default
           const cwd = '/Users/naokijodan/Desktop/vibe-hive';
 
           // Start the agent
           await window.electronAPI.agentStart(agentSessionId, 'claude', cwd);
 
-          // Build task prompt with optional review feedback injection
-          let taskPrompt = `# タスク: ${parsedTask.title}\n\n${parsedTask.description || ''}\n`;
+          // Build task prompt with optional role/system prompt and review feedback
+          let taskPrompt = '';
+
+          // Role injection: prepend role/system prompt if present
+          if (parsedTask.role) {
+            taskPrompt += `# あなたの役割\n${parsedTask.role}\n\n---\n\n`;
+          }
 
           // Review feedback injection: prepend feedback if present
           if (parsedTask.reviewFeedback) {
-            taskPrompt = `# レビューフィードバック\n以下のフィードバックを踏まえて修正してください:\n\n${parsedTask.reviewFeedback}\n\n---\n\n${taskPrompt}`;
+            taskPrompt += `# レビューフィードバック\n以下のフィードバックを踏まえて修正してください:\n\n${parsedTask.reviewFeedback}\n\n---\n\n`;
 
             // Clear the feedback after injection
             await window.electronAPI.dbTaskClearReviewFeedback(id);
           }
 
+          taskPrompt += `# タスク: ${parsedTask.title}\n\n${parsedTask.description || ''}\n`;
           taskPrompt += '\n上記のタスクを実行してください。\n';
 
           await window.electronAPI.agentInput(agentSessionId, taskPrompt);

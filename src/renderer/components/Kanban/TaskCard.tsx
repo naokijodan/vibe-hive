@@ -47,13 +47,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
   } = useSortable({ id: task.id });
 
   const { agents, assignTaskToAgent } = useAgentStore();
-  const { updateTask, tasks, checkDependencies, setReviewFeedback, createSubtasks, setDependencies } = useTaskStore();
+  const { updateTask, updateTaskStatus, tasks, checkDependencies, setReviewFeedback, createSubtasks, setDependencies } = useTaskStore();
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showSubtaskModal, setShowSubtaskModal] = useState(false);
   const [showDependencyModal, setShowDependencyModal] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [subtaskText, setSubtaskText] = useState('');
+  const [roleText, setRoleText] = useState(task.role || '');
   const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task.dependsOn || []);
   const [depInfo, setDepInfo] = useState<DependencyInfo | null>(null);
 
@@ -104,6 +106,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
     e.stopPropagation();
     await setDependencies(task.id, selectedDependencies);
     setShowDependencyModal(false);
+  };
+
+  // Handle role update
+  const handleRoleSubmit = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await updateTask(task.id, { role: roleText.trim() || undefined });
+    setShowRoleModal(false);
+  };
+
+  // Handle start execution (move to in_progress)
+  const handleStartExecution = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await updateTaskStatus(task.id, 'in_progress');
   };
 
   // Available tasks for dependency selection (exclude self and children)
@@ -282,7 +297,40 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
       </div>
 
       {/* Action buttons row */}
-      <div className="flex items-center gap-1 mt-2 pt-2 border-t border-hive-border/50">
+      <div className="flex items-center gap-1 mt-2 pt-2 border-t border-hive-border/50 flex-wrap">
+        {/* Start execution button (only for todo/backlog status) */}
+        {(task.status === 'todo' || task.status === 'backlog') && (
+          <button
+            onClick={handleStartExecution}
+            disabled={hasDependencyBlock}
+            className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+              hasDependencyBlock
+                ? 'bg-gray-700/30 text-gray-500 cursor-not-allowed'
+                : 'bg-green-600 text-white hover:bg-green-500'
+            }`}
+            title={hasDependencyBlock ? '依存タスクが未完了' : 'Claude Codeで実行開始'}
+          >
+            ▶ 実行
+          </button>
+        )}
+
+        {/* Role setting button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setRoleText(task.role || '');
+            setShowRoleModal(true);
+          }}
+          className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+            task.role
+              ? 'bg-yellow-900/50 text-yellow-300 hover:bg-yellow-800/50'
+              : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+          }`}
+          title="エージェントの役割を設定"
+        >
+          🎭 役割
+        </button>
+
         {/* Review feedback button (only for review status) */}
         {isReviewStatus && (
           <button
@@ -467,6 +515,51 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
               <button
                 onClick={handleDependencySubmit}
                 className="px-3 py-1.5 text-sm bg-hive-accent text-white rounded hover:bg-hive-accent/80 transition-colors"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Role Modal */}
+      {showRoleModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowRoleModal(false);
+          }}
+        >
+          <div
+            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-[500px] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-white font-medium mb-3">🎭 エージェントの役割設定</h3>
+            <p className="text-hive-muted text-xs mb-3">
+              このタスクを実行するClaude Codeに与える役割・システムプロンプトを設定します。
+              例：「あなたはTypeScriptの専門家です」「コードレビューを行うシニアエンジニアとして振る舞ってください」
+            </p>
+            <textarea
+              value={roleText}
+              onChange={(e) => setRoleText(e.target.value)}
+              placeholder="あなたはReactとTypeScriptの専門家です。コードの品質と型安全性を重視してください。"
+              className="w-full h-40 bg-hive-bg border border-hive-border rounded p-2 text-white text-sm resize-none focus:outline-none focus:border-hive-accent"
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowRoleModal(false);
+                }}
+                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleRoleSubmit}
+                className="px-3 py-1.5 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-500 transition-colors"
               >
                 保存
               </button>

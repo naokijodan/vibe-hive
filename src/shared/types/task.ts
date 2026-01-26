@@ -8,6 +8,8 @@ export interface Task {
   assignedAgentId?: string;
   parentTaskId?: string;
   subtasks?: string[];
+  // Role/system prompt for the agent executing this task
+  role?: string;
   // Review feedback injection
   reviewFeedback?: string;
   // Task dependencies for Ready check
@@ -28,4 +30,5 @@ export interface TaskCreateInput {
   priority?: TaskPriority;
   assignedAgentId?: string;
   parentTaskId?: string;
+  role?: string;
 }

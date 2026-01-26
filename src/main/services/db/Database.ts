@@ -156,6 +156,13 @@ function runMigrations(database: Database.Database): void {
         VALUES ('default-session', 'Default Session', '.', 'idle', datetime('now'), datetime('now'));
       `,
     },
+    {
+      name: '005_add_task_role',
+      sql: `
+        -- Add role column for agent system prompt / role definition
+        ALTER TABLE tasks ADD COLUMN role TEXT;
+      `,
+    },
   ];
 
   const appliedMigrations = database
