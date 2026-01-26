@@ -25,19 +25,17 @@ export function getDatabase(): Database.Database {
   // Run migrations
   runMigrations(db);
 
-  // Seed demo data on first run
-  // This is done after migrations to ensure tables exist
-  // The seed functions will check if data already exists
-  setTimeout(() => {
-    try {
-      const { seedDemoAgents } = require('./seedAgents');
-      seedDemoAgents();
-      const { seedDemoTasks } = require('./seedTasks');
-      seedDemoTasks();
-    } catch (error) {
-      console.error('Failed to seed demo data:', error);
-    }
-  }, 100);
+  // Seed demo data on first run - DISABLED for testing
+  // setTimeout(() => {
+  //   try {
+  //     const { seedDemoAgents } = require('./seedAgents');
+  //     seedDemoAgents();
+  //     const { seedDemoTasks } = require('./seedTasks');
+  //     seedDemoTasks();
+  //   } catch (error) {
+  //     console.error('Failed to seed demo data:', error);
+  //   }
+  // }, 100);
 
   console.log(`Database initialized at: ${dbPath}`);
   return db;

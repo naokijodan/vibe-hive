@@ -99,6 +99,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   updateTaskStatus: async (id: string, status: TaskStatus) => {
     set({ error: null });
     try {
+      // Skip ONLY if moving to in_progress and already in_progress (prevent duplicate agent starts)
+      // Allow other status changes (e.g., in_progress -> todo) to proceed
+      const currentTask = get().tasks.find(t => t.id === id);
+      if (currentTask && currentTask.status === status) {
+        console.log(`Task ${id} is already in status ${status}, skipping`);
+        return currentTask;
+      }
+
       // Ready check: if moving to in_progress, check dependencies first
       if (status === 'in_progress') {
         const depCheck = await window.electronAPI.dbTaskCheckDependencies(id);
@@ -129,9 +137,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
           // Use task's working directory or default
           const cwd = '/Users/naokijodan/Desktop/vibe-hive';
 
-          // Start the agent
-          await window.electronAPI.agentStart(agentSessionId, 'claude', cwd);
-
           // Build task prompt with optional role/system prompt and review feedback
           let taskPrompt = '';
 
@@ -149,9 +154,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
           }
 
           taskPrompt += `# タスク: ${parsedTask.title}\n\n${parsedTask.description || ''}\n`;
-          taskPrompt += '\n上記のタスクを実行してください。\n';
+          taskPrompt += '\n上記のタスクを実行してください。';
 
-          await window.electronAPI.agentInput(agentSessionId, taskPrompt);
+          // Start the agent with the task prompt as initial input
+          // The prompt will be sent after Claude CLI is ready
+          await window.electronAPI.agentStart(agentSessionId, 'claude', cwd, taskPrompt);
 
           console.log(`Auto-started agent for task: ${parsedTask.id}`);
         } catch (error) {

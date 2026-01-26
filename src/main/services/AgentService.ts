@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from 'child_process';
+import * as pty from 'node-pty';
 import { BrowserWindow } from 'electron';
 
 export type AgentType = 'claude' | 'codex';
@@ -6,7 +6,7 @@ export type AgentType = 'claude' | 'codex';
 interface AgentSession {
   id: string;
   type: AgentType;
-  process: ChildProcess;
+  ptyProcess: pty.IPty;
   cwd: string;
 }
 
@@ -18,65 +18,141 @@ class AgentService {
     this.mainWindow = window;
   }
 
-  start(sessionId: string, type: AgentType, cwd: string): string {
+  start(sessionId: string, type: AgentType, cwd: string, initialPrompt?: string): string {
     // Check if session already exists
     if (this.sessions.has(sessionId)) {
       console.log(`Agent session ${sessionId} already exists, stopping first`);
       this.stop(sessionId);
     }
 
-    // Determine the command based on agent type
-    const command = type === 'claude' ? 'claude' : 'codex';
+    // Use inline wrapper for reliable ready detection
+    // bash -c 'echo SIGNAL; exec command' pattern:
+    // - Outputs ready signal immediately
+    // - exec replaces bash with the actual command (no extra process)
+    const READY_SIGNAL = 'VIBE_HIVE_READY';
+    const claudePath = '/Users/naokijodan/.local/bin/claude';
+
+    const command = 'bash';
+    const args = type === 'claude'
+      ? ['-c', `echo "${READY_SIGNAL}"; exec ${claudePath}`]
+      : ['-c', `echo "${READY_SIGNAL}"; exec codex`];
 
     console.log(`Starting ${type} agent session ${sessionId} in ${cwd}`);
 
-    // Spawn the process
-    const agentProcess = spawn(command, [], {
+    // Build PATH with common locations for CLI tools
+    const homedir = process.env.HOME || '/Users/naokijodan';
+    const additionalPaths = [
+      `${homedir}/.local/bin`,
+      '/usr/local/bin',
+      '/opt/homebrew/bin',
+    ];
+    const currentPath = process.env.PATH || '';
+    const newPath = [...additionalPaths, currentPath].join(':');
+
+    // Spawn the process using node-pty for proper TTY support
+    const ptyProcess = pty.spawn(command, args, {
+      name: 'xterm-256color',
+      cols: 120,
+      rows: 30,
       cwd,
       env: {
         ...process.env,
         TERM: 'xterm-256color',
-      },
-      shell: true,
+        PATH: newPath,
+      } as Record<string, string>,
     });
 
-    // Handle stdout
-    agentProcess.stdout?.on('data', (data: Buffer) => {
-      const output = data.toString();
-      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-        this.mainWindow.webContents.send('agent:output', sessionId, output);
+    // Track if we've sent the initial prompt
+    let initialPromptSent = false;
+    let readySignalReceived = false;
+    let claudeCliReady = false;
+
+    // Claude CLI loading spinner phrases to filter out during startup
+    const loadingPhrases = [
+      'Jitterbugging', 'Gallivanting', 'Skedaddling', 'Moseying',
+      'Perambulating', 'Meandering', 'Traipsing', 'Sauntering',
+      'Ambling', 'Strolling', 'Wandering', 'Roaming',
+      '✻', '∙', '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'
+    ];
+
+    // Check if output is just a loading spinner line
+    const isLoadingOutput = (text: string): boolean => {
+      const trimmed = text.trim();
+      if (!trimmed) return true; // Empty lines during loading
+      // Check if it's a loading phrase or spinner character
+      return loadingPhrases.some(phrase => trimmed.includes(phrase));
+    };
+
+    // Handle output
+    ptyProcess.onData((data: string) => {
+      // Filter out the ready signal from displayed output
+      let outputData = data;
+      if (!readySignalReceived && data.includes(READY_SIGNAL)) {
+        readySignalReceived = true;
+        console.log(`Bash ready signal received for session ${sessionId}`);
+        outputData = data.replace(READY_SIGNAL, '').replace(/^\n/, '');
       }
-    });
 
-    // Handle stderr
-    agentProcess.stderr?.on('data', (data: Buffer) => {
-      const output = data.toString();
-      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-        this.mainWindow.webContents.send('agent:output', sessionId, output);
+      // Filter out loading spinner output during startup
+      // Once Claude CLI is ready, show all output
+      if (!claudeCliReady && isLoadingOutput(outputData)) {
+        // Send loading status instead of the actual loading text
+        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+          this.mainWindow.webContents.send('agent:loading', sessionId, true);
+        }
+        // Don't send the actual loading text to renderer
+      } else if (outputData && this.mainWindow && !this.mainWindow.isDestroyed()) {
+        // Send loading complete status
+        if (!claudeCliReady) {
+          this.mainWindow.webContents.send('agent:loading', sessionId, false);
+        }
+        this.mainWindow.webContents.send('agent:output', sessionId, outputData);
+      }
+
+      // Detect Claude CLI ready state:
+      // Claude CLI shows ">" prompt or "╭" (top-left corner of UI box) when ready
+      // Also check for common ready indicators
+      if (!claudeCliReady && readySignalReceived) {
+        const hasPromptIndicator = data.includes('>') ||
+                                   data.includes('╭') ||
+                                   data.includes('Try "') ||
+                                   data.includes('? for shortcuts');
+
+        if (hasPromptIndicator) {
+          claudeCliReady = true;
+          console.log(`Claude CLI ready for session ${sessionId}`);
+
+          // Send loading complete status
+          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+            this.mainWindow.webContents.send('agent:loading', sessionId, false);
+          }
+
+          // Send initial prompt now that Claude CLI is ready
+          if (initialPrompt && !initialPromptSent) {
+            initialPromptSent = true;
+            console.log(`Sending initial prompt to session ${sessionId}`);
+            // Small delay to ensure input is accepted
+            setTimeout(() => {
+              ptyProcess.write(initialPrompt + '\n');
+            }, 200);
+          }
+        }
       }
     });
 
     // Handle process exit
-    agentProcess.on('exit', (code, signal) => {
-      console.log(`Agent session ${sessionId} exited with code ${code}, signal ${signal}`);
+    ptyProcess.onExit(({ exitCode, signal }) => {
+      console.log(`Agent session ${sessionId} exited with code ${exitCode}, signal ${signal}`);
       this.sessions.delete(sessionId);
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-        this.mainWindow.webContents.send('agent:exit', sessionId, code || 0);
-      }
-    });
-
-    // Handle process error
-    agentProcess.on('error', (error) => {
-      console.error(`Agent session ${sessionId} error:`, error);
-      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-        this.mainWindow.webContents.send('agent:error', sessionId, error.message);
+        this.mainWindow.webContents.send('agent:exit', sessionId, exitCode);
       }
     });
 
     this.sessions.set(sessionId, {
       id: sessionId,
       type,
-      process: agentProcess,
+      ptyProcess,
       cwd,
     });
 
@@ -87,17 +163,17 @@ class AgentService {
     const session = this.sessions.get(sessionId);
     if (session) {
       console.log(`Stopping agent session ${sessionId}`);
-      session.process.kill('SIGTERM');
+      session.ptyProcess.kill();
       this.sessions.delete(sessionId);
     }
   }
 
   input(sessionId: string, data: string): void {
     const session = this.sessions.get(sessionId);
-    if (session && session.process.stdin) {
-      session.process.stdin.write(data);
+    if (session) {
+      session.ptyProcess.write(data);
     } else {
-      console.warn(`Agent session ${sessionId} not found or stdin not available`);
+      console.warn(`Agent session ${sessionId} not found`);
     }
   }
 

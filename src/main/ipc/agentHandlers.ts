@@ -3,8 +3,8 @@ import { agentService, AgentType } from '../services/AgentService';
 
 export function registerAgentHandlers(): void {
   // Start an agent session
-  ipcMain.handle('agent:start', (_event, sessionId: string, type: AgentType, cwd: string) => {
-    return agentService.start(sessionId, type, cwd);
+  ipcMain.handle('agent:start', (_event, sessionId: string, type: AgentType, cwd: string, initialPrompt?: string) => {
+    return agentService.start(sessionId, type, cwd, initialPrompt);
   });
 
   // Stop an agent session

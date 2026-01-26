@@ -19,15 +19,22 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const cleanupRef = useRef<(() => void)[]>([]);
+  const initializedRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const sessionId = `agent-${taskId}`;
 
-  const initTerminal = useCallback(async () => {
-    if (!containerRef.current) return;
-    if (terminalRef.current) {
-      terminalRef.current.focus();
-      return;
+  const handleResize = useCallback(() => {
+    if (fitAddonRef.current) {
+      fitAddonRef.current.fit();
     }
+  }, []);
+
+  useEffect(() => {
+    // Prevent double initialization (React StrictMode)
+    if (initializedRef.current || !containerRef.current) return;
+    initializedRef.current = true;
 
     const terminal = new Terminal({
       theme: {
@@ -59,7 +66,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       cursorBlink: true,
       cursorStyle: 'block',
       allowTransparency: true,
-      disableStdin: true, // Agent output is read-only
+      disableStdin: false, // Enable stdin for user input
     });
 
     const fitAddon = new FitAddon();
@@ -77,6 +84,13 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
     // Welcome message
     terminal.write(`\x1b[32m🤖 タスク実行中: ${taskTitle}\x1b[0m\r\n`);
     terminal.write('\x1b[90m' + '─'.repeat(50) + '\x1b[0m\r\n\r\n');
+
+    // Handle user input - send to agent
+    terminal.onData((data: string) => {
+      if (window.electronAPI?.agentInput) {
+        window.electronAPI.agentInput(sessionId, data);
+      }
+    });
 
     // Listen for agent output
     if (typeof window !== 'undefined' && window.electronAPI?.onAgentOutput) {
@@ -104,23 +118,16 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
         }
       });
 
+      // Listen for loading state changes
+      const unsubscribeLoading = window.electronAPI.onAgentLoading((sid: string, loading: boolean) => {
+        if (sid === sessionId) {
+          setIsLoading(loading);
+        }
+      });
+
       // Store cleanup functions
-      (terminal as unknown as { _cleanup: (() => void)[] })._cleanup = [
-        unsubscribeOutput,
-        unsubscribeExit,
-        unsubscribeError,
-      ];
+      cleanupRef.current = [unsubscribeOutput, unsubscribeExit, unsubscribeError, unsubscribeLoading];
     }
-  }, [taskId, taskTitle, sessionId, onAgentExit]);
-
-  const handleResize = useCallback(() => {
-    if (fitAddonRef.current) {
-      fitAddonRef.current.fit();
-    }
-  }, []);
-
-  useEffect(() => {
-    initTerminal();
 
     const resizeObserver = new ResizeObserver(() => {
       handleResize();
@@ -132,8 +139,17 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
 
     return () => {
       resizeObserver.disconnect();
+      // Clean up IPC listeners
+      cleanupRef.current.forEach(fn => fn());
+      cleanupRef.current = [];
+      // Dispose terminal
+      if (terminalRef.current) {
+        terminalRef.current.dispose();
+        terminalRef.current = null;
+      }
+      initializedRef.current = false;
     };
-  }, [initTerminal, handleResize]);
+  }, [taskId, taskTitle, sessionId, onAgentExit, handleResize]);
 
   const handleClick = () => {
     terminalRef.current?.focus();
@@ -162,12 +178,23 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       </div>
 
       {/* Terminal Container */}
-      <div
-        ref={containerRef}
-        className="flex-1 p-1"
-        onClick={handleClick}
-        style={{ minHeight: '200px' }}
-      />
+      <div className="flex-1 relative">
+        <div
+          ref={containerRef}
+          className="absolute inset-0 p-1"
+          onClick={handleClick}
+          style={{ minHeight: '200px' }}
+        />
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#0d1117]/80 z-10">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-hive-accent border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-gray-400">Claude Code を起動中...</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

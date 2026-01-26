@@ -45,8 +45,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Agent
-  agentStart: (sessionId: string, type: 'claude' | 'codex', cwd: string) =>
-    ipcRenderer.invoke('agent:start', sessionId, type, cwd),
+  agentStart: (sessionId: string, type: 'claude' | 'codex', cwd: string, initialPrompt?: string) =>
+    ipcRenderer.invoke('agent:start', sessionId, type, cwd, initialPrompt),
   agentStop: (sessionId: string) =>
     ipcRenderer.invoke('agent:stop', sessionId),
   agentInput: (sessionId: string, data: string) =>
@@ -69,6 +69,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(sessionId, error);
     ipcRenderer.on('agent:error', listener);
     return () => ipcRenderer.removeListener('agent:error', listener);
+  },
+  onAgentLoading: (callback: (sessionId: string, isLoading: boolean) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, sessionId: string, isLoading: boolean) =>
+      callback(sessionId, isLoading);
+    ipcRenderer.on('agent:loading', listener);
+    return () => ipcRenderer.removeListener('agent:loading', listener);
   },
   agentSendMessage: (sessionId: string, message: string) =>
     ipcRenderer.invoke('agent:send', sessionId, message),
@@ -147,13 +153,14 @@ export interface ElectronAPI {
   terminalResize: (sessionId: string, cols: number, rows: number) => Promise<void>;
   onTerminalData: (callback: (sessionId: string, data: string) => void) => () => void;
   // Agent
-  agentStart: (sessionId: string, type: 'claude' | 'codex', cwd: string) => Promise<string>;
+  agentStart: (sessionId: string, type: 'claude' | 'codex', cwd: string, initialPrompt?: string) => Promise<string>;
   agentStop: (sessionId: string) => Promise<void>;
   agentInput: (sessionId: string, data: string) => Promise<void>;
   agentList: () => Promise<Array<{ id: string; type: 'claude' | 'codex'; cwd: string }>>;
   onAgentOutput: (callback: (sessionId: string, data: string) => void) => () => void;
   onAgentExit: (callback: (sessionId: string, exitCode: number) => void) => () => void;
   onAgentError: (callback: (sessionId: string, error: string) => void) => () => void;
+  onAgentLoading: (callback: (sessionId: string, isLoading: boolean) => void) => () => void;
   agentSendMessage: (sessionId: string, message: string) => Promise<void>;
   onAgentStatus: (callback: (sessionId: string, status: string) => void) => () => void;
   getOrganization: () => Promise<unknown>;
