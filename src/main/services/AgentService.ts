@@ -69,8 +69,12 @@ class AgentService {
     let readySignalReceived = false;
     let claudeCliReady = false;
     let taskExecutionStarted = false;
+    let taskStartTime = 0;
     let lastActivityTime = Date.now();
+    let lastOutputTime = Date.now();
     let promptCheckTimer: NodeJS.Timeout | null = null;
+    let consecutivePromptDetections = 0;
+    let taskCompletionSent = false;
 
 
     // Handle output
@@ -118,6 +122,9 @@ class AgentService {
           if (initialPrompt && !initialPromptSent) {
             initialPromptSent = true;
             taskExecutionStarted = true;
+            taskStartTime = Date.now();
+            taskCompletionSent = false;
+            consecutivePromptDetections = 0;
             console.log(`Sending initial prompt to session ${sessionId}`);
             // Small delay to ensure input is accepted
             setTimeout(() => {
@@ -127,40 +134,69 @@ class AgentService {
         }
       }
 
-      // Update last activity time
+      // Update last activity time and output time
       lastActivityTime = Date.now();
+      lastOutputTime = Date.now();
 
       // Task completion detection:
-      // After initial prompt is sent, if Claude CLI returns to prompt state (showing ">")
-      // and remains idle for a period, consider the task complete
-      if (taskExecutionStarted && claudeCliReady) {
-        // Check for prompt indicator after task started
-        // Claude shows ">" or the input box when waiting for input
-        const hasPromptIndicator = data.includes('>') ||
-                                   data.includes('╭') ||
-                                   data.includes('Try "') ||
-                                   data.includes('? for shortcuts');
+      // After initial prompt is sent, if Claude CLI returns to prompt state
+      // We need multiple signals to avoid false positives:
+      // 1. Task must have been running for at least 10 seconds
+      // 2. Must detect prompt indicator multiple times (3+ consecutive)
+      // 3. Must be idle for at least 10 seconds after last significant output
+      if (taskExecutionStarted && claudeCliReady && !taskCompletionSent) {
+        const timeSinceTaskStart = Date.now() - taskStartTime;
+        const MIN_TASK_DURATION = 10000; // 10 seconds minimum task duration
 
-        if (hasPromptIndicator) {
-          // Clear any existing timer
-          if (promptCheckTimer) {
-            clearTimeout(promptCheckTimer);
+        // Only start checking after minimum task duration
+        if (timeSinceTaskStart < MIN_TASK_DURATION) {
+          // Reset counter if we're still in early phase
+          consecutivePromptDetections = 0;
+        } else {
+          // Check for strong prompt indicators (Claude's input prompt)
+          // Use more specific patterns to avoid false positives
+          const hasStrongPromptIndicator =
+            // Claude shows ">" at the start of a line when waiting for input
+            data.match(/^>/m) !== null ||
+            // Or the input box top border
+            data.includes('╭─') ||
+            // Or the explicit help hint
+            (data.includes('? for shortcuts') && data.includes('help'));
+
+          if (hasStrongPromptIndicator) {
+            consecutivePromptDetections++;
+            console.log(`Prompt detection ${consecutivePromptDetections}/3 for session ${sessionId}`);
+          } else if (data.length > 50) {
+            // Reset if we get substantial output (not just cursor movements)
+            consecutivePromptDetections = 0;
           }
 
-          // Set a timer to check if we're really back at prompt (idle for 2 seconds)
-          promptCheckTimer = setTimeout(() => {
-            const idleTime = Date.now() - lastActivityTime;
-            // If idle for more than 2 seconds and prompt indicator was shown, task is complete
-            if (idleTime >= 2000) {
-              console.log(`Task completion detected for session ${sessionId}`);
-              taskExecutionStarted = false; // Reset for next task
-
-              // Send task complete event
-              if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-                this.mainWindow.webContents.send('agent:taskComplete', sessionId);
-              }
+          // Require 3+ consecutive prompt detections
+          if (consecutivePromptDetections >= 3) {
+            // Clear any existing timer
+            if (promptCheckTimer) {
+              clearTimeout(promptCheckTimer);
             }
-          }, 2500);
+
+            // Set a longer timer to ensure we're really idle
+            promptCheckTimer = setTimeout(() => {
+              const idleTime = Date.now() - lastOutputTime;
+              const IDLE_THRESHOLD = 10000; // 10 seconds idle
+
+              // If idle for more than threshold and multiple prompts detected, task is complete
+              if (idleTime >= IDLE_THRESHOLD && !taskCompletionSent) {
+                console.log(`Task completion detected for session ${sessionId} (idle: ${idleTime}ms, prompts: ${consecutivePromptDetections})`);
+                taskCompletionSent = true;
+                taskExecutionStarted = false; // Reset for next task
+                consecutivePromptDetections = 0;
+
+                // Send task complete event
+                if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+                  this.mainWindow.webContents.send('agent:taskComplete', sessionId);
+                }
+              }
+            }, 10000); // Wait 10 seconds before confirming
+          }
         }
       }
     });
