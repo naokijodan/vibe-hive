@@ -151,18 +151,30 @@ function App(): React.ReactElement {
     setShowBashTerminal,
   });
 
-  // Keyboard shortcut for command palette (⌘K / Ctrl+K)
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // ⌘K / Ctrl+K: Command Palette
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen(prev => !prev);
+        return;
+      }
+
+      // ⌘1-9 / Ctrl+1-9: Session switching
+      if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        const index = parseInt(e.key) - 1;
+        if (sessions[index]) {
+          switchSession(sessions[index].id);
+        }
+        return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [sessions, switchSession]);
 
   // Handle new session creation
   const handleCreateSession = async () => {

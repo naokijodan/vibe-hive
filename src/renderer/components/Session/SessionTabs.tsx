@@ -18,8 +18,9 @@ export function SessionTabs({ sessions, activeSessionId, onSessionSwitch }: Sess
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 overflow-x-auto">
-      {sessions.map(session => {
+      {sessions.map((session, index) => {
         const isActive = session.id === activeSessionId;
+        const shortcutNumber = index < 9 ? index + 1 : null;
         const statusColor = {
           idle: 'bg-gray-500',
           running: 'bg-green-500 animate-pulse',
@@ -43,6 +44,11 @@ export function SessionTabs({ sessions, activeSessionId, onSessionSwitch }: Sess
           >
             <span className={`w-2 h-2 rounded-full ${statusColor}`} />
             <span>{session.name}</span>
+            {shortcutNumber && (
+              <span className={`text-xs ml-1 ${isActive ? 'text-black/50' : 'text-hive-muted/50'}`}>
+                ⌘{shortcutNumber}
+              </span>
+            )}
           </button>
         );
       })}
