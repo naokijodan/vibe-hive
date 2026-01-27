@@ -4,6 +4,7 @@ import { TerminalPanel, TerminalTabs, AgentOutputPanel } from './components/Term
 import { OrgChart } from './components/Organization';
 import { SessionTabs } from './components/Session';
 import { CommandPalette } from './components/CommandPalette';
+import { GitPanel } from './components/Git/GitPanel';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -49,6 +50,7 @@ function App(): React.ReactElement {
   const [newSessionCwd, setNewSessionCwd] = useState('');
   const [showBashTerminal, setShowBashTerminal] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isGitPanelOpen, setIsGitPanelOpen] = useState(false);
 
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
@@ -149,6 +151,7 @@ function App(): React.ReactElement {
     setCurrentView,
     setIsSessionModalOpen,
     setShowBashTerminal,
+    setIsGitPanelOpen,
   });
 
   // Keyboard shortcuts
@@ -533,6 +536,12 @@ function App(): React.ReactElement {
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         commands={commands}
+      />
+
+      {/* Git Panel */}
+      <GitPanel
+        isOpen={isGitPanelOpen}
+        onClose={() => setIsGitPanelOpen(false)}
       />
     </div>
   );

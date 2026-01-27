@@ -9,6 +9,7 @@ interface UseCommandPaletteProps {
   setCurrentView: (view: ViewType) => void;
   setIsSessionModalOpen: (open: boolean) => void;
   setShowBashTerminal: (show: boolean) => void;
+  setIsGitPanelOpen?: (open: boolean) => void;
 }
 
 export function useCommandPalette({
@@ -16,6 +17,7 @@ export function useCommandPalette({
   setCurrentView,
   setIsSessionModalOpen,
   setShowBashTerminal,
+  setIsGitPanelOpen,
 }: UseCommandPaletteProps): Command[] {
   const { sessions, switchSession } = useSessionStore();
 
@@ -100,8 +102,46 @@ export function useCommandPalette({
       }
     );
 
+    // Git commands
+    if (setIsGitPanelOpen) {
+      cmds.push(
+        {
+          id: 'git-open',
+          label: 'Git パネルを開く',
+          description: 'Git操作パネルを表示',
+          category: 'Git',
+          keywords: ['git', 'version', 'control', 'commit', 'push', 'ぎっと'],
+          action: () => setIsGitPanelOpen(true),
+        },
+        {
+          id: 'git-commit',
+          label: 'Git: Commit',
+          description: 'ステージされた変更をコミット',
+          category: 'Git',
+          keywords: ['git', 'commit', 'こみっと'],
+          action: () => setIsGitPanelOpen(true),
+        },
+        {
+          id: 'git-push',
+          label: 'Git: Push',
+          description: 'コミットをリモートにプッシュ',
+          category: 'Git',
+          keywords: ['git', 'push', 'ぷっしゅ'],
+          action: () => setIsGitPanelOpen(true),
+        },
+        {
+          id: 'git-pull',
+          label: 'Git: Pull',
+          description: 'リモートから変更を取得',
+          category: 'Git',
+          keywords: ['git', 'pull', 'ぷる'],
+          action: () => setIsGitPanelOpen(true),
+        }
+      );
+    }
+
     return cmds;
-  }, [sessions, setCurrentView, setIsSessionModalOpen, setShowBashTerminal, switchSession]);
+  }, [sessions, setCurrentView, setIsSessionModalOpen, setShowBashTerminal, setIsGitPanelOpen, switchSession]);
 
   return commands;
 }

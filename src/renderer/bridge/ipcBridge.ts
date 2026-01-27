@@ -40,6 +40,7 @@ export const ipcBridge = {
   git: {
     status: (path: string) => window.electronAPI.gitStatus(path),
     add: (path: string, files: string[]) => window.electronAPI.gitAdd(path, files),
+    unstage: (path: string, files: string[]) => window.electronAPI.gitUnstage(path, files),
     commit: (path: string, message: string) => window.electronAPI.gitCommit(path, message),
     push: (path: string) => window.electronAPI.gitPush(path),
     pull: (path: string) => window.electronAPI.gitPull(path),

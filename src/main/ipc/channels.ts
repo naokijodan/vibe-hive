@@ -31,6 +31,7 @@ export const IPC_CHANNELS = {
   // Git channels
   GIT_STATUS: 'git:status',
   GIT_ADD: 'git:add',
+  GIT_UNSTAGE: 'git:unstage',
   GIT_COMMIT: 'git:commit',
   GIT_PUSH: 'git:push',
   GIT_PULL: 'git:pull',

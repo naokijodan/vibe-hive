@@ -102,6 +102,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Git
   gitStatus: (path: string) => ipcRenderer.invoke('git:status', path),
   gitAdd: (path: string, files: string[]) => ipcRenderer.invoke('git:add', path, files),
+  gitUnstage: (path: string, files: string[]) => ipcRenderer.invoke('git:unstage', path, files),
   gitCommit: (path: string, message: string) => ipcRenderer.invoke('git:commit', path, message),
   gitPush: (path: string) => ipcRenderer.invoke('git:push', path),
   gitPull: (path: string) => ipcRenderer.invoke('git:pull', path),
@@ -183,6 +184,7 @@ export interface ElectronAPI {
   updateOrganization: (org: unknown) => Promise<void>;
   gitStatus: (path: string) => Promise<unknown>;
   gitAdd: (path: string, files: string[]) => Promise<boolean>;
+  gitUnstage: (path: string, files: string[]) => Promise<boolean>;
   gitCommit: (path: string, message: string) => Promise<boolean>;
   gitPush: (path: string) => Promise<boolean>;
   gitPull: (path: string) => Promise<boolean>;

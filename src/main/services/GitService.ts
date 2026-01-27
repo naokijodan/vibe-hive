@@ -95,6 +95,20 @@ export class GitService {
   }
 
   /**
+   * Unstage files (remove from staging area)
+   */
+  async unstage(repoPath: string, files: string[]): Promise<boolean> {
+    try {
+      const filesArg = files.map(f => `"${f}"`).join(' ');
+      await execAsync(`git reset HEAD ${filesArg}`, { cwd: repoPath });
+      return true;
+    } catch (error) {
+      console.error('Failed to unstage files:', error);
+      return false;
+    }
+  }
+
+  /**
    * Commit staged changes
    */
   async commit(repoPath: string, message: string): Promise<boolean> {

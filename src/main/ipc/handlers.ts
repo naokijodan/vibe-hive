@@ -87,6 +87,13 @@ export function registerIpcHandlers(): void {
     return success;
   });
 
+  ipcMain.handle(IPC_CHANNELS.GIT_UNSTAGE, async (_event, path, files) => {
+    console.log('git:unstage', path, files);
+    const gitService = getGitService();
+    const success = await gitService.unstage(path, files);
+    return success;
+  });
+
   ipcMain.handle(IPC_CHANNELS.GIT_COMMIT, async (_event, path, message) => {
     console.log('git:commit', path, message);
     const gitService = getGitService();
