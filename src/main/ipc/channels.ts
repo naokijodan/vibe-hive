@@ -5,6 +5,8 @@ export const IPC_CHANNELS = {
   SESSION_GET: 'session:get',
   SESSION_LIST: 'session:list',
   SESSION_DELETE: 'session:delete',
+  SESSION_SWITCH: 'session:switch',
+  SESSION_GET_ACTIVE: 'session:get-active',
 
   // Terminal channels
   TERMINAL_WRITE: 'terminal:write',

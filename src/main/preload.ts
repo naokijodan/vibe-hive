@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSession: (id: string) => ipcRenderer.invoke('session:get', id),
   listSessions: () => ipcRenderer.invoke('session:list'),
   deleteSession: (id: string) => ipcRenderer.invoke('session:delete', id),
+  switchSession: (id: string) => ipcRenderer.invoke('session:switch', id),
+  getActiveSession: () => ipcRenderer.invoke('session:get-active'),
 
   // PTY (node-pty)
   ptyCreate: (sessionId: string, cols?: number, rows?: number) =>

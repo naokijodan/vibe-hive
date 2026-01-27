@@ -1,5 +1,5 @@
 import { getDatabase } from './Database';
-import type { Session, SessionStatus, SessionConfig } from '../../../shared/types/session';
+import type { Session, SessionConfig, SessionStatus } from '../../../shared/types/session';
 import { randomUUID } from 'crypto';
 
 interface SessionRow {
@@ -8,6 +8,7 @@ interface SessionRow {
   working_directory: string;
   agent_id: string | null;
   status: string;
+  is_active: number;
   created_at: string;
   updated_at: string;
 }
@@ -31,9 +32,16 @@ export class SessionRepository {
     const now = new Date().toISOString();
 
     db.prepare(
-      `INSERT INTO sessions (id, name, working_directory, agent_id, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 'idle', ?, ?)`
-    ).run(id, config.name, config.workingDirectory, config.agentId || null, now, now);
+      `INSERT INTO sessions (id, name, working_directory, agent_id, status, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'idle', 0, ?, ?)`
+    ).run(
+      id,
+      config.name,
+      config.workingDirectory,
+      config.agentId || null,
+      now,
+      now
+    );
 
     return this.getById(id)!;
   }
@@ -46,57 +54,74 @@ export class SessionRepository {
 
   getAll(): Session[] {
     const db = getDatabase();
-    const rows = db.prepare('SELECT * FROM sessions ORDER BY created_at DESC').all() as SessionRow[];
+    const rows = db
+      .prepare('SELECT * FROM sessions ORDER BY created_at DESC')
+      .all() as SessionRow[];
     return rows.map(rowToSession);
   }
 
-  update(id: string, updates: Partial<Omit<Session, 'id' | 'createdAt'>>): Session | null {
+  getActive(): Session | null {
     const db = getDatabase();
-    const session = this.getById(id);
-    if (!session) return null;
+    const row = db
+      .prepare('SELECT * FROM sessions WHERE is_active = 1')
+      .get() as SessionRow | undefined;
+    return row ? rowToSession(row) : null;
+  }
 
-    const updateFields: string[] = [];
-    const values: unknown[] = [];
+  update(id: string, updates: Partial<SessionConfig>): Session {
+    const db = getDatabase();
+    const now = new Date().toISOString();
+    const fields: string[] = [];
+    const values: any[] = [];
 
     if (updates.name !== undefined) {
-      updateFields.push('name = ?');
+      fields.push('name = ?');
       values.push(updates.name);
     }
     if (updates.workingDirectory !== undefined) {
-      updateFields.push('working_directory = ?');
+      fields.push('working_directory = ?');
       values.push(updates.workingDirectory);
     }
     if (updates.agentId !== undefined) {
-      updateFields.push('agent_id = ?');
-      values.push(updates.agentId || null);
-    }
-    if (updates.status !== undefined) {
-      updateFields.push('status = ?');
-      values.push(updates.status);
+      fields.push('agent_id = ?');
+      values.push(updates.agentId);
     }
 
-    if (updateFields.length > 0) {
-      updateFields.push('updated_at = ?');
-      values.push(new Date().toISOString());
-      values.push(id);
+    fields.push('updated_at = ?');
+    values.push(now);
+    values.push(id);
 
-      db.prepare(
-        `UPDATE sessions SET ${updateFields.join(', ')} WHERE id = ?`
-      ).run(...values);
-    }
+    db.prepare(`UPDATE sessions SET ${fields.join(', ')} WHERE id = ?`).run(...values);
 
-    return this.getById(id);
+    return this.getById(id)!;
   }
 
-  delete(id: string): boolean {
+  updateStatus(id: string, status: SessionStatus): Session {
     const db = getDatabase();
-    const result = db.prepare('DELETE FROM sessions WHERE id = ?').run(id);
-    return result.changes > 0;
+    const now = new Date().toISOString();
+
+    db.prepare('UPDATE sessions SET status = ?, updated_at = ? WHERE id = ?').run(
+      status,
+      now,
+      id
+    );
+
+    return this.getById(id)!;
   }
 
-  updateStatus(id: string, status: SessionStatus): Session | null {
-    return this.update(id, { status });
+  setActive(id: string): void {
+    const db = getDatabase();
+    const now = new Date().toISOString();
+
+    // すべてのセッションを非アクティブに
+    db.prepare('UPDATE sessions SET is_active = 0, updated_at = ?').run(now);
+
+    // 指定されたセッションをアクティブに
+    db.prepare('UPDATE sessions SET is_active = 1, updated_at = ? WHERE id = ?').run(now, id);
+  }
+
+  delete(id: string): void {
+    const db = getDatabase();
+    db.prepare('DELETE FROM sessions WHERE id = ?').run(id);
   }
 }
-
-export const sessionRepository = new SessionRepository();

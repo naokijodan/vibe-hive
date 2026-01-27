@@ -1,29 +1,44 @@
 import { ipcMain } from 'electron';
 import { IPC_CHANNELS } from './channels';
+import { getSessionService } from '../services/SessionService';
 
 export function registerIpcHandlers(): void {
+  const sessionService = getSessionService();
+
   // Session handlers
   ipcMain.handle(IPC_CHANNELS.SESSION_CREATE, async (_event, config) => {
-    // TODO: Implement SessionService
     console.log('session:create', config);
-    return { id: 'test-session', ...config };
+    const session = sessionService.createSession(config);
+    return session;
   });
 
   ipcMain.handle(IPC_CHANNELS.SESSION_GET, async (_event, id) => {
-    // TODO: Implement SessionService
     console.log('session:get', id);
-    return null;
+    const session = sessionService.getSession(id);
+    return session;
   });
 
   ipcMain.handle(IPC_CHANNELS.SESSION_LIST, async () => {
-    // TODO: Implement SessionService
     console.log('session:list');
-    return [];
+    const sessions = sessionService.listSessions();
+    return sessions;
   });
 
   ipcMain.handle(IPC_CHANNELS.SESSION_DELETE, async (_event, id) => {
-    // TODO: Implement SessionService
     console.log('session:delete', id);
+    sessionService.deleteSession(id);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SESSION_SWITCH, async (_event, id) => {
+    console.log('session:switch', id);
+    const session = sessionService.switchSession(id);
+    return session;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SESSION_GET_ACTIVE, async () => {
+    console.log('session:get-active');
+    const session = sessionService.getActiveSession();
+    return session;
   });
 
   // Terminal handlers
