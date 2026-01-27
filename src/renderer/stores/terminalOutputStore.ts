@@ -7,54 +7,71 @@ interface TerminalOutput {
 }
 
 interface TerminalOutputStore {
-  outputs: Map<string, TerminalOutput>;
+  // Use a plain object instead of Map for better Zustand compatibility
+  outputs: Record<string, TerminalOutput>;
   appendOutput: (sessionId: string, data: string) => void;
   getOutput: (sessionId: string) => string[];
   clearOutput: (sessionId: string) => void;
   clearAll: () => void;
+  debugState: () => void;
 }
 
 const MAX_LINES = 5000;
 
 export const useTerminalOutputStore = create<TerminalOutputStore>((set, get) => ({
-  outputs: new Map(),
+  outputs: {},
 
   appendOutput: (sessionId: string, data: string) => {
     set((state) => {
-      const newOutputs = new Map(state.outputs);
-      const existing = newOutputs.get(sessionId) || {
+      const existing = state.outputs[sessionId] || {
         sessionId,
         data: [],
         maxLines: MAX_LINES,
       };
 
-      // Append new data
-      existing.data.push(data);
+      // Create a new array with the new data
+      const newData = [...existing.data, data];
 
       // Trim if exceeds max lines (keep last MAX_LINES entries)
-      if (existing.data.length > MAX_LINES) {
-        existing.data = existing.data.slice(-MAX_LINES);
-      }
+      const trimmedData = newData.length > MAX_LINES ? newData.slice(-MAX_LINES) : newData;
 
-      newOutputs.set(sessionId, existing);
+      const newOutputs = {
+        ...state.outputs,
+        [sessionId]: {
+          ...existing,
+          data: trimmedData,
+        },
+      };
+
+      console.log(`[TerminalOutputStore] Appended data for ${sessionId}, total entries: ${trimmedData.length}`);
       return { outputs: newOutputs };
     });
   },
 
   getOutput: (sessionId: string) => {
-    const output = get().outputs.get(sessionId);
-    return output ? output.data : [];
+    const state = get();
+    const output = state.outputs[sessionId];
+    const data = output ? output.data : [];
+    console.log(`[TerminalOutputStore] getOutput for ${sessionId}, entries: ${data.length}, keys in store: ${Object.keys(state.outputs).join(', ')}`);
+    return data;
   },
 
   clearOutput: (sessionId: string) => {
     set((state) => {
-      const newOutputs = new Map(state.outputs);
-      newOutputs.delete(sessionId);
-      return { outputs: newOutputs };
+      const { [sessionId]: _, ...rest } = state.outputs;
+      return { outputs: rest };
     });
   },
 
   clearAll: () => {
-    set({ outputs: new Map() });
+    set({ outputs: {} });
+  },
+
+  debugState: () => {
+    const state = get();
+    console.log('[TerminalOutputStore] Current state:', {
+      sessionIds: Object.keys(state.outputs),
+      entryCounts: Object.entries(state.outputs).map(([id, o]) => `${id}: ${o.data.length}`),
+    });
   },
 }));

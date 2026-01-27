@@ -9,21 +9,23 @@ interface AgentSession {
   ptyProcess: pty.IPty;
   cwd: string;
   taskExecutionState: 'idle' | 'executing' | 'completed';
+  suppressExitEvent: boolean; // Don't send exit event when stopping for restart
 }
 
 class AgentService {
   private sessions: Map<string, AgentSession> = new Map();
   private mainWindow: BrowserWindow | null = null;
+  private silentExitSessions: Set<string> = new Set(); // Sessions that should not send exit event
 
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window;
   }
 
   start(sessionId: string, type: AgentType, cwd: string, initialPrompt?: string): string {
-    // Check if session already exists
+    // Check if session already exists - stop it silently (don't trigger exit event)
     if (this.sessions.has(sessionId)) {
-      console.log(`Agent session ${sessionId} already exists, stopping first`);
-      this.stop(sessionId);
+      console.log(`Agent session ${sessionId} already exists, stopping first (silent)`);
+      this.stop(sessionId, true); // Silent stop - don't send exit event
     }
 
     // Use inline wrapper for reliable ready detection
@@ -141,61 +143,82 @@ class AgentService {
       // Task completion detection:
       // After initial prompt is sent, if Claude CLI returns to prompt state
       // We need multiple signals to avoid false positives:
-      // 1. Task must have been running for at least 10 seconds
-      // 2. Must detect prompt indicator multiple times (3+ consecutive)
-      // 3. Must be idle for at least 10 seconds after last significant output
+      // 1. Task must have been running for at least 5 seconds (reduced from 10)
+      // 2. Must detect prompt indicator multiple times (2+ consecutive, reduced from 3)
+      // 3. Must be idle for at least 5 seconds after last significant output (reduced from 10)
       if (taskExecutionStarted && claudeCliReady && !taskCompletionSent) {
         const timeSinceTaskStart = Date.now() - taskStartTime;
-        const MIN_TASK_DURATION = 10000; // 10 seconds minimum task duration
+        const MIN_TASK_DURATION = 5000; // 5 seconds minimum task duration
+
+        console.log(`[TaskComplete] Checking: taskStarted=${taskExecutionStarted}, cliReady=${claudeCliReady}, sent=${taskCompletionSent}, duration=${timeSinceTaskStart}ms`);
 
         // Only start checking after minimum task duration
         if (timeSinceTaskStart < MIN_TASK_DURATION) {
           // Reset counter if we're still in early phase
           consecutivePromptDetections = 0;
+          console.log(`[TaskComplete] Too early, duration: ${timeSinceTaskStart}ms < ${MIN_TASK_DURATION}ms`);
         } else {
-          // Check for strong prompt indicators (Claude's input prompt)
-          // Use more specific patterns to avoid false positives
-          const hasStrongPromptIndicator =
+          // Check for prompt indicators (Claude's input prompt)
+          // Claude Code shows various patterns when waiting for input
+          const hasPromptIndicator =
             // Claude shows ">" at the start of a line when waiting for input
             data.match(/^>/m) !== null ||
             // Or the input box top border
-            data.includes('╭─') ||
-            // Or the explicit help hint
-            (data.includes('? for shortcuts') && data.includes('help'));
+            data.includes('╭') ||
+            // The bottom border of the input box
+            data.includes('╰') ||
+            // Help hint
+            data.includes('? for') ||
+            // Empty prompt line with just cursor positioning
+            data.match(/\x1b\[\d+;\d+H>/) !== null;
 
-          if (hasStrongPromptIndicator) {
+          // Debug: log the data being analyzed
+          const printableData = data.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '[ESC]').substring(0, 100);
+          console.log(`[TaskComplete] Data chunk (${data.length} chars): "${printableData}"`);
+          console.log(`[TaskComplete] hasPromptIndicator=${hasPromptIndicator}`);
+
+          if (hasPromptIndicator) {
             consecutivePromptDetections++;
-            console.log(`Prompt detection ${consecutivePromptDetections}/3 for session ${sessionId}`);
-          } else if (data.length > 50) {
+            console.log(`[TaskComplete] Prompt detection ${consecutivePromptDetections}/2 for session ${sessionId}`);
+          } else if (data.length > 100) {
             // Reset if we get substantial output (not just cursor movements)
+            console.log(`[TaskComplete] Resetting counter - substantial output (${data.length} chars)`);
             consecutivePromptDetections = 0;
           }
 
-          // Require 3+ consecutive prompt detections
-          if (consecutivePromptDetections >= 3) {
+          // Require 2+ consecutive prompt detections (reduced from 3)
+          if (consecutivePromptDetections >= 2) {
             // Clear any existing timer
             if (promptCheckTimer) {
               clearTimeout(promptCheckTimer);
+              console.log(`[TaskComplete] Cleared existing timer`);
             }
 
-            // Set a longer timer to ensure we're really idle
+            console.log(`[TaskComplete] Starting 5s idle timer for session ${sessionId}`);
+
+            // Set a timer to ensure we're really idle (reduced to 5 seconds)
             promptCheckTimer = setTimeout(() => {
               const idleTime = Date.now() - lastOutputTime;
-              const IDLE_THRESHOLD = 10000; // 10 seconds idle
+              const IDLE_THRESHOLD = 5000; // 5 seconds idle (reduced from 10)
+
+              console.log(`[TaskComplete] Timer fired - idleTime=${idleTime}ms, threshold=${IDLE_THRESHOLD}ms`);
 
               // If idle for more than threshold and multiple prompts detected, task is complete
               if (idleTime >= IDLE_THRESHOLD && !taskCompletionSent) {
-                console.log(`Task completion detected for session ${sessionId} (idle: ${idleTime}ms, prompts: ${consecutivePromptDetections})`);
+                console.log(`[TaskComplete] ✓ Task completion detected for session ${sessionId} (idle: ${idleTime}ms, prompts: ${consecutivePromptDetections})`);
                 taskCompletionSent = true;
                 taskExecutionStarted = false; // Reset for next task
                 consecutivePromptDetections = 0;
 
                 // Send task complete event
                 if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+                  console.log(`[TaskComplete] Sending agent:taskComplete event`);
                   this.mainWindow.webContents.send('agent:taskComplete', sessionId);
                 }
+              } else {
+                console.log(`[TaskComplete] Timer fired but conditions not met - idleTime=${idleTime}ms, sent=${taskCompletionSent}`);
               }
-            }, 10000); // Wait 10 seconds before confirming
+            }, 5000); // Wait 5 seconds before confirming (reduced from 10)
           }
         }
       }
@@ -205,6 +228,14 @@ class AgentService {
     ptyProcess.onExit(({ exitCode, signal }) => {
       console.log(`Agent session ${sessionId} exited with code ${exitCode}, signal ${signal}`);
       this.sessions.delete(sessionId);
+
+      // Check if this is a silent exit (from restart)
+      if (this.silentExitSessions.has(sessionId)) {
+        console.log(`Agent session ${sessionId} exit is silent (restart), not sending event`);
+        this.silentExitSessions.delete(sessionId);
+        return;
+      }
+
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {
         this.mainWindow.webContents.send('agent:exit', sessionId, exitCode);
       }
@@ -216,15 +247,20 @@ class AgentService {
       ptyProcess,
       cwd,
       taskExecutionState: initialPrompt ? 'executing' : 'idle',
+      suppressExitEvent: false,
     });
 
     return sessionId;
   }
 
-  stop(sessionId: string): void {
+  stop(sessionId: string, silent: boolean = false): void {
     const session = this.sessions.get(sessionId);
     if (session) {
-      console.log(`Stopping agent session ${sessionId}`);
+      console.log(`Stopping agent session ${sessionId}${silent ? ' (silent)' : ''}`);
+      // Mark session for silent exit before killing
+      if (silent) {
+        this.silentExitSessions.add(sessionId);
+      }
       session.ptyProcess.kill();
       this.sessions.delete(sessionId);
     }

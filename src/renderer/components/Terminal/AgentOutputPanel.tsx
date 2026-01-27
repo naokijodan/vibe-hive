@@ -11,6 +11,7 @@ interface AgentOutputPanelProps {
   isReadOnly?: boolean; // For viewing completed task output
   onAgentExit?: (taskId: string, exitCode: number) => void;
   onTaskComplete?: (taskId: string) => void;
+  onResumeConversation?: (taskId: string) => void; // Resume conversation from review
 }
 
 export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
@@ -20,6 +21,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
   isReadOnly = false,
   onAgentExit,
   onTaskComplete,
+  onResumeConversation,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -30,7 +32,13 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
   const [isLoading, setIsLoading] = useState(!isReadOnly);
   const sessionId = `agent-${taskId}`;
 
-  const { appendOutput, getOutput } = useTerminalOutputStore();
+  // Use Zustand store's getState() directly to avoid stale closure issues
+  const appendOutput = useTerminalOutputStore((state) => state.appendOutput);
+
+  // For getting output, we use getState() directly in useEffect to get fresh data
+  const getOutputFromStore = useCallback(() => {
+    return useTerminalOutputStore.getState().getOutput(sessionId);
+  }, [sessionId]);
 
   const handleResize = useCallback(() => {
     if (fitAddonRef.current && terminalRef.current) {
@@ -114,7 +122,8 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
     fitAddonRef.current = fitAddon;
 
     // Restore previous output from store
-    const previousOutput = getOutput(sessionId);
+    const previousOutput = getOutputFromStore();
+    console.log(`[AgentOutputPanel] Restoring output for ${sessionId}, entries: ${previousOutput.length}`);
     if (previousOutput.length > 0) {
       setIsConnected(true);
       setIsLoading(false);
@@ -123,6 +132,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       });
       // Scroll to bottom after restoring
       terminal.scrollToBottom();
+      console.log(`[AgentOutputPanel] Restored ${previousOutput.length} entries for ${sessionId}`);
     }
 
     // Handle user input - send to agent (only if not read-only)
@@ -143,6 +153,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
           terminalRef.current.write(data);
           // Save to store for persistence
           appendOutput(sessionId, data);
+          console.log(`[AgentOutputPanel] Saved output chunk to store for ${sessionId}`);
           // Auto-scroll to bottom
           terminalRef.current.scrollToBottom();
         }
@@ -210,7 +221,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       }
       initializedRef.current = false;
     };
-  }, [taskId, sessionId, isReadOnly, onAgentExit, onTaskComplete, handleResize, appendOutput, getOutput]);
+  }, [taskId, sessionId, isReadOnly, onAgentExit, onTaskComplete, handleResize, appendOutput, getOutputFromStore]);
 
   const handleClick = () => {
     terminalRef.current?.focus();
@@ -238,6 +249,16 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
           )}
         </div>
         <div className="flex gap-1">
+          {/* Resume conversation button - only show for read-only (review) tasks */}
+          {isReadOnly && onResumeConversation && (
+            <button
+              onClick={() => onResumeConversation(taskId)}
+              className="px-2 py-1 bg-green-600 hover:bg-green-500 rounded text-white text-xs font-medium"
+              title="会話を続ける"
+            >
+              ▶ 続ける
+            </button>
+          )}
           <button
             onClick={handleScrollToBottom}
             className="p-1 hover:bg-gray-800 rounded text-gray-500 hover:text-gray-300"
