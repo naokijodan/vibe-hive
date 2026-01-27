@@ -39,7 +39,11 @@ export const ipcBridge = {
   // Git operations
   git: {
     status: (path: string) => window.electronAPI.gitStatus(path),
+    add: (path: string, files: string[]) => window.electronAPI.gitAdd(path, files),
     commit: (path: string, message: string) => window.electronAPI.gitCommit(path, message),
+    push: (path: string) => window.electronAPI.gitPush(path),
+    pull: (path: string) => window.electronAPI.gitPull(path),
+    log: (path: string, limit?: number) => window.electronAPI.gitLog(path, limit),
   },
 };
 

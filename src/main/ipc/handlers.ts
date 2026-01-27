@@ -1,6 +1,8 @@
 import { ipcMain } from 'electron';
 import { IPC_CHANNELS } from './channels';
 import { getSessionService } from '../services/SessionService';
+import { ptyService } from '../services/PtyService';
+import { getGitService } from '../services/GitService';
 
 export function registerIpcHandlers(): void {
   const sessionService = getSessionService();
@@ -41,15 +43,15 @@ export function registerIpcHandlers(): void {
     return session;
   });
 
-  // Terminal handlers
+  // Terminal handlers (legacy - delegates to ptyService)
   ipcMain.handle(IPC_CHANNELS.TERMINAL_WRITE, async (_event, sessionId, data) => {
-    // TODO: Implement PtyManager
     console.log('terminal:write', sessionId, data);
+    ptyService.write(sessionId, data);
   });
 
   ipcMain.handle(IPC_CHANNELS.TERMINAL_RESIZE, async (_event, sessionId, cols, rows) => {
-    // TODO: Implement PtyManager
     console.log('terminal:resize', sessionId, cols, rows);
+    ptyService.resize(sessionId, cols, rows);
   });
 
   // Agent handlers
@@ -72,13 +74,44 @@ export function registerIpcHandlers(): void {
 
   // Git handlers
   ipcMain.handle(IPC_CHANNELS.GIT_STATUS, async (_event, path) => {
-    // TODO: Implement GitService
     console.log('git:status', path);
-    return null;
+    const gitService = getGitService();
+    const status = await gitService.getStatus(path);
+    return status;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_ADD, async (_event, path, files) => {
+    console.log('git:add', path, files);
+    const gitService = getGitService();
+    const success = await gitService.add(path, files);
+    return success;
   });
 
   ipcMain.handle(IPC_CHANNELS.GIT_COMMIT, async (_event, path, message) => {
-    // TODO: Implement GitService
     console.log('git:commit', path, message);
+    const gitService = getGitService();
+    const success = await gitService.commit(path, message);
+    return success;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_PUSH, async (_event, path) => {
+    console.log('git:push', path);
+    const gitService = getGitService();
+    const success = await gitService.push(path);
+    return success;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_PULL, async (_event, path) => {
+    console.log('git:pull', path);
+    const gitService = getGitService();
+    const success = await gitService.pull(path);
+    return success;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_LOG, async (_event, path, limit) => {
+    console.log('git:log', path, limit);
+    const gitService = getGitService();
+    const log = await gitService.log(path, limit);
+    return log;
   });
 }

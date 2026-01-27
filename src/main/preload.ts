@@ -101,7 +101,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Git
   gitStatus: (path: string) => ipcRenderer.invoke('git:status', path),
+  gitAdd: (path: string, files: string[]) => ipcRenderer.invoke('git:add', path, files),
   gitCommit: (path: string, message: string) => ipcRenderer.invoke('git:commit', path, message),
+  gitPush: (path: string) => ipcRenderer.invoke('git:push', path),
+  gitPull: (path: string) => ipcRenderer.invoke('git:pull', path),
+  gitLog: (path: string, limit?: number) => ipcRenderer.invoke('git:log', path, limit),
 
   // Database - Sessions
   dbSessionCreate: (config: unknown) => ipcRenderer.invoke('db:session:create', config),
@@ -178,7 +182,11 @@ export interface ElectronAPI {
   getOrganization: () => Promise<unknown>;
   updateOrganization: (org: unknown) => Promise<void>;
   gitStatus: (path: string) => Promise<unknown>;
-  gitCommit: (path: string, message: string) => Promise<void>;
+  gitAdd: (path: string, files: string[]) => Promise<boolean>;
+  gitCommit: (path: string, message: string) => Promise<boolean>;
+  gitPush: (path: string) => Promise<boolean>;
+  gitPull: (path: string) => Promise<boolean>;
+  gitLog: (path: string, limit?: number) => Promise<unknown[]>;
   // Database - Sessions
   dbSessionCreate: (config: unknown) => Promise<unknown>;
   dbSessionGet: (id: string) => Promise<unknown>;
