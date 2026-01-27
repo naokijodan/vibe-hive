@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { KanbanBoard } from './components/Kanban';
 import { TerminalPanel, TerminalTabs, AgentOutputPanel } from './components/Terminal';
 import { OrgChart } from './components/Organization';
+import { SessionTabs } from './components/Session';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
+import { useSessionStore } from './stores/sessionStore';
 
 type ViewType = 'kanban' | 'organization' | 'history' | 'settings';
 
@@ -35,6 +37,7 @@ const mapAgentStatusToTabStatus = (agentStatus: Agent['status']): AgentTab['stat
 function App(): React.ReactElement {
   const { tasks, loadTasks, updateTaskStatus } = useTaskStore();
   const { agents, loadAgents } = useAgentStore();
+  const { sessions, activeSessionId, loadSessions, loadActiveSession, switchSession } = useSessionStore();
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [activeRunningTaskId, setActiveRunningTaskId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>('kanban');
@@ -46,12 +49,6 @@ function App(): React.ReactElement {
 
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
-
-  // Get tasks that need review (have terminal output to show)
-  const reviewTasks = tasks.filter(t => t.status === 'review');
-
-  // Selected review task for viewing output
-  const [selectedReviewTaskId, setSelectedReviewTaskId] = useState<string | null>(null);
 
   // Auto-select first running task if none selected
   useEffect(() => {
@@ -69,17 +66,31 @@ function App(): React.ReactElement {
     await updateTaskStatus(taskId, 'review');
   }, [updateTaskStatus]);
 
-  // Handle task completion (Claude CLI returned to prompt)
-  const handleTaskComplete = useCallback(async (taskId: string) => {
-    console.log(`Task ${taskId} completed - moving to review`);
-    await updateTaskStatus(taskId, 'review');
-  }, [updateTaskStatus]);
+  // Track completed tasks (for visual alert)
+  const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(new Set());
 
-  // Load tasks and agents from DB on mount
+  // Handle task completion (Claude CLI returned to prompt) - show alert instead of moving
+  const handleTaskComplete = useCallback((taskId: string) => {
+    console.log(`Task ${taskId} completed - showing alert`);
+    // Add to completed set for visual indicator
+    setCompletedTaskIds(prev => new Set(prev).add(taskId));
+    // Play notification sound
+    try {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Onp+dlI6Ff3N0hJWkrrGxqqKXi39zdH6Ok6GqsK+ooZWJe3J0foqYoaqwr6ecj4J2c3V/i5mjqq6tnpOHe3N1fomXoamtrZ2ShHhzdX6IlZ+nq6yckYN3c3V9h5Sdpamrm5CCdnN1fIaTm6OoqZqPgHVzc3uEkZmhoqeYjn90c3N6g5CXn6KlloyCc3Jze4KPlp6ho5WLgHJycnqBjZSdoKKUin5xcXF5gIySnaCgk4l9cHBweX+Lkpufn5KIfG9wcHh+io+Zn5+RhntvbW94fYmOmJ2ekYV6bm1ud3yHjJeclIF5bWxsdXqFi5eblYB3bGtsc3mEiZaZlH91a2prcniDh5SYk350amlocXeDhpOXkn1ya2hocHWBhJKVkXtxa2docHSAg5GUkHpwamdncHN/go+SkHlwaWZmb3J+gY6RjnhvZ2VlbnF9gI2Qjndtak5mbnB8f4yPjXZuZ2RkbW97fo2OjHVtZmNjbG56fYuNi3RsZWJia2x5fIqMi3NrZGFhamx4e4mLinJqY2BgaWt3eoiKiXFpYl9faGp2eYeJiHBoYV5dZ2l1eIaIhnBnYF1cZmh0d4WHhW9mX1xbZWdzdoSGhG5lXltaZGZyd4OFg21kXVpZY2VxdYKEgmxjXFlYYmRwdIGDgWtCW1hXYWNvcoCD/2pBWFdWYGJucn+B/2lAV1ZVX2FtcX5//2g/VlVUXmBscX1+/2c+VVRTXl9rcHx9/2Y9VFNSXV5qb3t8/2U8U1JRXFprcHt7/2RdUlFQW1lqb3p5/2NcUVBPWlhpbnl4/2JbUE9OWVdobXd3/2E=');
+      audio.volume = 0.3;
+      audio.play().catch(() => {}); // Ignore errors if audio can't play
+    } catch (e) {
+      // Ignore audio errors
+    }
+  }, []);
+
+  // Load tasks, agents, and sessions from DB on mount
   useEffect(() => {
     loadTasks();
     loadAgents();
-  }, [loadTasks, loadAgents]);
+    loadSessions();
+    loadActiveSession();
+  }, [loadTasks, loadAgents, loadSessions, loadActiveSession]);
 
   // エージェントからタブを生成
   const agentTabs: AgentTab[] = agents.map(agent => ({
@@ -124,6 +135,11 @@ function App(): React.ReactElement {
     setCurrentView('kanban'); // Switch to kanban view to show tasks
   };
 
+  // Handle session switch
+  const handleSessionSwitch = async (sessionId: string) => {
+    await switchSession(sessionId);
+  };
+
   // Handle new session creation
   const handleCreateSession = async () => {
     if (!newSessionName.trim()) return;
@@ -134,6 +150,9 @@ function App(): React.ReactElement {
         workingDirectory: newSessionCwd || '.',
         status: 'idle',
       });
+
+      // Reload sessions to show the new one
+      await loadSessions();
 
       // Reset form and close modal
       setNewSessionName('');
@@ -260,13 +279,20 @@ function App(): React.ReactElement {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header - Draggable region for window movement */}
-        <header className="h-12 border-b border-hive-border bg-hive-surface flex items-center justify-between px-4 drag-region">
-          <div className="flex items-center gap-4 no-drag">
-            <span className="font-medium">Session: Vibe Hive 開発</span>
-            <span className="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded">Active</span>
+        {/* Header - Session tabs and command palette hint */}
+        <header className="border-b border-hive-border bg-hive-surface drag-region">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 no-drag">
+              <SessionTabs
+                sessions={sessions}
+                activeSessionId={activeSessionId}
+                onSessionSwitch={handleSessionSwitch}
+              />
+            </div>
+            <div className="px-4 py-2">
+              <span className="text-hive-muted text-sm no-drag">⌘K でコマンドパレット</span>
+            </div>
           </div>
-          <span className="text-hive-muted text-sm no-drag">⌘K でコマンドパレット</span>
         </header>
 
         {/* Content Area */}
@@ -282,13 +308,18 @@ function App(): React.ReactElement {
             <div className="flex border-b border-hive-border">
               <button
                 onClick={() => setShowBashTerminal(false)}
-                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors relative ${
                   !showBashTerminal
                     ? 'bg-hive-surface text-hive-accent border-b-2 border-hive-accent'
                     : 'text-hive-muted hover:text-white'
                 }`}
               >
                 🤖 Agent ({runningTasks.length})
+                {completedTaskIds.size > 0 && (
+                  <span className="ml-2 px-1.5 py-0.5 bg-yellow-500 text-black text-xs font-bold rounded animate-pulse">
+                    確認待ち {completedTaskIds.size}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setShowBashTerminal(true)}
@@ -310,76 +341,59 @@ function App(): React.ReactElement {
             ) : (
               <>
                 {/* Show running task agent output if any */}
-                {runningTasks.length > 0 || reviewTasks.length > 0 ? (
+                {runningTasks.length > 0 ? (
                   <>
                     {/* Running tasks section */}
-                    {runningTasks.length > 0 && (
-                      <div className="border-b border-hive-border bg-green-900/20">
-                        <div className="px-3 py-2 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                          <span className="text-sm font-medium text-green-400">
-                            稼働中 ({runningTasks.length})
-                          </span>
-                        </div>
-                        {/* Task tabs for switching between parallel running tasks */}
-                        <div className="flex overflow-x-auto px-2 pb-1 gap-1">
-                          {runningTasks.map(task => (
+                    <div className="border-b border-hive-border bg-green-900/20">
+                      <div className="px-3 py-2 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-sm font-medium text-green-400">
+                          稼働中 ({runningTasks.length})
+                        </span>
+                      </div>
+                      {/* Task tabs for switching between parallel running tasks */}
+                      <div className="flex overflow-x-auto px-2 pb-1 gap-1">
+                        {runningTasks.map(task => {
+                          const isCompleted = completedTaskIds.has(task.id);
+                          return (
                             <button
                               key={task.id}
                               onClick={() => {
                                 setActiveRunningTaskId(task.id);
-                                setSelectedReviewTaskId(null);
+                                // Clear completed status when clicked
+                                if (isCompleted) {
+                                  setCompletedTaskIds(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(task.id);
+                                    return next;
+                                  });
+                                }
                               }}
                               className={`px-3 py-1.5 text-xs rounded-t whitespace-nowrap transition-colors ${
-                                activeRunningTaskId === task.id && !selectedReviewTaskId
-                                  ? 'bg-hive-surface text-white border-t border-x border-hive-border'
-                                  : 'bg-transparent text-hive-muted hover:text-white hover:bg-hive-surface/50'
+                                isCompleted
+                                  ? 'bg-yellow-500 text-black font-semibold'
+                                  : activeRunningTaskId === task.id
+                                    ? 'bg-hive-surface text-white border-t border-x border-hive-border'
+                                    : 'bg-transparent text-hive-muted hover:text-white hover:bg-hive-surface/50'
                               }`}
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block mr-1.5 animate-pulse" />
+                              {isCompleted ? (
+                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block mr-1.5 animate-ping" />
+                              ) : (
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block mr-1.5 animate-pulse" />
+                              )}
                               {task.title.length > 15 ? task.title.substring(0, 15) + '...' : task.title}
+                              {isCompleted && <span className="ml-1">✓</span>}
                             </button>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
-                    )}
-
-                    {/* Review tasks section */}
-                    {reviewTasks.length > 0 && (
-                      <div className="border-b border-hive-border bg-yellow-900/20">
-                        <div className="px-3 py-2 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                          <span className="text-sm font-medium text-yellow-400">
-                            確認待ち ({reviewTasks.length})
-                          </span>
-                        </div>
-                        {/* Review task tabs */}
-                        <div className="flex overflow-x-auto px-2 pb-1 gap-1">
-                          {reviewTasks.map(task => (
-                            <button
-                              key={task.id}
-                              onClick={() => {
-                                setSelectedReviewTaskId(task.id);
-                                setActiveRunningTaskId(null);
-                              }}
-                              className={`px-3 py-1.5 text-xs rounded-t whitespace-nowrap transition-colors ${
-                                selectedReviewTaskId === task.id
-                                  ? 'bg-hive-surface text-white border-t border-x border-hive-border'
-                                  : 'bg-transparent text-hive-muted hover:text-white hover:bg-hive-surface/50'
-                              }`}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block mr-1.5" />
-                              {task.title.length > 15 ? task.title.substring(0, 15) + '...' : task.title}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    </div>
 
                     {/* Active task terminal */}
                     <div className="flex-1 overflow-hidden">
                       {/* Show running task output */}
-                      {activeRunningTaskId && !selectedReviewTaskId && runningTasks.find(t => t.id === activeRunningTaskId) && (
+                      {activeRunningTaskId && runningTasks.find(t => t.id === activeRunningTaskId) && (
                         <AgentOutputPanel
                           key={activeRunningTaskId}
                           taskId={activeRunningTaskId}
@@ -389,18 +403,8 @@ function App(): React.ReactElement {
                           onTaskComplete={handleTaskComplete}
                         />
                       )}
-                      {/* Show review task output (read-only) */}
-                      {selectedReviewTaskId && reviewTasks.find(t => t.id === selectedReviewTaskId) && (
-                        <AgentOutputPanel
-                          key={`review-${selectedReviewTaskId}`}
-                          taskId={selectedReviewTaskId}
-                          taskTitle={reviewTasks.find(t => t.id === selectedReviewTaskId)?.title || ''}
-                          isActive={false}
-                          isReadOnly={true}
-                        />
-                      )}
                       {/* No task selected - show first available */}
-                      {!activeRunningTaskId && !selectedReviewTaskId && runningTasks.length > 0 && (
+                      {!activeRunningTaskId && runningTasks.length > 0 && (
                         <AgentOutputPanel
                           key={runningTasks[0].id}
                           taskId={runningTasks[0].id}

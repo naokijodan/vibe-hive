@@ -8,6 +8,8 @@ export const ipcBridge = {
     get: (id: string) => window.electronAPI.getSession(id),
     list: () => window.electronAPI.listSessions(),
     delete: (id: string) => window.electronAPI.deleteSession(id),
+    switch: (id: string) => window.electronAPI.switchSession(id),
+    getActive: () => window.electronAPI.getActiveSession(),
   },
 
   // Terminal operations
