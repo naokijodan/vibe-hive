@@ -3,10 +3,12 @@ import { KanbanBoard } from './components/Kanban';
 import { TerminalPanel, TerminalTabs, AgentOutputPanel } from './components/Terminal';
 import { OrgChart } from './components/Organization';
 import { SessionTabs } from './components/Session';
+import { CommandPalette } from './components/CommandPalette';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
 import { useSessionStore } from './stores/sessionStore';
+import { useCommandPalette } from './hooks/useCommandPalette';
 
 type ViewType = 'kanban' | 'organization' | 'history' | 'settings';
 
@@ -46,6 +48,7 @@ function App(): React.ReactElement {
   const [newSessionName, setNewSessionName] = useState('');
   const [newSessionCwd, setNewSessionCwd] = useState('');
   const [showBashTerminal, setShowBashTerminal] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
@@ -139,6 +142,27 @@ function App(): React.ReactElement {
   const handleSessionSwitch = async (sessionId: string) => {
     await switchSession(sessionId);
   };
+
+  // Command palette
+  const commands = useCommandPalette({
+    currentView,
+    setCurrentView,
+    setIsSessionModalOpen,
+    setShowBashTerminal,
+  });
+
+  // Keyboard shortcut for command palette (⌘K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Handle new session creation
   const handleCreateSession = async () => {
@@ -491,6 +515,13 @@ function App(): React.ReactElement {
           </div>
         </div>
       )}
+
+      {/* Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        commands={commands}
+      />
     </div>
   );
 }
