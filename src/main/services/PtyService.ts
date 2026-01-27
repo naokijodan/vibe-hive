@@ -1,6 +1,7 @@
 import * as pty from 'node-pty';
 import { BrowserWindow } from 'electron';
 import * as os from 'os';
+import { terminalLogRepository } from './db/TerminalLogRepository';
 
 interface PtySession {
   id: string;
@@ -42,8 +43,12 @@ class PtyService {
       } as { [key: string]: string },
     });
 
-    // Send data to renderer
+    // Send data to renderer and save to database
     ptyProcess.onData((data: string) => {
+      // Save to database
+      terminalLogRepository.append(sessionId, data);
+
+      // Send to renderer
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {
         this.mainWindow.webContents.send('pty:data', sessionId, data);
       }
@@ -64,6 +69,21 @@ class PtyService {
       cols,
       rows,
     });
+
+    // Restore recent logs (last 100 entries) when session is created
+    setTimeout(() => {
+      try {
+        const recentLogs = terminalLogRepository.getBySessionId(sessionId, 100);
+        if (recentLogs.length > 0 && this.mainWindow && !this.mainWindow.isDestroyed()) {
+          // Send each log entry to renderer to restore terminal state
+          for (const log of recentLogs) {
+            this.mainWindow.webContents.send('pty:data', sessionId, log.data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to restore terminal logs:', error);
+      }
+    }, 100); // Small delay to ensure renderer is ready
 
     return sessionId;
   }
