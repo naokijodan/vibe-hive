@@ -8,13 +8,17 @@ import { GitPanel } from './components/Git/GitPanel';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
 import { TaskDependencyTree } from './components/TaskDependencyTree';
 import { HistoryView } from './components/HistoryView';
+import { ExecutionPanel } from './components/Execution/ExecutionPanel';
+import { ExecutionLog } from './components/Execution/ExecutionLog';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
 import { useSessionStore } from './stores/sessionStore';
+import { useExecutionStore } from './stores/executionStore';
 import { useCommandPalette } from './hooks/useCommandPalette';
+import type { ExecutionRecord } from '../shared/types/execution';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'history' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -56,6 +60,7 @@ function App(): React.ReactElement {
   const [isGitPanelOpen, setIsGitPanelOpen] = useState(false);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
   const [selectedTaskForDependencies, setSelectedTaskForDependencies] = useState<string | null>(null);
+  const [selectedExecution, setSelectedExecution] = useState<ExecutionRecord | null>(null);
 
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
@@ -325,6 +330,19 @@ function App(): React.ReactElement {
             )}
           </div>
         );
+      case 'execution':
+        return (
+          <div className="h-full flex">
+            {/* Left: Execution List */}
+            <div className="w-80 border-r border-hive-border">
+              <ExecutionPanel onSelectExecution={setSelectedExecution} />
+            </div>
+            {/* Right: Execution Log */}
+            <div className="flex-1">
+              <ExecutionLog execution={selectedExecution} />
+            </div>
+          </div>
+        );
       case 'history':
         return <HistoryView />;
       case 'settings':
@@ -357,6 +375,7 @@ function App(): React.ReactElement {
             {renderNavButton('kanban', '📋', 'タスクボード')}
             {renderNavButton('organization', '🏢', '組織構造')}
             {renderNavButton('dependencies', '🔗', '依存関係')}
+            {renderNavButton('execution', '⚙', '実行管理')}
             {renderNavButton('history', '📜', '履歴')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>
