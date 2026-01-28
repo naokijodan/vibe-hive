@@ -68,6 +68,9 @@ export const ipcBridge = {
     getDependencyTree: (taskId: string) => window.electronAPI.dbTaskGetDependencyTree(taskId),
     // Review Feedback
     clearReviewFeedback: (taskId: string) => window.electronAPI.dbTaskClearReviewFeedback(taskId) as Promise<Task | null>,
+    // Ready to Execute
+    isReadyToExecute: (taskId: string) => window.electronAPI.dbTaskIsReadyToExecute(taskId) as Promise<boolean>,
+    getReadyTasks: () => window.electronAPI.dbTaskGetReadyTasks() as Promise<Task[]>,
   },
 
   // Settings operations

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -14,6 +14,7 @@ import { Task, TaskStatus, TaskPriority } from '../../../shared/types';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskCard } from './TaskCard';
 import { useTaskStore } from '../../stores/taskStore';
+import ipcBridge from '../../bridge/ipcBridge';
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -44,6 +45,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('medium');
+  const [showOnlyReady, setShowOnlyReady] = useState(false);
+  const [readyTaskIds, setReadyTaskIds] = useState<Set<string>>(new Set());
   const { createTask } = useTaskStore();
 
   const sensors = useSensors(
@@ -53,6 +56,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       },
     })
   );
+
+  // Load ready tasks when tasks change
+  useEffect(() => {
+    ipcBridge.task.getReadyTasks().then((readyTasks) => {
+      setReadyTaskIds(new Set(readyTasks.map(t => t.id)));
+    });
+  }, [tasks]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = tasks.find((t) => t.id === event.active.id);
@@ -85,7 +95,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   const getTasksByStatus = (status: TaskStatus): Task[] => {
-    return tasks.filter((task) => task.status === status);
+    let filteredTasks = tasks.filter((task) => task.status === status);
+
+    // Apply ready filter if enabled
+    if (showOnlyReady && (status === 'todo' || status === 'backlog')) {
+      filteredTasks = filteredTasks.filter((task) => readyTaskIds.has(task.id));
+    }
+
+    return filteredTasks;
   };
 
   const handleCreateTask = async () => {
@@ -120,12 +137,25 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       {/* Header with Add Task Button */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-hive-text">タスクボード</h2>
-        <button
-          onClick={() => setIsAddingTask(true)}
-          className="px-4 py-2 bg-hive-accent text-black font-medium rounded hover:bg-hive-accent/80 text-sm"
-        >
-          + 新規タスク
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowOnlyReady(!showOnlyReady)}
+            className={`px-3 py-2 text-xs font-medium rounded transition-colors ${
+              showOnlyReady
+                ? 'bg-green-600 text-white'
+                : 'bg-hive-surface border border-hive-border text-hive-muted hover:text-white'
+            }`}
+            title="実行準備完了タスクのみ表示"
+          >
+            {showOnlyReady ? '✓ Ready のみ' : 'すべて表示'}
+          </button>
+          <button
+            onClick={() => setIsAddingTask(true)}
+            className="px-4 py-2 bg-hive-accent text-black font-medium rounded hover:bg-hive-accent/80 text-sm"
+          >
+            + 新規タスク
+          </button>
+        </div>
       </div>
 
       {/* Add Task Modal */}

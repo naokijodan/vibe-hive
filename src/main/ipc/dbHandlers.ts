@@ -97,6 +97,14 @@ export function registerDbHandlers(): void {
     return taskRepository.getDependencyTree(taskId);
   });
 
+  ipcMain.handle('db:task:isReadyToExecute', (_event, taskId: string) => {
+    return taskRepository.isReadyToExecute(taskId);
+  });
+
+  ipcMain.handle('db:task:getReadyTasks', () => {
+    return taskRepository.getReadyTasks();
+  });
+
   // Terminal log handlers
   ipcMain.handle('db:terminalLog:append', (_event, sessionId: string, data: string) => {
     terminalLogRepository.append(sessionId, data);

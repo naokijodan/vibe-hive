@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Task, AgentStatus } from '../../../shared/types';
 import { useAgentStore } from '../../stores/agentStore';
 import { useTaskStore } from '../../stores/taskStore';
+import ipcBridge from '../../bridge/ipcBridge';
 
 interface TaskCardProps {
   task: Task;
@@ -58,6 +59,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
   const [roleText, setRoleText] = useState(task.role || '');
   const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task.dependsOn || []);
   const [depInfo, setDepInfo] = useState<DependencyInfo | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   // Check dependencies on mount and when task changes
   useEffect(() => {
@@ -67,6 +69,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
       setDepInfo(null);
     }
   }, [task.id, task.dependsOn, checkDependencies]);
+
+  // Check if task is ready to execute
+  useEffect(() => {
+    if (task.status === 'todo' || task.status === 'backlog') {
+      ipcBridge.task.isReadyToExecute(task.id).then(setIsReady);
+    } else {
+      setIsReady(false);
+    }
+  }, [task.id, task.status, task.dependsOn]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -213,6 +224,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
         {hasDependencyBlock && <span className="text-orange-400 text-sm" title="依存タスクが未完了">🔒</span>}
         {task.reviewFeedback && <span className="text-purple-400 text-sm" title="レビューフィードバックあり">💬</span>}
         {hasSubtasks && <span className="text-blue-400 text-sm" title={`サブタスク: ${task.subtasks?.length}`}>📋</span>}
+        {isReady && !hasDependencyBlock && (task.status === 'todo' || task.status === 'backlog') && (
+          <span className="text-green-400 text-sm font-bold" title="実行準備完了">✓</span>
+        )}
         <h4 className={`text-sm font-medium flex-1 ${
           isAgentError ? 'text-red-300' :
           isAgentBlocked || hasDependencyBlock ? 'text-orange-300' :

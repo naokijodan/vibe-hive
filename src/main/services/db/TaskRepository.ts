@@ -306,6 +306,45 @@ export class TaskRepository {
 
     return { task, dependencies };
   }
+
+  /**
+   * Check if a task is ready to execute
+   * A task is ready if:
+   * - Status is 'todo' or 'backlog'
+   * - All dependencies are met (all dependent tasks are done)
+   */
+  isReadyToExecute(taskId: string): boolean {
+    const task = this.getById(taskId);
+    if (!task) return false;
+
+    // Only todo and backlog tasks can be ready to execute
+    if (task.status !== 'todo' && task.status !== 'backlog') {
+      return false;
+    }
+
+    // Check if all dependencies are met
+    const depStatus = this.areDependenciesMet(taskId);
+    return depStatus.met;
+  }
+
+  /**
+   * Get all ready-to-execute tasks
+   * Returns tasks that are in todo/backlog status and have all dependencies met
+   */
+  getReadyTasks(): Task[] {
+    const db = getDatabase();
+    const rows = db
+      .prepare('SELECT * FROM tasks WHERE status IN (\'todo\', \'backlog\') ORDER BY priority DESC, created_at ASC')
+      .all() as TaskRow[];
+
+    const tasks = rows.map(rowToTask);
+
+    // Filter tasks where all dependencies are met
+    return tasks.filter(task => {
+      const depStatus = this.areDependenciesMet(task.id);
+      return depStatus.met;
+    });
+  }
 }
 
 export const taskRepository = new TaskRepository();
