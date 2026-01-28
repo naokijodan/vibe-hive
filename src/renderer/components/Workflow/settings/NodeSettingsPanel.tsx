@@ -7,6 +7,9 @@ import { ConditionalNodeSettings } from './ConditionalNodeSettings';
 import { DelayNodeSettings } from './DelayNodeSettings';
 import { TriggerNodeSettings } from './TriggerNodeSettings';
 import { NotificationNodeSettings } from './NotificationNodeSettings';
+import { LoopNodeSettings } from './LoopNodeSettings';
+import { SubworkflowNodeSettings } from './SubworkflowNodeSettings';
+import { AgentNodeSettings } from './AgentNodeSettings';
 
 interface NodeSettingsPanelProps {
   selectedNode: Node<WorkflowNodeData> | null;
@@ -62,6 +65,12 @@ export const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ selectedNo
         return <TriggerNodeSettings data={selectedNode.data} onChange={handleChange} />;
       case 'notification':
         return <NotificationNodeSettings data={selectedNode.data} onChange={handleChange} />;
+      case 'loop':
+        return <LoopNodeSettings data={selectedNode.data} onChange={handleChange} />;
+      case 'subworkflow':
+        return <SubworkflowNodeSettings data={selectedNode.data} onChange={handleChange} />;
+      case 'agent':
+        return <AgentNodeSettings data={selectedNode.data} onChange={handleChange} />;
       case 'merge':
         return (
           <div className="p-3 bg-gray-700/50 rounded-lg border border-gray-600">
@@ -89,6 +98,9 @@ export const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ selectedNo
       notification: 'Notification',
       delay: 'Delay',
       merge: 'Merge',
+      loop: 'Loop',
+      subworkflow: 'Subworkflow',
+      agent: 'AI Agent',
     };
     return labels[type] || type;
   };
@@ -101,6 +113,9 @@ export const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ selectedNo
       notification: '📢',
       delay: '⏱️',
       merge: '🔗',
+      loop: '🔄',
+      subworkflow: '📋',
+      agent: '🤖',
     };
     return icons[type] || '❓';
   };

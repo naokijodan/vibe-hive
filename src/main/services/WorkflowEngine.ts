@@ -9,6 +9,9 @@ import type {
   WorkflowExecutionResult,
   WorkflowNode,
   WorkflowEdge,
+  SimpleCondition,
+  ConditionGroup,
+  ConditionalOperator,
 } from '../../shared/types/workflow';
 
 interface NodeExecutionContext {
@@ -244,40 +247,77 @@ export class WorkflowEngine {
    * Execute a conditional node
    */
   private executeConditionalNode(node: WorkflowNode, input: any): NodeExecutionResult {
-    const condition = node.data.condition;
-    if (!condition) {
+    let result: boolean;
+
+    // Check if using advanced mode (conditionGroup) or simple mode (condition)
+    if (node.data.conditionGroup) {
+      result = this.evaluateConditionGroup(node.data.conditionGroup, input);
+    } else if (node.data.condition) {
+      result = this.evaluateSimpleCondition(node.data.condition, input);
+    } else {
       return { success: false, error: 'Condition not specified' };
-    }
-
-    const { field, operator, value } = condition;
-    const fieldValue = this.getFieldValue(input, field);
-
-    let result = false;
-    switch (operator) {
-      case 'equals':
-        result = fieldValue === value;
-        break;
-      case 'not_equals':
-        result = fieldValue !== value;
-        break;
-      case 'greater_than':
-        result = fieldValue > value;
-        break;
-      case 'less_than':
-        result = fieldValue < value;
-        break;
-      case 'contains':
-        result = String(fieldValue).includes(String(value));
-        break;
-      case 'not_contains':
-        result = !String(fieldValue).includes(String(value));
-        break;
     }
 
     return {
       success: true,
       output: { branch: result ? 'true' : 'false', conditionMet: result },
     };
+  }
+
+  /**
+   * Evaluate a single condition
+   */
+  private evaluateSimpleCondition(condition: SimpleCondition, input: any): boolean {
+    const { field, operator, value } = condition;
+    const fieldValue = this.getFieldValue(input, field);
+
+    return this.compareValues(fieldValue, operator, value);
+  }
+
+  /**
+   * Evaluate a condition group (multiple conditions with AND/OR)
+   */
+  private evaluateConditionGroup(group: ConditionGroup, input: any): boolean {
+    const { operator, conditions, groups } = group;
+
+    // Evaluate all simple conditions
+    const conditionResults = conditions.map(cond => this.evaluateSimpleCondition(cond, input));
+
+    // Evaluate nested groups recursively
+    const groupResults = groups ? groups.map(g => this.evaluateConditionGroup(g, input)) : [];
+
+    // Combine all results
+    const allResults = [...conditionResults, ...groupResults];
+
+    // Apply logical operator
+    if (operator === 'AND') {
+      return allResults.every(r => r === true);
+    } else {
+      // OR
+      return allResults.some(r => r === true);
+    }
+  }
+
+  /**
+   * Compare two values using an operator
+   */
+  private compareValues(fieldValue: any, operator: ConditionalOperator, value: any): boolean {
+    switch (operator) {
+      case 'equals':
+        return fieldValue === value;
+      case 'not_equals':
+        return fieldValue !== value;
+      case 'greater_than':
+        return fieldValue > value;
+      case 'less_than':
+        return fieldValue < value;
+      case 'contains':
+        return String(fieldValue).includes(String(value));
+      case 'not_contains':
+        return !String(fieldValue).includes(String(value));
+      default:
+        return false;
+    }
   }
 
   /**

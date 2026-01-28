@@ -4,7 +4,10 @@ export type NodeType =
   | 'conditional'    // IF/ELSE branching
   | 'notification'   // Send notification
   | 'delay'          // Wait/delay
-  | 'merge';         // Merge multiple flows
+  | 'merge'          // Merge multiple flows
+  | 'loop'           // Loop/iteration
+  | 'subworkflow'    // Call another workflow
+  | 'agent';         // Execute AI agent
 
 export type TriggerType =
   | 'manual'         // Manual trigger
@@ -20,19 +23,58 @@ export type ConditionalOperator =
   | 'contains'
   | 'not_contains';
 
+export type LogicalOperator = 'AND' | 'OR';
+
+export interface SimpleCondition {
+  field: string;
+  operator: ConditionalOperator;
+  value: any;
+}
+
+export interface ConditionGroup {
+  operator: LogicalOperator;
+  conditions: SimpleCondition[];
+  groups?: ConditionGroup[];  // Nested groups for complex logic
+}
+
+export type LoopType = 'forEach' | 'count' | 'while';
+
+export interface LoopConfig {
+  type: LoopType;
+  arrayPath?: string;        // For forEach: path to array in input
+  count?: number;            // For count: number of iterations
+  condition?: ConditionGroup; // For while: exit condition
+  maxIterations: number;     // Safety limit (default 100)
+}
+
+export interface SubworkflowConfig {
+  workflowId: number;
+  inputMapping: Record<string, string>;  // parent field -> child input
+  outputMapping: Record<string, string>; // child output -> parent field
+}
+
+export type AgentType = 'claude-code' | 'codex' | 'custom';
+
+export interface AgentConfig {
+  agentType: AgentType;
+  prompt: string;
+  templateVariables: boolean;
+  timeout: number;  // milliseconds
+}
+
 export interface WorkflowNodeData {
   label: string;
   config: Record<string, any>;
   // Node-specific config
   taskId?: number;                    // For task nodes
   triggerType?: TriggerType;          // For trigger nodes
-  condition?: {                       // For conditional nodes
-    field: string;
-    operator: ConditionalOperator;
-    value: any;
-  };
+  condition?: SimpleCondition;        // For conditional nodes (legacy, single condition)
+  conditionGroup?: ConditionGroup;    // For conditional nodes (new, multiple conditions)
   notificationType?: 'discord' | 'slack' | 'email';  // For notification nodes
   delayMs?: number;                   // For delay nodes
+  loopConfig?: LoopConfig;            // For loop nodes
+  subworkflowConfig?: SubworkflowConfig;  // For subworkflow nodes
+  agentConfig?: AgentConfig;          // For agent nodes
 }
 
 export interface WorkflowNode {

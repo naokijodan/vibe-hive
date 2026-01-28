@@ -13,7 +13,7 @@ import {
   type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { TaskNode, TriggerNode, ConditionalNode, NotificationNode, MergeNode, DelayNode } from './nodes';
+import { TaskNode, TriggerNode, ConditionalNode, NotificationNode, MergeNode, DelayNode, LoopNode, SubworkflowNode, AgentNode } from './nodes';
 import { NodePalette } from './NodePalette';
 import { NodeSettingsPanel } from './settings/NodeSettingsPanel';
 import { useWorkflowStore } from '../../stores/workflowStore';
@@ -26,6 +26,9 @@ const nodeTypes: NodeTypes = {
   notification: NotificationNode,
   merge: MergeNode,
   delay: DelayNode,
+  loop: LoopNode,
+  subworkflow: SubworkflowNode,
+  agent: AgentNode,
 };
 
 interface WorkflowCanvasProps {
@@ -212,6 +215,12 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
                   return '#06b6d4';
                 case 'delay':
                   return '#6b7280';
+                case 'loop':
+                  return '#f97316';
+                case 'subworkflow':
+                  return '#6366f1';
+                case 'agent':
+                  return '#ec4899';
                 default:
                   return '#6b7280';
               }

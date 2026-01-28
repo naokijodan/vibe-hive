@@ -4,3 +4,6 @@ export { ConditionalNode } from './ConditionalNode';
 export { NotificationNode } from './NotificationNode';
 export { MergeNode } from './MergeNode';
 export { DelayNode } from './DelayNode';
+export { LoopNode } from './LoopNode';
+export { SubworkflowNode } from './SubworkflowNode';
+export { AgentNode } from './AgentNode';
