@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Task, AgentStatus } from '../../../shared/types';
 import { useAgentStore } from '../../stores/agentStore';
 import { useTaskStore } from '../../stores/taskStore';
+import { useExecutionStore } from '../../stores/executionStore';
 import ipcBridge from '../../bridge/ipcBridge';
 
 interface TaskCardProps {
@@ -49,6 +50,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
 
   const { agents, assignTaskToAgent } = useAgentStore();
   const { updateTask, updateTaskStatus, tasks, checkDependencies, setReviewFeedback, createSubtasks, setDependencies } = useTaskStore();
+  const { startExecution, runningExecutions } = useExecutionStore();
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showSubtaskModal, setShowSubtaskModal] = useState(false);
@@ -90,6 +92,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
   const hasDependencyBlock = depInfo && !depInfo.met;
   const isReviewStatus = task.status === 'review';
   const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+  const isExecuting = runningExecutions.some((e) => e.taskId === task.id);
 
   // Handle feedback submission
   const handleFeedbackSubmit = async (e: React.MouseEvent) => {
@@ -126,10 +129,23 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
     setShowRoleModal(false);
   };
 
-  // Handle start execution (move to in_progress)
+  // Handle start execution
   const handleStartExecution = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await updateTaskStatus(task.id, 'in_progress');
+
+    try {
+      // Use task description as command if available
+      const command = task.description?.trim() || 'echo "No command specified"';
+
+      // Start execution via ExecutionStore
+      await startExecution(task.id, command);
+
+      // Update task status to in_progress
+      await updateTaskStatus(task.id, 'in_progress');
+    } catch (error) {
+      console.error('Failed to start execution:', error);
+      // Show error to user (could add a toast notification here)
+    }
   };
 
   // Available tasks for dependency selection (exclude self and children)
@@ -316,15 +332,30 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
         {(task.status === 'todo' || task.status === 'backlog') && (
           <button
             onClick={handleStartExecution}
-            disabled={hasDependencyBlock}
-            className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
-              hasDependencyBlock
+            disabled={hasDependencyBlock || isExecuting}
+            className={`text-[10px] px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
+              isExecuting
+                ? 'bg-blue-600/50 text-white cursor-wait'
+                : hasDependencyBlock
                 ? 'bg-gray-700/30 text-gray-500 cursor-not-allowed'
                 : 'bg-green-600 text-white hover:bg-green-500'
             }`}
-            title={hasDependencyBlock ? '依存タスクが未完了' : 'Claude Codeで実行開始'}
+            title={
+              isExecuting
+                ? '実行中...'
+                : hasDependencyBlock
+                ? '依存タスクが未完了'
+                : 'Claude Codeで実行開始'
+            }
           >
-            ▶ 実行
+            {isExecuting ? (
+              <>
+                <span className="animate-spin">⚙</span>
+                <span>実行中</span>
+              </>
+            ) : (
+              <>▶ 実行</>
+            )}
           </button>
         )}
 
