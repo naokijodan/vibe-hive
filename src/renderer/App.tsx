@@ -6,13 +6,14 @@ import { SessionTabs } from './components/Session';
 import { CommandPalette } from './components/CommandPalette';
 import { GitPanel } from './components/Git/GitPanel';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
+import { TaskDependencyTree } from './components/TaskDependencyTree';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
 import { useSessionStore } from './stores/sessionStore';
 import { useCommandPalette } from './hooks/useCommandPalette';
 
-type ViewType = 'kanban' | 'organization' | 'history' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'history' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -53,6 +54,7 @@ function App(): React.ReactElement {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isGitPanelOpen, setIsGitPanelOpen] = useState(false);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
+  const [selectedTaskForDependencies, setSelectedTaskForDependencies] = useState<string | null>(null);
 
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
@@ -274,6 +276,54 @@ function App(): React.ReactElement {
             onAgentClick={handleAgentClick}
           />
         );
+      case 'dependencies':
+        return (
+          <div className="h-full overflow-auto p-6">
+            {selectedTaskForDependencies ? (
+              <div>
+                <div className="mb-4 flex items-center gap-2">
+                  <button
+                    onClick={() => setSelectedTaskForDependencies(null)}
+                    className="text-hive-accent hover:text-hive-accent/80 text-sm"
+                  >
+                    ← 戻る
+                  </button>
+                </div>
+                <TaskDependencyTree taskId={selectedTaskForDependencies} />
+              </div>
+            ) : (
+              <div>
+                <h2 className="text-2xl font-bold mb-6">タスク依存関係管理</h2>
+                <p className="text-hive-muted mb-6">タスクを選択して依存関係を表示・編集します</p>
+                <div className="grid gap-3">
+                  {tasks.map(task => (
+                    <button
+                      key={task.id}
+                      onClick={() => setSelectedTaskForDependencies(task.id)}
+                      className="p-4 bg-hive-surface border border-hive-border rounded-lg hover:border-hive-accent transition-colors text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-white">{task.title}</div>
+                          <div className="text-sm text-hive-muted mt-1">
+                            Status: {task.status} | Priority: {task.priority}
+                          </div>
+                        </div>
+                        <div className="text-hive-muted">
+                          {task.dependsOn && task.dependsOn.length > 0 && (
+                            <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs">
+                              {task.dependsOn.length} 依存
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
       case 'history':
         return (
           <div className="flex items-center justify-center h-full text-hive-muted">
@@ -309,6 +359,7 @@ function App(): React.ReactElement {
           <div className="space-y-1">
             {renderNavButton('kanban', '📋', 'タスクボード')}
             {renderNavButton('organization', '🏢', '組織構造')}
+            {renderNavButton('dependencies', '🔗', '依存関係')}
             {renderNavButton('history', '📜', '履歴')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>

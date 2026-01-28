@@ -85,6 +85,18 @@ export function registerDbHandlers(): void {
     return taskRepository.clearReviewFeedback(taskId);
   });
 
+  ipcMain.handle('db:task:wouldCreateCircularDependency', (_event, taskId: string, newDependencyId: string) => {
+    return taskRepository.wouldCreateCircularDependency(taskId, newDependencyId);
+  });
+
+  ipcMain.handle('db:task:getDependentTasks', (_event, taskId: string) => {
+    return taskRepository.getDependentTasks(taskId);
+  });
+
+  ipcMain.handle('db:task:getDependencyTree', (_event, taskId: string) => {
+    return taskRepository.getDependencyTree(taskId);
+  });
+
   // Terminal log handlers
   ipcMain.handle('db:terminalLog:append', (_event, sessionId: string, data: string) => {
     terminalLogRepository.append(sessionId, data);

@@ -232,6 +232,80 @@ export class TaskRepository {
   clearReviewFeedback(taskId: string): Task | null {
     return this.update(taskId, { reviewFeedback: undefined });
   }
+
+  /**
+   * Check if adding a dependency would create a circular dependency
+   * Returns true if circular dependency would be created
+   */
+  wouldCreateCircularDependency(taskId: string, newDependencyId: string): boolean {
+    // Can't depend on itself
+    if (taskId === newDependencyId) {
+      return true;
+    }
+
+    // DFS to check if taskId is reachable from newDependencyId
+    const visited = new Set<string>();
+    const stack = [newDependencyId];
+
+    while (stack.length > 0) {
+      const currentId = stack.pop()!;
+
+      // Found a cycle
+      if (currentId === taskId) {
+        return true;
+      }
+
+      if (visited.has(currentId)) {
+        continue;
+      }
+      visited.add(currentId);
+
+      // Get dependencies of current task
+      const currentTask = this.getById(currentId);
+      if (currentTask && currentTask.dependsOn) {
+        for (const depId of currentTask.dependsOn) {
+          if (!visited.has(depId)) {
+            stack.push(depId);
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Get all tasks that depend on this task (reverse dependency lookup)
+   */
+  getDependentTasks(taskId: string): Task[] {
+    const allTasks = this.getAll();
+    return allTasks.filter(task =>
+      task.dependsOn && task.dependsOn.includes(taskId)
+    );
+  }
+
+  /**
+   * Get dependency tree for visualization
+   */
+  getDependencyTree(taskId: string): {
+    task: Task;
+    dependencies: ReturnType<TaskRepository['getDependencyTree']>[];
+  } | null {
+    const task = this.getById(taskId);
+    if (!task) return null;
+
+    const dependencies = [];
+    if (task.dependsOn) {
+      for (const depId of task.dependsOn) {
+        const depTree = this.getDependencyTree(depId);
+        if (depTree) {
+          dependencies.push(depTree);
+        }
+      }
+    }
+
+    return { task, dependencies };
+  }
 }
 
 export const taskRepository = new TaskRepository();

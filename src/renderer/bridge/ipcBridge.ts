@@ -1,5 +1,6 @@
 // IPC Bridge - Renderer process API abstraction
 // This module provides type-safe access to Electron IPC
+import type { Task, TaskCreateInput, TaskStatus } from '../../shared/types/task';
 
 export const ipcBridge = {
   // Session operations
@@ -45,6 +46,28 @@ export const ipcBridge = {
     push: (path: string) => window.electronAPI.gitPush(path),
     pull: (path: string) => window.electronAPI.gitPull(path),
     log: (path: string, limit?: number) => window.electronAPI.gitLog(path, limit),
+  },
+
+  // Task operations
+  task: {
+    create: (input: TaskCreateInput) => window.electronAPI.dbTaskCreate(input) as Promise<Task>,
+    get: (id: string) => window.electronAPI.dbTaskGet(id) as Promise<Task | null>,
+    getBySession: (sessionId: string) => window.electronAPI.dbTaskGetBySession(sessionId) as Promise<Task[]>,
+    getByStatus: (status: TaskStatus) => window.electronAPI.dbTaskGetByStatus(status) as Promise<Task[]>,
+    getAll: () => window.electronAPI.dbTaskGetAll() as Promise<Task[]>,
+    update: (id: string, updates: Partial<Task>) => window.electronAPI.dbTaskUpdate(id, updates) as Promise<Task | null>,
+    updateStatus: (id: string, status: TaskStatus) => window.electronAPI.dbTaskUpdateStatus(id, status) as Promise<Task | null>,
+    delete: (id: string) => window.electronAPI.dbTaskDelete(id),
+    // Subtasks
+    getSubtasks: (parentId: string) => window.electronAPI.dbTaskGetSubtasks(parentId) as Promise<Task[]>,
+    createSubtasks: (parentId: string, titles: string[]) => window.electronAPI.dbTaskCreateSubtasks(parentId, titles) as Promise<Task[]>,
+    // Dependencies
+    checkDependencies: (taskId: string) => window.electronAPI.dbTaskCheckDependencies(taskId),
+    wouldCreateCircularDependency: (taskId: string, newDependencyId: string) => window.electronAPI.dbTaskWouldCreateCircularDependency(taskId, newDependencyId),
+    getDependentTasks: (taskId: string) => window.electronAPI.dbTaskGetDependentTasks(taskId) as Promise<Task[]>,
+    getDependencyTree: (taskId: string) => window.electronAPI.dbTaskGetDependencyTree(taskId),
+    // Review Feedback
+    clearReviewFeedback: (taskId: string) => window.electronAPI.dbTaskClearReviewFeedback(taskId) as Promise<Task | null>,
   },
 
   // Settings operations

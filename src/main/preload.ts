@@ -139,6 +139,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   dbTaskCheckDependencies: (taskId: string) => ipcRenderer.invoke('db:task:checkDependencies', taskId),
   // Task - Review Feedback
   dbTaskClearReviewFeedback: (taskId: string) => ipcRenderer.invoke('db:task:clearReviewFeedback', taskId),
+  // Task - Dependency Management
+  dbTaskWouldCreateCircularDependency: (taskId: string, newDependencyId: string) => ipcRenderer.invoke('db:task:wouldCreateCircularDependency', taskId, newDependencyId),
+  dbTaskGetDependentTasks: (taskId: string) => ipcRenderer.invoke('db:task:getDependentTasks', taskId),
+  dbTaskGetDependencyTree: (taskId: string) => ipcRenderer.invoke('db:task:getDependencyTree', taskId),
 
   // Database - Terminal Logs
   dbTerminalLogAppend: (sessionId: string, data: string) => ipcRenderer.invoke('db:terminalLog:append', sessionId, data),
@@ -225,6 +229,10 @@ export interface ElectronAPI {
   dbTaskCheckDependencies: (taskId: string) => Promise<{ met: boolean; completed: number; total: number; blocking: unknown[] }>;
   // Task - Review Feedback
   dbTaskClearReviewFeedback: (taskId: string) => Promise<unknown>;
+  // Task - Dependency Management
+  dbTaskWouldCreateCircularDependency: (taskId: string, newDependencyId: string) => Promise<boolean>;
+  dbTaskGetDependentTasks: (taskId: string) => Promise<unknown[]>;
+  dbTaskGetDependencyTree: (taskId: string) => Promise<unknown>;
   // Database - Terminal Logs
   dbTerminalLogAppend: (sessionId: string, data: string) => Promise<void>;
   dbTerminalLogGetBySession: (sessionId: string, limit?: number) => Promise<unknown[]>;
