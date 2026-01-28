@@ -23,7 +23,7 @@ interface NodeExecutionContext {
 
 interface NodeExecutionResult {
   success: boolean;
-  output: any;
+  output?: any;
   error?: string;
 }
 
@@ -252,7 +252,7 @@ export class WorkflowEngine {
       if (execution?.status === 'completed') {
         return { success: true, output: { executionId: response.executionId, taskId } };
       } else {
-        return { success: false, error: execution?.error || 'Task execution failed' };
+        return { success: false, error: execution?.errorMessage || 'Task execution failed' };
       }
     } catch (error) {
       return {
@@ -596,7 +596,6 @@ ${JSON.stringify(nodeResults, null, 2)}
         sessionId: workflow.sessionId.toString(),
         title: taskTitle,
         description: taskDescription,
-        status: 'todo',
         priority: 'medium',
       });
     } catch (error) {

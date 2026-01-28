@@ -5,7 +5,7 @@ import { WorkflowRepository } from './db/WorkflowRepository';
 interface ScheduledJob {
   workflowId: number;
   cronExpression: string;
-  task: cron.ScheduledTask;
+  task: ReturnType<typeof cron.schedule>;
 }
 
 export class WorkflowScheduler {
@@ -61,7 +61,6 @@ export class WorkflowScheduler {
         }
       },
       {
-        scheduled: true,
         timezone: 'UTC', // TODO: Make this configurable
       }
     );

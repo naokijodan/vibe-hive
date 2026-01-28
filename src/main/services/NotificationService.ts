@@ -141,7 +141,7 @@ export class NotificationService {
       throw new Error('Email recipient not specified');
     }
 
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: emailConfig.smtpHost,
       port: emailConfig.smtpPort,
       secure: emailConfig.smtpPort === 465, // true for 465, false for other ports

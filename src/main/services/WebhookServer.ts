@@ -42,7 +42,7 @@ export class WebhookServer {
       const triggerData = req.body;
 
       try {
-        const id = parseInt(workflowId, 10);
+        const id = parseInt(Array.isArray(workflowId) ? workflowId[0] : workflowId, 10);
         if (isNaN(id)) {
           return res.status(400).json({
             success: false,
