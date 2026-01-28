@@ -7,6 +7,7 @@ export interface Organization {
   agents: Agent[];
   connections: AgentConnection[];
   whiteboard: Whiteboard;
+  hierarchy?: OrgHierarchy; // Added hierarchy support
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,3 +36,19 @@ export interface WhiteboardEntry {
 }
 
 export type WhiteboardEntryType = 'note' | 'decision' | 'question' | 'context';
+
+// Organization hierarchy nodes (teams and roles)
+export interface OrgNode {
+  id: string;
+  name: string;
+  type: 'team' | 'role';
+  parentId?: string;
+  assignedAgentIds?: string[];
+  description?: string;
+  position?: { x: number; y: number }; // For React Flow positioning
+}
+
+export interface OrgHierarchy {
+  nodes: OrgNode[];
+  rootNodeId?: string;
+}
