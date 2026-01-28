@@ -40,7 +40,6 @@ function createWindow(): void {
   });
 
   if (isDev) {
-    console.log('Dev mode detected! Loading:', 'http://localhost:5173');
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
     // Force show window immediately in dev mode for debugging
