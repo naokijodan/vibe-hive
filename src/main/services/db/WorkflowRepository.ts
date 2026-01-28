@@ -15,6 +15,7 @@ interface WorkflowRow {
   nodes: string;
   edges: string;
   status: string;
+  auto_create_task: number;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +39,7 @@ function rowToWorkflow(row: WorkflowRow): Workflow {
     nodes: JSON.parse(row.nodes),
     edges: JSON.parse(row.edges),
     status: row.status as 'draft' | 'active' | 'paused',
+    autoCreateTask: row.auto_create_task === 1,
     createdAt: new Date(row.created_at).getTime(),
     updatedAt: new Date(row.updated_at).getTime(),
   };
@@ -63,8 +65,8 @@ export class WorkflowRepository {
 
     const stmt = db.prepare(`
       INSERT INTO workflows (
-        id, session_id, name, description, nodes, edges, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id, session_id, name, description, nodes, edges, status, auto_create_task, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -75,6 +77,7 @@ export class WorkflowRepository {
       JSON.stringify(params.nodes || []),
       JSON.stringify(params.edges || []),
       'draft',
+      params.autoCreateTask ? 1 : 0,
       now,
       now
     );
@@ -139,6 +142,10 @@ export class WorkflowRepository {
     if (params.status !== undefined) {
       updates.push('status = ?');
       values.push(params.status);
+    }
+    if (params.autoCreateTask !== undefined) {
+      updates.push('auto_create_task = ?');
+      values.push(params.autoCreateTask ? 1 : 0);
     }
 
     updates.push('updated_at = ?');

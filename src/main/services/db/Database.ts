@@ -242,6 +242,13 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_workflow_executions_started_at ON workflow_executions(started_at);
       `,
     },
+    {
+      name: '009_add_workflow_auto_create_task',
+      sql: `
+        -- Add auto_create_task column to workflows table
+        ALTER TABLE workflows ADD COLUMN auto_create_task INTEGER DEFAULT 0;
+      `,
+    },
   ];
 
   const appliedMigrations = database

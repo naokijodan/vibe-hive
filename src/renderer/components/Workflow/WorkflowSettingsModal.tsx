@@ -1,26 +1,34 @@
-import React, { useState } from 'react';
-import { useSessionStore } from '../../stores/sessionStore';
+import React, { useState, useEffect } from 'react';
 import { useWorkflowStore } from '../../stores/workflowStore';
+import type { Workflow } from '../../../shared/types/workflow';
 
-interface WorkflowCreateModalProps {
+interface WorkflowSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated?: (workflowId: number) => void;
+  workflow: Workflow;
 }
 
-export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
+export const WorkflowSettingsModal: React.FC<WorkflowSettingsModalProps> = ({
   isOpen,
   onClose,
-  onCreated,
+  workflow,
 }) => {
-  const { activeSessionId } = useSessionStore();
-  const { createWorkflow } = useWorkflowStore();
+  const { updateWorkflow } = useWorkflowStore();
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [autoCreateTask, setAutoCreateTask] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  const [name, setName] = useState(workflow.name);
+  const [description, setDescription] = useState(workflow.description || '');
+  const [status, setStatus] = useState(workflow.status);
+  const [autoCreateTask, setAutoCreateTask] = useState(workflow.autoCreateTask || false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Update local state when workflow changes
+  useEffect(() => {
+    setName(workflow.name);
+    setDescription(workflow.description || '');
+    setStatus(workflow.status);
+    setAutoCreateTask(workflow.autoCreateTask || false);
+  }, [workflow]);
 
   if (!isOpen) return null;
 
@@ -32,47 +40,37 @@ export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
       return;
     }
 
-    if (!activeSessionId) {
-      setError('No active session. Please create a session first.');
-      return;
-    }
-
-    setIsCreating(true);
+    setIsSaving(true);
     setError(null);
 
     try {
-      const workflow = await createWorkflow({
-        sessionId: parseInt(activeSessionId, 10),
+      const updated = await updateWorkflow({
+        id: workflow.id,
         name: name.trim(),
         description: description.trim() || undefined,
-        nodes: [],
-        edges: [],
+        status,
         autoCreateTask,
       });
 
-      if (workflow) {
-        setName('');
-        setDescription('');
-        setAutoCreateTask(false);
+      if (updated) {
         onClose();
-        if (onCreated) {
-          onCreated(workflow.id);
-        }
       } else {
-        setError('Failed to create workflow');
+        setError('Failed to update workflow');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create workflow');
+      setError(err instanceof Error ? err.message : 'Failed to update workflow');
     } finally {
-      setIsCreating(false);
+      setIsSaving(false);
     }
   };
 
   const handleClose = () => {
-    if (!isCreating) {
-      setName('');
-      setDescription('');
-      setAutoCreateTask(false);
+    if (!isSaving) {
+      // Reset to original values
+      setName(workflow.name);
+      setDescription(workflow.description || '');
+      setStatus(workflow.status);
+      setAutoCreateTask(workflow.autoCreateTask || false);
       setError(null);
       onClose();
     }
@@ -82,10 +80,10 @@ export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white">Create New Workflow</h2>
+          <h2 className="text-xl font-semibold text-white">Workflow Settings</h2>
           <button
             onClick={handleClose}
-            disabled={isCreating}
+            disabled={isSaving}
             className="text-gray-400 hover:text-white disabled:opacity-50"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +103,7 @@ export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                disabled={isCreating}
+                disabled={isSaving}
                 className="
                   w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg
                   text-white placeholder-gray-400
@@ -125,7 +123,7 @@ export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
                 id="workflow-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                disabled={isCreating}
+                disabled={isSaving}
                 rows={3}
                 className="
                   w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg
@@ -138,6 +136,28 @@ export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
               />
             </div>
 
+            <div>
+              <label htmlFor="workflow-status" className="block text-sm font-medium text-gray-300 mb-1">
+                Status
+              </label>
+              <select
+                id="workflow-status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'draft' | 'active' | 'paused')}
+                disabled={isSaving}
+                className="
+                  w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg
+                  text-white
+                  focus:outline-none focus:ring-2 focus:ring-blue-500
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                "
+              >
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+              </select>
+            </div>
+
             <div className="flex items-start space-x-3">
               <div className="flex items-center h-5">
                 <input
@@ -145,7 +165,7 @@ export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
                   type="checkbox"
                   checked={autoCreateTask}
                   onChange={(e) => setAutoCreateTask(e.target.checked)}
-                  disabled={isCreating}
+                  disabled={isSaving}
                   className="
                     w-4 h-4 bg-gray-700 border-gray-600 rounded
                     text-blue-600 focus:ring-2 focus:ring-blue-500
@@ -168,21 +188,13 @@ export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
                 <p className="text-sm text-red-300">{error}</p>
               </div>
             )}
-
-            {!activeSessionId && (
-              <div className="px-3 py-2 bg-yellow-900/50 border border-yellow-700 rounded-lg">
-                <p className="text-sm text-yellow-300">
-                  No active session. Please create a session first.
-                </p>
-              </div>
-            )}
           </div>
 
           <div className="flex gap-3 mt-6">
             <button
               type="button"
               onClick={handleClose}
-              disabled={isCreating}
+              disabled={isSaving}
               className="
                 flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600
                 text-white rounded-lg font-medium
@@ -193,14 +205,14 @@ export const WorkflowCreateModal: React.FC<WorkflowCreateModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isCreating || !name.trim() || !activeSessionId}
+              disabled={isSaving || !name.trim()}
               className="
                 flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700
                 text-white rounded-lg font-medium
                 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              {isCreating ? 'Creating...' : 'Create'}
+              {isSaving ? 'Saving...' : 'Save'}
             </button>
           </div>
         </form>

@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron';
 import { WorkflowRepository } from './db/WorkflowRepository';
+import { TaskRepository } from './db/TaskRepository';
 import { getExecutionEngine } from './ExecutionEngine';
 import { notificationService } from './NotificationService';
 import type {
@@ -28,11 +29,13 @@ interface NodeExecutionResult {
 
 export class WorkflowEngine {
   private repository: WorkflowRepository;
+  private taskRepository: TaskRepository;
   private mainWindow: BrowserWindow | null = null;
   private activeExecutions: Map<number, AbortController> = new Map();
 
   constructor() {
     this.repository = new WorkflowRepository();
+    this.taskRepository = new TaskRepository();
   }
 
   setMainWindow(window: BrowserWindow): void {
@@ -65,6 +68,11 @@ export class WorkflowEngine {
         status: 'success',
         executionData: nodeResults,
       });
+
+      // Auto-create task if enabled
+      if (workflow.autoCreateTask) {
+        await this.createTaskFromExecution(workflow, execution, nodeResults);
+      }
 
       this.notifyRenderer('workflow:execution:completed', { executionId: execution.id, status: 'success' });
 
@@ -541,6 +549,43 @@ export class WorkflowEngine {
     // TODO: Add more template variables (workflow.name, execution.id, etc.)
 
     return result;
+  }
+
+  /**
+   * Create a task from workflow execution results
+   */
+  private async createTaskFromExecution(
+    workflow: Workflow,
+    execution: WorkflowExecution,
+    nodeResults: Record<string, any>
+  ): Promise<void> {
+    try {
+      const taskTitle = `${workflow.name} - Execution #${execution.id}`;
+      const taskDescription = `Auto-generated from workflow execution
+
+**Workflow**: ${workflow.name}
+**Execution ID**: ${execution.id}
+**Started**: ${new Date(execution.startedAt).toISOString()}
+**Completed**: ${new Date().toISOString()}
+
+**Results**:
+\`\`\`json
+${JSON.stringify(nodeResults, null, 2)}
+\`\`\``;
+
+      await this.taskRepository.create({
+        sessionId: workflow.sessionId.toString(),
+        title: taskTitle,
+        description: taskDescription,
+        status: 'todo',
+        priority: 'medium',
+      });
+
+      console.log(`Task auto-created from workflow ${workflow.id} execution ${execution.id}`);
+    } catch (error) {
+      console.error('Failed to auto-create task from workflow execution:', error);
+      // Don't throw - task creation failure shouldn't fail the workflow
+    }
   }
 
   /**

@@ -100,6 +100,7 @@ export interface Workflow {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
   status: 'draft' | 'active' | 'paused';
+  autoCreateTask?: boolean;  // Auto-create task on workflow completion
   createdAt: number;
   updatedAt: number;
 }
@@ -120,6 +121,7 @@ export interface CreateWorkflowParams {
   description?: string;
   nodes?: WorkflowNode[];
   edges?: WorkflowEdge[];
+  autoCreateTask?: boolean;
 }
 
 export interface UpdateWorkflowParams {
@@ -129,6 +131,7 @@ export interface UpdateWorkflowParams {
   nodes?: WorkflowNode[];
   edges?: WorkflowEdge[];
   status?: 'draft' | 'active' | 'paused';
+  autoCreateTask?: boolean;
 }
 
 export interface ExecuteWorkflowParams {
