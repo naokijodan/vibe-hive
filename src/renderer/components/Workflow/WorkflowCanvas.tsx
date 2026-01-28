@@ -13,7 +13,7 @@ import {
   type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { TaskNode, TriggerNode, ConditionalNode, NotificationNode, MergeNode } from './nodes';
+import { TaskNode, TriggerNode, ConditionalNode, NotificationNode, MergeNode, DelayNode } from './nodes';
 import { NodePalette } from './NodePalette';
 import { NodeSettingsPanel } from './settings/NodeSettingsPanel';
 import { useWorkflowStore } from '../../stores/workflowStore';
@@ -25,6 +25,7 @@ const nodeTypes: NodeTypes = {
   conditional: ConditionalNode,
   notification: NotificationNode,
   merge: MergeNode,
+  delay: DelayNode,
 };
 
 interface WorkflowCanvasProps {

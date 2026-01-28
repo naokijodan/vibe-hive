@@ -99,7 +99,7 @@ export const WorkflowManager: React.FC = () => {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-hidden">
-          {activeTab === 'canvas' && <WorkflowCanvas />}
+          {activeTab === 'canvas' && <WorkflowCanvas showNodePalette={true} />}
           {activeTab === 'history' && (
             <div className="flex h-full">
               <div className="w-80 border-r border-gray-700">
