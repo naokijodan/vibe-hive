@@ -1,4 +1,3 @@
-import cron from 'node-cron';
 import type { WorkflowNodeData, TriggerType, NotificationType } from '../../shared/types/workflow';
 
 export interface ValidationResult {
@@ -16,14 +15,25 @@ export const validateEmail = (email: string): boolean => {
 };
 
 /**
- * Validate cron expression
+ * Validate cron expression (basic format check)
+ * Full validation happens on the main process
  */
 export const validateCronExpression = (expression: string): boolean => {
-  try {
-    return cron.validate(expression);
-  } catch {
+  if (!expression || typeof expression !== 'string') {
     return false;
   }
+
+  // Basic cron format: 5 fields separated by spaces
+  // minute hour day month weekday
+  const parts = expression.trim().split(/\s+/);
+
+  if (parts.length !== 5) {
+    return false;
+  }
+
+  // Each part should contain valid cron characters: numbers, *, /, -, ,
+  const cronPartRegex = /^[\d\*\/\-,]+$/;
+  return parts.every(part => cronPartRegex.test(part));
 };
 
 /**
