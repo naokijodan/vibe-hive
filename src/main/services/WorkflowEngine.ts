@@ -1,6 +1,7 @@
 import { BrowserWindow } from 'electron';
 import { WorkflowRepository } from './db/WorkflowRepository';
 import { getExecutionEngine } from './ExecutionEngine';
+import { notificationService } from './NotificationService';
 import type {
   Workflow,
   WorkflowExecution,
@@ -108,7 +109,7 @@ export class WorkflowEngine {
   }
 
   /**
-   * Execute workflow nodes in topological order
+   * Execute workflow nodes with parallel execution support
    */
   private async executeWorkflow(
     workflow: Workflow,
@@ -116,41 +117,50 @@ export class WorkflowEngine {
     signal: AbortSignal
   ): Promise<Record<string, any>> {
     const nodeResults: Record<string, any> = {};
-    const executionOrder = this.topologicalSort(workflow.nodes, workflow.edges);
 
     // Store trigger data
     nodeResults['__trigger__'] = triggerData;
 
-    for (const nodeId of executionOrder) {
+    // Group nodes by execution level for parallel execution
+    const levels = this.groupNodesByLevel(workflow.nodes, workflow.edges);
+
+    // Execute nodes level by level (parallel within each level)
+    for (const level of levels) {
       if (signal.aborted) {
         throw new Error('Workflow execution cancelled');
       }
 
-      const node = workflow.nodes.find(n => n.id === nodeId);
-      if (!node) continue;
+      // Execute all nodes in this level in parallel
+      const levelPromises = level.map(async (nodeId) => {
+        const node = workflow.nodes.find(n => n.id === nodeId);
+        if (!node) return;
 
-      // Get input from previous nodes
-      const input = this.getNodeInput(nodeId, workflow.edges, nodeResults);
+        // Get input from previous nodes
+        const input = this.getNodeInput(nodeId, workflow.edges, nodeResults);
 
-      // Execute node
-      const result = await this.executeNode({
-        nodeId,
-        input,
-        workflowData: nodeResults,
-      }, node);
+        // Execute node
+        const result = await this.executeNode({
+          nodeId,
+          input,
+          workflowData: nodeResults,
+        }, node);
 
-      if (!result.success) {
-        throw new Error(`Node ${nodeId} execution failed: ${result.error}`);
-      }
+        if (!result.success) {
+          throw new Error(`Node ${nodeId} execution failed: ${result.error}`);
+        }
 
-      nodeResults[nodeId] = result.output;
+        return { nodeId, result };
+      });
 
-      // Handle conditional branching
-      if (node.type === 'conditional' && result.output?.branch) {
-        // Filter execution path based on condition result
-        const branch = result.output.branch; // 'true' or 'false'
-        // This will be handled in topological sort
-      }
+      // Wait for all nodes in this level to complete
+      const levelResults = await Promise.all(levelPromises);
+
+      // Store results
+      levelResults.forEach(item => {
+        if (item) {
+          nodeResults[item.nodeId] = item.result.output;
+        }
+      });
     }
 
     return nodeResults;
@@ -175,7 +185,7 @@ export class WorkflowEngine {
           return await this.executeDelayNode(node);
 
         case 'notification':
-          return this.executeNotificationNode(node, context.input);
+          return await this.executeNotificationNode(node, context.input);
 
         case 'merge':
           return { success: true, output: context.input };
@@ -280,12 +290,31 @@ export class WorkflowEngine {
   }
 
   /**
-   * Execute a notification node (placeholder)
+   * Execute a notification node
    */
-  private executeNotificationNode(node: WorkflowNode, input: any): NodeExecutionResult {
-    // Placeholder - implement actual notification logic
-    console.log(`[Notification] ${node.data.notificationType}:`, input);
-    return { success: true, output: { notified: true } };
+  private async executeNotificationNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
+    const notificationType = node.data.notificationType;
+    const title = node.data.config?.title;
+    const message = node.data.config?.message || JSON.stringify(input);
+
+    if (!notificationType) {
+      return { success: false, error: 'Notification type not specified' };
+    }
+
+    try {
+      await notificationService.send({
+        type: notificationType,
+        title,
+        message,
+      });
+
+      return { success: true, output: { notified: true, type: notificationType } };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Notification failed',
+      };
+    }
   }
 
   /**
@@ -337,6 +366,62 @@ export class WorkflowEngine {
       }
     }
     return value;
+  }
+
+  /**
+   * Group nodes by execution level for parallel execution
+   */
+  private groupNodesByLevel(nodes: WorkflowNode[], edges: WorkflowEdge[]): string[][] {
+    const adjList = new Map<string, string[]>();
+    const inDegree = new Map<string, number>();
+
+    // Initialize
+    nodes.forEach(node => {
+      adjList.set(node.id, []);
+      inDegree.set(node.id, 0);
+    });
+
+    // Build adjacency list and in-degree
+    edges.forEach(edge => {
+      adjList.get(edge.source)?.push(edge.target);
+      inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1);
+    });
+
+    const levels: string[][] = [];
+    const queue: string[] = [];
+
+    // Find nodes with no incoming edges (level 0)
+    inDegree.forEach((degree, nodeId) => {
+      if (degree === 0) {
+        queue.push(nodeId);
+      }
+    });
+
+    while (queue.length > 0) {
+      const currentLevel: string[] = [...queue];
+      levels.push(currentLevel);
+      queue.length = 0;
+
+      // Process all nodes in current level
+      currentLevel.forEach(nodeId => {
+        const neighbors = adjList.get(nodeId) || [];
+        neighbors.forEach(neighbor => {
+          const newDegree = (inDegree.get(neighbor) || 0) - 1;
+          inDegree.set(neighbor, newDegree);
+          if (newDegree === 0) {
+            queue.push(neighbor);
+          }
+        });
+      });
+    }
+
+    // Check for cycles
+    const totalNodes = levels.reduce((sum, level) => sum + level.length, 0);
+    if (totalNodes !== nodes.length) {
+      throw new Error('Workflow contains cycles');
+    }
+
+    return levels;
   }
 
   /**
