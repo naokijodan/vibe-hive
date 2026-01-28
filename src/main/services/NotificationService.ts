@@ -1,4 +1,5 @@
 import fetch from 'electron-fetch';
+import nodemailer from 'nodemailer';
 
 interface NotificationConfig {
   discordWebhookUrl?: string;
@@ -17,6 +18,7 @@ interface SendNotificationParams {
   title?: string;
   message: string;
   color?: string;
+  to?: string; // For email notifications
 }
 
 export class NotificationService {
@@ -130,8 +132,42 @@ export class NotificationService {
   }
 
   private async sendEmail(params: SendNotificationParams): Promise<void> {
-    // TODO: Implement email sending with nodemailer
-    throw new Error('Email notifications are not implemented yet');
+    const emailConfig = this.config.emailConfig;
+    if (!emailConfig) {
+      throw new Error('Email configuration not set');
+    }
+
+    if (!params.to) {
+      throw new Error('Email recipient not specified');
+    }
+
+    const transporter = nodemailer.createTransporter({
+      host: emailConfig.smtpHost,
+      port: emailConfig.smtpPort,
+      secure: emailConfig.smtpPort === 465, // true for 465, false for other ports
+      auth: {
+        user: emailConfig.username,
+        pass: emailConfig.password,
+      },
+    });
+
+    const mailOptions = {
+      from: emailConfig.from,
+      to: params.to,
+      subject: params.title || 'Notification from Vibe Hive',
+      text: params.message,
+      html: params.title
+        ? `<h2>${params.title}</h2><p>${params.message}</p>`
+        : `<p>${params.message}</p>`,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      throw new Error(
+        `Email notification failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 
   private parseColor(colorString: string): number {

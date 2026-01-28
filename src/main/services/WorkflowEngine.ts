@@ -353,16 +353,24 @@ export class WorkflowEngine {
     const notificationType = node.data.notificationType;
     const title = node.data.config?.title;
     const message = node.data.config?.message || JSON.stringify(input);
+    const webhookUrl = node.data.config?.webhookUrl;
+    const emailTo = node.data.config?.emailTo;
 
     if (!notificationType) {
       return { success: false, error: 'Notification type not specified' };
     }
 
     try {
+      // Set webhook URL if provided
+      if (webhookUrl && (notificationType === 'discord' || notificationType === 'slack')) {
+        notificationService.setWebhookUrl(notificationType, webhookUrl);
+      }
+
       await notificationService.send({
         type: notificationType,
         title,
         message,
+        to: emailTo,
       });
 
       return { success: true, output: { notified: true, type: notificationType } };
@@ -414,16 +422,25 @@ export class WorkflowEngine {
         }
       } else if (type === 'while') {
         // While: conditional loop
-        // Note: Full condition evaluation requires implementing conditionGroup evaluation
-        // For now, use a simple counter to prevent infinite loops
+        const condition = loopConfig.condition;
+        if (!condition) {
+          return { success: false, error: 'While loop condition not specified' };
+        }
+
         let shouldContinue = true;
 
         while (shouldContinue && iterations < maxIterations) {
-          // TODO: Evaluate condition and execute child nodes
-          // For now, just break after first iteration
+          // Evaluate condition
+          const conditionMet = this.evaluateConditionGroup(condition, context.input);
+
+          if (!conditionMet) {
+            shouldContinue = false;
+            break;
+          }
+
+          // TODO: Execute child nodes with current input
           results.push({ index: iterations, result: context.input });
           iterations++;
-          shouldContinue = false; // Placeholder
         }
       }
 

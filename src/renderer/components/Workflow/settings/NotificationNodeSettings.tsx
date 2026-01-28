@@ -24,6 +24,8 @@ export const NotificationNodeSettings: React.FC<NotificationNodeSettingsProps> =
   const notificationType = data.notificationType || 'discord';
   const title = data.config?.title || '';
   const message = data.config?.message || '';
+  const webhookUrl = data.config?.webhookUrl || '';
+  const emailTo = data.config?.emailTo || '';
 
   const handleTypeChange = (type: 'discord' | 'slack' | 'email') => {
     onChange({ notificationType: type });
@@ -43,6 +45,24 @@ export const NotificationNodeSettings: React.FC<NotificationNodeSettingsProps> =
       config: {
         ...data.config,
         message: newMessage,
+      },
+    });
+  };
+
+  const handleWebhookUrlChange = (url: string) => {
+    onChange({
+      config: {
+        ...data.config,
+        webhookUrl: url,
+      },
+    });
+  };
+
+  const handleEmailToChange = (email: string) => {
+    onChange({
+      config: {
+        ...data.config,
+        emailTo: email,
       },
     });
   };
@@ -110,9 +130,55 @@ export const NotificationNodeSettings: React.FC<NotificationNodeSettingsProps> =
         </p>
       </div>
 
+      {(notificationType === 'discord' || notificationType === 'slack') && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Webhook URL *
+          </label>
+          <input
+            type="text"
+            value={webhookUrl}
+            onChange={(e) => handleWebhookUrlChange(e.target.value)}
+            placeholder={`Enter ${notificationType} webhook URL...`}
+            className="
+              w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg
+              text-white placeholder-gray-500 font-mono text-sm
+              focus:outline-none focus:ring-2 focus:ring-purple-500
+            "
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            {notificationType === 'discord'
+              ? 'Discord webhook URL from Server Settings → Integrations → Webhooks'
+              : 'Slack webhook URL from Incoming Webhooks app'}
+          </p>
+        </div>
+      )}
+
+      {notificationType === 'email' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Recipient Email *
+          </label>
+          <input
+            type="email"
+            value={emailTo}
+            onChange={(e) => handleEmailToChange(e.target.value)}
+            placeholder="recipient@example.com"
+            className="
+              w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg
+              text-white placeholder-gray-500
+              focus:outline-none focus:ring-2 focus:ring-purple-500
+            "
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Email address to send the notification to
+          </p>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          Message
+          Message *
         </label>
         <textarea
           value={message}
@@ -127,18 +193,20 @@ export const NotificationNodeSettings: React.FC<NotificationNodeSettingsProps> =
           "
         />
         <p className="text-xs text-gray-500 mt-1">
-          Supports template variables: {'{{taskName}}'}, {'{{status}}'}, {'{{output}}'}
+          You can use template variables from workflow input data
         </p>
       </div>
 
-      <div className="p-3 bg-gray-700/50 rounded-lg border border-gray-600">
-        <h4 className="text-xs font-semibold text-gray-400 mb-1 uppercase">
-          Note
-        </h4>
-        <p className="text-xs text-gray-300">
-          Webhook URLs need to be configured in app settings before notifications can be sent.
-        </p>
-      </div>
+      {notificationType === 'email' && (
+        <div className="p-3 bg-yellow-900/30 rounded-lg border border-yellow-700">
+          <h4 className="text-xs font-semibold text-yellow-400 mb-1 uppercase">
+            Email Configuration Required
+          </h4>
+          <p className="text-xs text-gray-300">
+            Email notifications require SMTP settings to be configured in app settings.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

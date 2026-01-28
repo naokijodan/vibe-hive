@@ -18,6 +18,7 @@ import { NodePalette } from './NodePalette';
 import { NodeSettingsPanel } from './settings/NodeSettingsPanel';
 import { WorkflowSettingsModal } from './WorkflowSettingsModal';
 import { useWorkflowStore } from '../../stores/workflowStore';
+import { ipcBridge } from '../../bridge/ipcBridge';
 import type { NodeType, WorkflowNodeData } from '../../../shared/types/workflow';
 
 const nodeTypes: NodeTypes = {
@@ -158,6 +159,51 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
     }
   };
 
+  const handleExport = async () => {
+    if (!currentWorkflow) {
+      alert('No workflow selected');
+      return;
+    }
+
+    try {
+      const result = await ipcBridge.workflow.export(currentWorkflow.id);
+      if (result.success && result.filePath) {
+        alert(`Workflow exported successfully to:\n${result.filePath}`);
+      } else if (result.canceled) {
+        // User cancelled the dialog, do nothing
+      } else {
+        alert('Failed to export workflow');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!currentWorkflow) {
+      alert('No workflow selected. Please select or create a workflow first.');
+      return;
+    }
+
+    try {
+      const sessionId = currentWorkflow.sessionId;
+      const result = await ipcBridge.workflow.import(sessionId);
+      if (result.success && result.workflow) {
+        alert(`Workflow "${result.workflow.name}" imported successfully!`);
+        // Optionally reload workflows here
+        window.location.reload();
+      } else if (result.canceled) {
+        // User cancelled the dialog, do nothing
+      } else {
+        alert('Failed to import workflow');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      alert(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node<WorkflowNodeData>) => {
       setSelectedNode(node);
@@ -241,6 +287,30 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <button
+              onClick={handleExport}
+              className="
+                px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg
+                font-medium shadow-lg transition-colors
+              "
+              title="Export workflow to JSON"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+            <button
+              onClick={handleImport}
+              className="
+                px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg
+                font-medium shadow-lg transition-colors
+              "
+              title="Import workflow from JSON"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
             </button>
             <button

@@ -160,6 +160,10 @@ export const ipcBridge = {
       window.electronAPI.workflowGetExecution(executionId) as Promise<WorkflowExecution | null>,
     getExecutions: (workflowId: number) =>
       window.electronAPI.workflowGetExecutions(workflowId) as Promise<WorkflowExecution[]>,
+    export: (workflowId: number) =>
+      window.electronAPI.workflowExport(workflowId) as Promise<{ success: boolean; filePath?: string; canceled?: boolean }>,
+    import: (sessionId: number) =>
+      window.electronAPI.workflowImport(sessionId) as Promise<{ success: boolean; workflow?: Workflow; canceled?: boolean }>,
     onExecutionStarted: (callback: (data: { executionId: number; workflowId: number }) => void) =>
       window.electronAPI.onWorkflowExecutionStarted?.(callback),
     onExecutionCompleted: (callback: (data: { executionId: number; status: string; error?: string }) => void) =>

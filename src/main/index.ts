@@ -11,6 +11,8 @@ import { registerNotificationHandlers } from './ipc/notificationHandlers';
 import { ptyService } from './services/PtyService';
 import { agentService } from './services/AgentService';
 import { getDatabase, closeDatabase } from './services/db';
+import { getWebhookServer } from './services/WebhookServer';
+import { getWorkflowScheduler } from './services/WorkflowScheduler';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -76,6 +78,18 @@ app.whenReady().then(() => {
     workflowEngine.setMainWindow(mainWindow);
   }
 
+  // Start webhook server
+  const webhookServer = getWebhookServer(3100);
+  webhookServer.start().catch((error) => {
+    console.error('Failed to start webhook server:', error);
+  });
+
+  // Initialize workflow scheduler
+  const workflowScheduler = getWorkflowScheduler();
+  workflowScheduler.initialize().catch((error) => {
+    console.error('Failed to initialize workflow scheduler:', error);
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -100,9 +114,18 @@ app.on('window-all-closed', () => {
   }
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
   ptyService.closeAll();
   agentService.stopAll();
   executionEngine.cleanup();
+
+  // Stop webhook server
+  const webhookServer = getWebhookServer();
+  await webhookServer.stop();
+
+  // Stop workflow scheduler
+  const workflowScheduler = getWorkflowScheduler();
+  workflowScheduler.stopAll();
+
   closeDatabase();
 });
