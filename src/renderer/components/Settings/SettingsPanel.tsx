@@ -39,8 +39,14 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-hive-bg border border-hive-border rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-hive-bg border border-hive-border rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-hive-border">
           <h2 className="text-xl font-semibold text-white">Settings</h2>

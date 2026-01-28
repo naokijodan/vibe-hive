@@ -12,6 +12,7 @@ export function GitSettings({ settings, onUpdate, isLoading }: GitSettingsProps)
   const [userEmail, setUserEmail] = useState(settings.userEmail);
   const [defaultRepo, setDefaultRepo] = useState(settings.defaultRepo);
   const [hasChanges, setHasChanges] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     setUserName(settings.userName);
@@ -34,6 +35,8 @@ export function GitSettings({ settings, onUpdate, isLoading }: GitSettingsProps)
       defaultRepo,
     });
     setHasChanges(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   const handleReset = () => {
@@ -114,6 +117,13 @@ export function GitSettings({ settings, onUpdate, isLoading }: GitSettingsProps)
           </p>
         </div>
       </div>
+
+      {/* Success Message */}
+      {saveSuccess && (
+        <div className="px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-md">
+          <p className="text-sm text-green-400">✓ Settings saved successfully</p>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t border-hive-border">
