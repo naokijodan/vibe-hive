@@ -10,6 +10,7 @@ interface UseCommandPaletteProps {
   setIsSessionModalOpen: (open: boolean) => void;
   setShowBashTerminal: (show: boolean) => void;
   setIsGitPanelOpen?: (open: boolean) => void;
+  setIsSettingsPanelOpen?: (open: boolean) => void;
 }
 
 export function useCommandPalette({
@@ -18,6 +19,7 @@ export function useCommandPalette({
   setIsSessionModalOpen,
   setShowBashTerminal,
   setIsGitPanelOpen,
+  setIsSettingsPanelOpen,
 }: UseCommandPaletteProps): Command[] {
   const { sessions, switchSession } = useSessionStore();
 
@@ -56,7 +58,13 @@ export function useCommandPalette({
         description: '設定画面を表示',
         category: 'ビュー',
         keywords: ['settings', 'config', 'せってい'],
-        action: () => setCurrentView('settings'),
+        action: () => {
+          if (setIsSettingsPanelOpen) {
+            setIsSettingsPanelOpen(true);
+          } else {
+            setCurrentView('settings');
+          }
+        },
       }
     );
 
@@ -141,7 +149,7 @@ export function useCommandPalette({
     }
 
     return cmds;
-  }, [sessions, setCurrentView, setIsSessionModalOpen, setShowBashTerminal, setIsGitPanelOpen, switchSession]);
+  }, [sessions, setCurrentView, setIsSessionModalOpen, setShowBashTerminal, setIsGitPanelOpen, setIsSettingsPanelOpen, switchSession]);
 
   return commands;
 }

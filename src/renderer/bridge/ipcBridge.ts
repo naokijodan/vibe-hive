@@ -46,6 +46,15 @@ export const ipcBridge = {
     pull: (path: string) => window.electronAPI.gitPull(path),
     log: (path: string, limit?: number) => window.electronAPI.gitLog(path, limit),
   },
+
+  // Settings operations
+  settings: {
+    get: () => window.electronAPI.settingsGet(),
+    update: (updates: unknown) => window.electronAPI.settingsUpdate(updates),
+    updateGit: (gitSettings: unknown) => window.electronAPI.settingsUpdateGit(gitSettings),
+    updateApp: (appSettings: unknown) => window.electronAPI.settingsUpdateApp(appSettings),
+    reset: () => window.electronAPI.settingsReset(),
+  },
 };
 
 export default ipcBridge;

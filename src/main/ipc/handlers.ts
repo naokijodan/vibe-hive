@@ -3,6 +3,7 @@ import { IPC_CHANNELS } from './channels';
 import { getSessionService } from '../services/SessionService';
 import { ptyService } from '../services/PtyService';
 import { getGitService } from '../services/GitService';
+import { getSettingsService } from '../services/SettingsService';
 
 export function registerIpcHandlers(): void {
   const sessionService = getSessionService();
@@ -120,5 +121,41 @@ export function registerIpcHandlers(): void {
     const gitService = getGitService();
     const log = await gitService.log(path, limit);
     return log;
+  });
+
+  // Settings handlers
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, async () => {
+    console.log('settings:get');
+    const settingsService = getSettingsService();
+    const settings = settingsService.getSettings();
+    return settings;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE, async (_event, updates) => {
+    console.log('settings:update', updates);
+    const settingsService = getSettingsService();
+    const settings = settingsService.updateSettings(updates);
+    return settings;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE_GIT, async (_event, gitSettings) => {
+    console.log('settings:update-git', gitSettings);
+    const settingsService = getSettingsService();
+    const settings = settingsService.updateGitSettings(gitSettings);
+    return settings;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE_APP, async (_event, appSettings) => {
+    console.log('settings:update-app', appSettings);
+    const settingsService = getSettingsService();
+    const settings = settingsService.updateAppSettings(appSettings);
+    return settings;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_RESET, async () => {
+    console.log('settings:reset');
+    const settingsService = getSettingsService();
+    const settings = settingsService.resetSettings();
+    return settings;
   });
 }

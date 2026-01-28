@@ -108,6 +108,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gitPull: (path: string) => ipcRenderer.invoke('git:pull', path),
   gitLog: (path: string, limit?: number) => ipcRenderer.invoke('git:log', path, limit),
 
+  // Settings
+  settingsGet: () => ipcRenderer.invoke('settings:get'),
+  settingsUpdate: (updates: unknown) => ipcRenderer.invoke('settings:update', updates),
+  settingsUpdateGit: (gitSettings: unknown) => ipcRenderer.invoke('settings:update-git', gitSettings),
+  settingsUpdateApp: (appSettings: unknown) => ipcRenderer.invoke('settings:update-app', appSettings),
+  settingsReset: () => ipcRenderer.invoke('settings:reset'),
+
   // Database - Sessions
   dbSessionCreate: (config: unknown) => ipcRenderer.invoke('db:session:create', config),
   dbSessionGet: (id: string) => ipcRenderer.invoke('db:session:get', id),
@@ -189,6 +196,12 @@ export interface ElectronAPI {
   gitPush: (path: string) => Promise<boolean>;
   gitPull: (path: string) => Promise<boolean>;
   gitLog: (path: string, limit?: number) => Promise<unknown[]>;
+  // Settings
+  settingsGet: () => Promise<unknown>;
+  settingsUpdate: (updates: unknown) => Promise<unknown>;
+  settingsUpdateGit: (gitSettings: unknown) => Promise<unknown>;
+  settingsUpdateApp: (appSettings: unknown) => Promise<unknown>;
+  settingsReset: () => Promise<unknown>;
   // Database - Sessions
   dbSessionCreate: (config: unknown) => Promise<unknown>;
   dbSessionGet: (id: string) => Promise<unknown>;

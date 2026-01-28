@@ -5,6 +5,7 @@ import { OrgChart } from './components/Organization';
 import { SessionTabs } from './components/Session';
 import { CommandPalette } from './components/CommandPalette';
 import { GitPanel } from './components/Git/GitPanel';
+import { SettingsPanel } from './components/Settings/SettingsPanel';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -51,6 +52,7 @@ function App(): React.ReactElement {
   const [showBashTerminal, setShowBashTerminal] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isGitPanelOpen, setIsGitPanelOpen] = useState(false);
+  const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
 
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
@@ -152,6 +154,7 @@ function App(): React.ReactElement {
     setIsSessionModalOpen,
     setShowBashTerminal,
     setIsGitPanelOpen,
+    setIsSettingsPanelOpen,
   });
 
   // Keyboard shortcuts
@@ -278,9 +281,13 @@ function App(): React.ReactElement {
           </div>
         );
       case 'settings':
+        // Open settings panel instead of inline view
+        if (!isSettingsPanelOpen) {
+          setIsSettingsPanelOpen(true);
+        }
         return (
           <div className="flex items-center justify-center h-full text-hive-muted">
-            <p>設定機能は開発中です...</p>
+            <p>Settings opened in modal</p>
           </div>
         );
       default:
@@ -542,6 +549,12 @@ function App(): React.ReactElement {
       <GitPanel
         isOpen={isGitPanelOpen}
         onClose={() => setIsGitPanelOpen(false)}
+      />
+
+      {/* Settings Panel */}
+      <SettingsPanel
+        isOpen={isSettingsPanelOpen}
+        onClose={() => setIsSettingsPanelOpen(false)}
       />
     </div>
   );

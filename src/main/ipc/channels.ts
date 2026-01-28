@@ -36,6 +36,13 @@ export const IPC_CHANNELS = {
   GIT_PUSH: 'git:push',
   GIT_PULL: 'git:pull',
   GIT_LOG: 'git:log',
+
+  // Settings channels
+  SETTINGS_GET: 'settings:get',
+  SETTINGS_UPDATE: 'settings:update',
+  SETTINGS_UPDATE_GIT: 'settings:update-git',
+  SETTINGS_UPDATE_APP: 'settings:update-app',
+  SETTINGS_RESET: 'settings:reset',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
