@@ -183,6 +183,28 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_execution_history_started_at ON execution_history(started_at);
       `,
     },
+    {
+      name: '007_add_task_templates',
+      sql: `
+        -- Task templates table for reusable task patterns
+        CREATE TABLE IF NOT EXISTS task_templates (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          category TEXT,
+          task_data TEXT NOT NULL,
+          subtasks TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          usage_count INTEGER NOT NULL DEFAULT 0
+        );
+
+        -- Create indexes for task_templates
+        CREATE INDEX IF NOT EXISTS idx_task_templates_category ON task_templates(category);
+        CREATE INDEX IF NOT EXISTS idx_task_templates_usage_count ON task_templates(usage_count);
+        CREATE INDEX IF NOT EXISTS idx_task_templates_created_at ON task_templates(created_at);
+      `,
+    },
   ];
 
   const appliedMigrations = database

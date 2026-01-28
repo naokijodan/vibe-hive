@@ -184,6 +184,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('execution:cancelled', listener);
     return () => ipcRenderer.removeListener('execution:cancelled', listener);
   },
+
+  // Template
+  templateCreate: (input: unknown) => ipcRenderer.invoke('template:create', input),
+  templateGet: (id: string) => ipcRenderer.invoke('template:get', id),
+  templateGetAll: () => ipcRenderer.invoke('template:getAll'),
+  templateGetByCategory: (category: string) => ipcRenderer.invoke('template:getByCategory', category),
+  templateGetPopular: (limit?: number) => ipcRenderer.invoke('template:getPopular', limit),
+  templateUpdate: (id: string, updates: unknown) => ipcRenderer.invoke('template:update', id, updates),
+  templateIncrementUsage: (id: string) => ipcRenderer.invoke('template:incrementUsage', id),
+  templateDelete: (id: string) => ipcRenderer.invoke('template:delete', id),
+  templateSearch: (query: string) => ipcRenderer.invoke('template:search', query),
 });
 
 // Type declarations for the exposed API
@@ -285,6 +296,16 @@ export interface ElectronAPI {
   onExecutionStarted: (callback: (data: unknown) => void) => () => void;
   onExecutionCompleted: (callback: (data: unknown) => void) => () => void;
   onExecutionCancelled: (callback: (data: unknown) => void) => () => void;
+  // Template
+  templateCreate: (input: unknown) => Promise<unknown>;
+  templateGet: (id: string) => Promise<unknown>;
+  templateGetAll: () => Promise<unknown[]>;
+  templateGetByCategory: (category: string) => Promise<unknown[]>;
+  templateGetPopular: (limit?: number) => Promise<unknown[]>;
+  templateUpdate: (id: string, updates: unknown) => Promise<unknown>;
+  templateIncrementUsage: (id: string) => Promise<void>;
+  templateDelete: (id: string) => Promise<void>;
+  templateSearch: (query: string) => Promise<unknown[]>;
 }
 
 declare global {

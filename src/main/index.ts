@@ -5,6 +5,7 @@ import { registerPtyHandlers } from './ipc/ptyHandlers';
 import { registerDbHandlers } from './ipc/dbHandlers';
 import { registerAgentHandlers } from './ipc/agentHandlers';
 import { registerExecutionHandlers, executionEngine } from './ipc/executionHandlers';
+import { registerTemplateHandlers } from './ipc/templateHandlers';
 import { ptyService } from './services/PtyService';
 import { agentService } from './services/AgentService';
 import { getDatabase, closeDatabase } from './services/db';
@@ -59,6 +60,7 @@ app.whenReady().then(() => {
   registerDbHandlers();
   registerAgentHandlers();
   registerExecutionHandlers();
+  registerTemplateHandlers();
 
   createWindow();
 

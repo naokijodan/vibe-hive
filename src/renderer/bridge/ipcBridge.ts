@@ -6,6 +6,11 @@ import type {
   StartExecutionRequest,
   StartExecutionResponse,
 } from '../../shared/types/execution';
+import type {
+  TaskTemplate,
+  TaskTemplateCreateInput,
+  TaskTemplateUpdateInput,
+} from '../../shared/types/taskTemplate';
 
 export const ipcBridge = {
   // Session operations
@@ -104,6 +109,28 @@ export const ipcBridge = {
       window.electronAPI.onExecutionCompleted(callback),
     onCancelled: (callback: (execution: ExecutionRecord) => void) =>
       window.electronAPI.onExecutionCancelled(callback),
+  },
+
+  // Template operations
+  template: {
+    create: (input: TaskTemplateCreateInput) =>
+      window.electronAPI.templateCreate(input) as Promise<TaskTemplate>,
+    get: (id: string) =>
+      window.electronAPI.templateGet(id) as Promise<TaskTemplate | null>,
+    getAll: () =>
+      window.electronAPI.templateGetAll() as Promise<TaskTemplate[]>,
+    getByCategory: (category: string) =>
+      window.electronAPI.templateGetByCategory(category) as Promise<TaskTemplate[]>,
+    getPopular: (limit?: number) =>
+      window.electronAPI.templateGetPopular(limit) as Promise<TaskTemplate[]>,
+    update: (id: string, updates: TaskTemplateUpdateInput) =>
+      window.electronAPI.templateUpdate(id, updates) as Promise<TaskTemplate | null>,
+    incrementUsage: (id: string) =>
+      window.electronAPI.templateIncrementUsage(id),
+    delete: (id: string) =>
+      window.electronAPI.templateDelete(id),
+    search: (query: string) =>
+      window.electronAPI.templateSearch(query) as Promise<TaskTemplate[]>,
   },
 };
 
