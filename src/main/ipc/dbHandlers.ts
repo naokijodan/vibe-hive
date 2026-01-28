@@ -1,8 +1,14 @@
 import { ipcMain } from 'electron';
-import { sessionRepository, taskRepository, terminalLogRepository, agentRepository } from '../services/db';
+import { SessionRepository, TaskRepository, TerminalLogRepository, AgentRepository } from '../services/db';
 import type { SessionConfig } from '../../shared/types/session';
 import type { TaskCreateInput, TaskStatus } from '../../shared/types/task';
 import type { AgentConfig, AgentStatus } from '../../shared/types/agent';
+
+// Create repository instances
+const sessionRepository = new SessionRepository();
+const taskRepository = new TaskRepository();
+const terminalLogRepository = new TerminalLogRepository();
+const agentRepository = new AgentRepository();
 
 export function registerDbHandlers(): void {
   // Session handlers

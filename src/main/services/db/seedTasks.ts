@@ -1,6 +1,6 @@
-import { taskRepository } from './TaskRepository';
-import { agentRepository } from './AgentRepository';
-import { sessionRepository } from './SessionRepository';
+import { TaskRepository } from './TaskRepository';
+import { AgentRepository } from './AgentRepository';
+import { SessionRepository } from './SessionRepository';
 import type { TaskCreateInput } from '../../../shared/types/task';
 
 /**
@@ -8,6 +8,10 @@ import type { TaskCreateInput } from '../../../shared/types/task';
  */
 export function seedDemoTasks(): void {
   try {
+    const taskRepository = new TaskRepository();
+    const agentRepository = new AgentRepository();
+    const sessionRepository = new SessionRepository();
+
     // Check if tasks already exist
     const existingTasks = taskRepository.getAll();
     if (existingTasks.length > 0) {

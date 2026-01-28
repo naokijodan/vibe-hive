@@ -1,6 +1,6 @@
 export { getDatabase, closeDatabase } from './Database';
-export { sessionRepository, SessionRepository } from './SessionRepository';
-export { taskRepository, TaskRepository } from './TaskRepository';
-export { terminalLogRepository, TerminalLogRepository } from './TerminalLogRepository';
-export { agentRepository, AgentRepository } from './AgentRepository';
+export { SessionRepository } from './SessionRepository';
+export { TaskRepository } from './TaskRepository';
+export { TerminalLogRepository } from './TerminalLogRepository';
+export { AgentRepository } from './AgentRepository';
 export type { TerminalLog } from './TerminalLogRepository';
