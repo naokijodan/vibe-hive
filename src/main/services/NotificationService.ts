@@ -1,5 +1,5 @@
-import fetch from 'electron-fetch';
 import nodemailer from 'nodemailer';
+import fetch from 'node-fetch';
 
 interface NotificationConfig {
   discordWebhookUrl?: string;

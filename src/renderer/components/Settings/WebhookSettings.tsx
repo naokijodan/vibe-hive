@@ -206,7 +206,7 @@ export const WebhookSettings: React.FC = () => {
             <div className="bg-black p-3 rounded font-mono text-xs text-green-400 overflow-x-auto">
               curl -X POST {webhookUrl}/1 \<br />
               &nbsp;&nbsp;-H "Content-Type: application/json" \<br />
-              &nbsp;&nbsp;-d '{"{'}"key": "value"{'}'}'
+              &nbsp;&nbsp;-d {'\'{"key": "value"}\''}
             </div>
           </div>
         )}
