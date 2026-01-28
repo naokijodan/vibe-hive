@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { GitSettings } from './GitSettings';
 import { AppSettings } from './AppSettings';
+import { WebhookSettings } from './WebhookSettings';
+import { NotificationSettings } from './NotificationSettings';
 
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type Tab = 'git' | 'app' | 'about';
+type Tab = 'git' | 'app' | 'webhook' | 'notification' | 'about';
 
 export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.ReactElement | null {
   const {
@@ -90,7 +92,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
         )}
 
         {/* Tabs */}
-        <div className="flex border-b border-hive-border px-6">
+        <div className="flex border-b border-hive-border px-6 overflow-x-auto">
           <button
             onClick={() => setActiveTab('git')}
             className={`px-4 py-3 text-sm font-medium transition-colors relative ${
@@ -110,6 +112,26 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
             }`}
           >
             App
+          </button>
+          <button
+            onClick={() => setActiveTab('webhook')}
+            className={`px-4 py-3 text-sm font-medium transition-colors relative ${
+              activeTab === 'webhook'
+                ? 'text-hive-accent border-b-2 border-hive-accent'
+                : 'text-hive-muted hover:text-white'
+            }`}
+          >
+            Webhook
+          </button>
+          <button
+            onClick={() => setActiveTab('notification')}
+            className={`px-4 py-3 text-sm font-medium transition-colors relative ${
+              activeTab === 'notification'
+                ? 'text-hive-accent border-b-2 border-hive-accent'
+                : 'text-hive-muted hover:text-white'
+            }`}
+          >
+            Notification
           </button>
           <button
             onClick={() => setActiveTab('about')}
@@ -145,6 +167,8 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
                   isLoading={isLoading}
                 />
               )}
+              {activeTab === 'webhook' && <WebhookSettings />}
+              {activeTab === 'notification' && <NotificationSettings />}
               {activeTab === 'about' && (
                 <div className="space-y-6">
                   <div>

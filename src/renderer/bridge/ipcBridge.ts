@@ -167,6 +167,27 @@ export const ipcBridge = {
     onExecutionCancelled: (callback: (data: { executionId: number }) => void) =>
       window.electronAPI.onWorkflowExecutionCancelled?.(callback),
   },
+
+  // Notification operations
+  notification: {
+    test: (type: 'discord' | 'slack' | 'email') =>
+      window.electronAPI.notificationTest({ type }),
+    setWebhookUrl: (type: 'discord' | 'slack', url: string) =>
+      window.electronAPI.notificationSetWebhookUrl({ type, url }),
+  },
+
+  // Webhook operations
+  webhook: {
+    start: (port?: number) =>
+      window.electronAPI.webhookStart(port ? { port } : undefined),
+    stop: () => window.electronAPI.webhookStop(),
+    status: () =>
+      window.electronAPI.webhookStatus() as Promise<{
+        running: boolean;
+        port?: number;
+        url?: string;
+      }>,
+  },
 };
 
 export default ipcBridge;

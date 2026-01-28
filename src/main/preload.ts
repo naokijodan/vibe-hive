@@ -222,6 +222,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('workflow:execution:cancelled', listener);
     return () => ipcRenderer.removeListener('workflow:execution:cancelled', listener);
   },
+
+  // Notification
+  notificationTest: (params: unknown) => ipcRenderer.invoke('notification:test', params),
+  notificationSetWebhookUrl: (params: unknown) => ipcRenderer.invoke('notification:setWebhookUrl', params),
+
+  // Webhook
+  webhookStart: (params?: unknown) => ipcRenderer.invoke('webhook:start', params),
+  webhookStop: () => ipcRenderer.invoke('webhook:stop'),
+  webhookStatus: () => ipcRenderer.invoke('webhook:status'),
 });
 
 // Type declarations for the exposed API
@@ -347,6 +356,13 @@ export interface ElectronAPI {
   onWorkflowExecutionStarted?: (callback: (data: unknown) => void) => () => void;
   onWorkflowExecutionCompleted?: (callback: (data: unknown) => void) => () => void;
   onWorkflowExecutionCancelled?: (callback: (data: unknown) => void) => () => void;
+  // Notification
+  notificationTest: (params: unknown) => Promise<unknown>;
+  notificationSetWebhookUrl: (params: unknown) => Promise<unknown>;
+  // Webhook
+  webhookStart: (params?: unknown) => Promise<unknown>;
+  webhookStop: () => Promise<unknown>;
+  webhookStatus: () => Promise<unknown>;
 }
 
 declare global {
