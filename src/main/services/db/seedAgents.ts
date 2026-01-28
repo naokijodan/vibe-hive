@@ -10,11 +10,8 @@ export function seedDemoAgents(): void {
     // Check if agents already exist
     const existingAgents = agentRepository.getAll();
     if (existingAgents.length > 0) {
-      console.log('Agents already exist, skipping seed');
       return;
     }
-
-    console.log('Seeding demo agents...');
 
     // Create CEO Agent
     const ceoConfig: AgentConfig = {
@@ -57,8 +54,6 @@ export function seedDemoAgents(): void {
       capabilities: ['testing', 'automation', 'quality-assurance'],
     };
     agentRepository.create(qaConfig);
-
-    console.log('Demo agents seeded successfully');
   } catch (error) {
     console.error('Failed to seed demo agents:', error);
   }

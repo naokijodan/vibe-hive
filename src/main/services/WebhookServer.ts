@@ -64,7 +64,7 @@ export class WebhookServer {
         // Execute workflow asynchronously
         workflowEngine.execute({ workflowId: id, triggerData })
           .then(result => {
-            console.log(`Workflow ${id} executed via webhook:`, result);
+            // Workflow executed successfully
           })
           .catch(error => {
             console.error(`Workflow ${id} execution failed:`, error);
@@ -108,7 +108,6 @@ export class WebhookServer {
       }
 
       this.server = this.app.listen(this.port, () => {
-        console.log(`Webhook server listening on port ${this.port}`);
         resolve();
       });
 
@@ -131,7 +130,6 @@ export class WebhookServer {
       }
 
       this.server.close(() => {
-        console.log('Webhook server stopped');
         this.server = null;
         resolve();
       });

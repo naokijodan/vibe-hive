@@ -15,11 +15,8 @@ export function seedDemoTasks(): void {
     // Check if tasks already exist
     const existingTasks = taskRepository.getAll();
     if (existingTasks.length > 0) {
-      console.log('Tasks already exist, skipping seed');
       return;
     }
-
-    console.log('Seeding demo tasks...');
 
     // Create a demo session first if it doesn't exist
     let demoSession = sessionRepository.getById('demo-session');
@@ -96,8 +93,6 @@ export function seedDemoTasks(): void {
       taskRepository.updateStatus(allTasks[1].id, 'in_progress');
       taskRepository.updateStatus(allTasks[2].id, 'in_progress');
     }
-
-    console.log('Demo tasks seeded successfully');
   } catch (error) {
     console.error('Failed to seed demo tasks:', error);
   }

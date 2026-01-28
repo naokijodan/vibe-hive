@@ -21,14 +21,11 @@ class PtyService {
   create(sessionId: string, cols = 80, rows = 24): string {
     // Check if session already exists
     if (this.sessions.has(sessionId)) {
-      console.log(`PTY session ${sessionId} already exists, reusing`);
       return sessionId;
     }
 
     const shell = '/bin/zsh';
     const home = process.env.HOME || '/Users/' + process.env.USER || '/tmp';
-
-    console.log(`Creating PTY session ${sessionId} with shell ${shell}, cwd: ${home}`);
 
     const ptyProcess = pty.spawn(shell, ['--login'], {
       name: 'xterm-256color',
@@ -56,7 +53,6 @@ class PtyService {
 
     // Handle exit
     ptyProcess.onExit(({ exitCode }) => {
-      console.log(`PTY session ${sessionId} exited with code ${exitCode}`);
       this.sessions.delete(sessionId);
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {
         this.mainWindow.webContents.send('pty:exit', sessionId, exitCode);

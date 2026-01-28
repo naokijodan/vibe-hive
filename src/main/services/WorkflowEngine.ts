@@ -599,8 +599,6 @@ ${JSON.stringify(nodeResults, null, 2)}
         status: 'todo',
         priority: 'medium',
       });
-
-      console.log(`Task auto-created from workflow ${workflow.id} execution ${execution.id}`);
     } catch (error) {
       console.error('Failed to auto-create task from workflow execution:', error);
       // Don't throw - task creation failure shouldn't fail the workflow

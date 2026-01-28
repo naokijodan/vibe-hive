@@ -152,6 +152,4 @@ export function registerDbHandlers(): void {
   ipcMain.handle('db:agent:delete', (_event, id: string) => {
     return agentRepository.delete(id);
   });
-
-  console.log('Database IPC handlers registered');
 }

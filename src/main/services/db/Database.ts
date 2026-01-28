@@ -37,7 +37,6 @@ export function getDatabase(): Database.Database {
   //   }
   // }, 100);
 
-  console.log(`Database initialized at: ${dbPath}`);
   return db;
 }
 
@@ -258,10 +257,8 @@ function runMigrations(database: Database.Database): void {
 
   for (const migration of migrations) {
     if (!appliedNames.has(migration.name)) {
-      console.log(`Running migration: ${migration.name}`);
       database.exec(migration.sql);
       database.prepare('INSERT INTO migrations (name) VALUES (?)').run(migration.name);
-      console.log(`Migration ${migration.name} applied successfully`);
     }
   }
 }
@@ -270,6 +267,5 @@ export function closeDatabase(): void {
   if (db) {
     db.close();
     db = null;
-    console.log('Database closed');
   }
 }

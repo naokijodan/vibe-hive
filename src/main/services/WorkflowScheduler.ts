@@ -20,8 +20,6 @@ export class WorkflowScheduler {
    * Initialize scheduler and load all active scheduled workflows
    */
   async initialize(): Promise<void> {
-    console.log('Initializing workflow scheduler...');
-
     const workflows = this.repository.findAll();
     const activeWorkflows = workflows.filter(w => w.status === 'active');
 
@@ -39,8 +37,6 @@ export class WorkflowScheduler {
         console.warn(`Invalid cron expression for workflow ${workflow.id}: ${cronExpression}`);
       }
     }
-
-    console.log(`Scheduled ${this.scheduledJobs.size} workflows`);
   }
 
   /**
@@ -57,7 +53,6 @@ export class WorkflowScheduler {
     const task = cron.schedule(
       cronExpression,
       async () => {
-        console.log(`Executing scheduled workflow ${workflowId}`);
         try {
           const engine = getWorkflowEngine();
           await engine.execute({ workflowId });
@@ -76,8 +71,6 @@ export class WorkflowScheduler {
       cronExpression,
       task,
     });
-
-    console.log(`Scheduled workflow ${workflowId} with cron: ${cronExpression}`);
   }
 
   /**
@@ -88,7 +81,6 @@ export class WorkflowScheduler {
     if (job) {
       job.task.stop();
       this.scheduledJobs.delete(workflowId);
-      console.log(`Unscheduled workflow ${workflowId}`);
     }
   }
 
@@ -114,7 +106,6 @@ export class WorkflowScheduler {
    * Stop all scheduled jobs
    */
   stopAll(): void {
-    console.log(`Stopping ${this.scheduledJobs.size} scheduled workflows`);
     this.scheduledJobs.forEach(job => job.task.stop());
     this.scheduledJobs.clear();
   }

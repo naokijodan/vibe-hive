@@ -16,7 +16,6 @@ class SessionService {
 
   createSession(config: SessionConfig): Session {
     const session = this.repository.create(config);
-    console.log(`Session created: ${session.id} - ${session.name}`);
     return session;
   }
 
@@ -29,7 +28,6 @@ class SessionService {
   }
 
   deleteSession(id: string): void {
-    console.log(`Deleting session: ${id}`);
     this.repository.delete(id);
     
     // アクティブセッションが削除された場合
@@ -44,7 +42,6 @@ class SessionService {
       throw new Error(`Session not found: ${id}`);
     }
 
-    console.log(`Switching to session: ${id} - ${session.name}`);
     this.repository.setActive(id);
     this.activeSessionId = id;
 
