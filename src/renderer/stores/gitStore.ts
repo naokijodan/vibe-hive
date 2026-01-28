@@ -31,7 +31,7 @@ interface GitStore {
 export const useGitStore = create<GitStore>((set, get) => ({
   status: null,
   isLoading: false,
-  repoPath: process.cwd(),
+  repoPath: '', // Will be set from session working directory
   autoRefresh: false,
   error: null,
 

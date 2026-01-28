@@ -13,7 +13,7 @@
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "vite build",
     "start": "electron .",
-    "electron:dev": "wait-on http://localhost:5173 && electron .",
+    "electron:dev": "wait-on http://localhost:5173 && NODE_ENV=development electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps",
