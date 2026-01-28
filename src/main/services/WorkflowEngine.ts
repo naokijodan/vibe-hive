@@ -214,9 +214,11 @@ export class WorkflowEngine {
           return { success: false, error: `Unknown node type: ${node.type}` };
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const nodeName = node.data.label || node.type || 'Unknown';
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: `Error in node "${nodeName}" (${node.type}): ${errorMessage}`,
       };
     }
   }
@@ -227,7 +229,7 @@ export class WorkflowEngine {
   private async executeTaskNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
     const taskId = node.data.taskId;
     if (!taskId) {
-      return { success: false, error: 'Task ID not specified' };
+      return { success: false, error: 'Task node error: Task ID not specified. Please select a task in node settings.' };
     }
 
     const executionEngine = getExecutionEngine();
@@ -272,7 +274,7 @@ export class WorkflowEngine {
     } else if (node.data.condition) {
       result = this.evaluateSimpleCondition(node.data.condition, input);
     } else {
-      return { success: false, error: 'Condition not specified' };
+      return { success: false, error: 'Conditional node error: No condition specified. Please configure the condition in node settings.' };
     }
 
     return {
@@ -402,7 +404,7 @@ export class WorkflowEngine {
         const array = this.getFieldValue(context.input, arrayPath);
 
         if (!Array.isArray(array)) {
-          return { success: false, error: `Field '${arrayPath}' is not an array` };
+          return { success: false, error: `Loop node error: Field '${arrayPath}' is not an array. Expected an array for forEach iteration.` };
         }
 
         for (let i = 0; i < array.length && i < maxIterations; i++) {
@@ -424,7 +426,7 @@ export class WorkflowEngine {
         // While: conditional loop
         const condition = loopConfig.condition;
         if (!condition) {
-          return { success: false, error: 'While loop condition not specified' };
+          return { success: false, error: 'Loop node error: While loop condition not specified. Please configure the loop condition in node settings.' };
         }
 
         let shouldContinue = true;
@@ -466,7 +468,7 @@ export class WorkflowEngine {
   private async executeSubworkflowNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
     const subworkflowConfig = node.data.subworkflowConfig;
     if (!subworkflowConfig) {
-      return { success: false, error: 'Subworkflow configuration not specified' };
+      return { success: false, error: 'Subworkflow node error: Subworkflow not selected. Please select a subworkflow in node settings.' };
     }
 
     const { workflowId, inputMapping, outputMapping } = subworkflowConfig;
@@ -474,7 +476,7 @@ export class WorkflowEngine {
     // Get the target workflow
     const targetWorkflow = this.repository.findById(workflowId);
     if (!targetWorkflow) {
-      return { success: false, error: `Workflow ${workflowId} not found` };
+      return { success: false, error: `Subworkflow node error: Workflow with ID ${workflowId} not found. The workflow may have been deleted.` };
     }
 
     try {

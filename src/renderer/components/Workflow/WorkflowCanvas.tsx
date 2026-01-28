@@ -19,6 +19,7 @@ import { NodeSettingsPanel } from './settings/NodeSettingsPanel';
 import { WorkflowSettingsModal } from './WorkflowSettingsModal';
 import { useWorkflowStore } from '../../stores/workflowStore';
 import { ipcBridge } from '../../bridge/ipcBridge';
+import { useToast } from '../../hooks/useToast';
 import type { NodeType, WorkflowNodeData } from '../../../shared/types/workflow';
 
 const nodeTypes: NodeTypes = {
@@ -42,6 +43,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<Node<WorkflowNodeData> | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const toast = useToast();
 
   const {
     currentWorkflow,
@@ -131,76 +133,99 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
 
   const handleSave = async () => {
     if (currentWorkflow) {
-      await saveCurrentWorkflow();
-      alert('Workflow saved!');
+      const loadingToast = toast.loading('Saving workflow...');
+      try {
+        await saveCurrentWorkflow();
+        toast.dismiss(loadingToast);
+        toast.success('Workflow saved successfully!');
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        toast.error('Failed to save workflow');
+        console.error('Save error:', error);
+      }
     } else {
-      alert('No workflow selected');
+      toast.warning('No workflow selected');
     }
   };
 
   const handleExecute = async () => {
     if (!currentWorkflow) {
-      alert('No workflow selected');
+      toast.warning('No workflow selected');
       return;
     }
 
     if (isExecuting) {
-      alert('Workflow is already executing');
+      toast.warning('Workflow is already executing');
       return;
     }
 
-    const result = await executeWorkflow(currentWorkflow.id);
-    if (result) {
-      if (result.status === 'success') {
-        alert('Workflow executed successfully!');
-      } else {
-        alert(`Workflow execution failed: ${result.error}`);
+    const loadingToast = toast.loading('Executing workflow...');
+    try {
+      const result = await executeWorkflow(currentWorkflow.id);
+      toast.dismiss(loadingToast);
+
+      if (result) {
+        if (result.status === 'success') {
+          toast.success('Workflow executed successfully!');
+        } else {
+          toast.error(`Workflow execution failed: ${result.error || 'Unknown error'}`);
+        }
       }
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error('Failed to execute workflow');
+      console.error('Execution error:', error);
     }
   };
 
   const handleExport = async () => {
     if (!currentWorkflow) {
-      alert('No workflow selected');
+      toast.warning('No workflow selected');
       return;
     }
 
     try {
       const result = await ipcBridge.workflow.export(currentWorkflow.id);
       if (result.success && result.filePath) {
-        alert(`Workflow exported successfully to:\n${result.filePath}`);
+        toast.success(`Workflow exported to: ${result.filePath}`);
       } else if (result.canceled) {
         // User cancelled the dialog, do nothing
       } else {
-        alert('Failed to export workflow');
+        toast.error('Failed to export workflow');
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const handleImport = async () => {
     if (!currentWorkflow) {
-      alert('No workflow selected. Please select or create a workflow first.');
+      toast.warning('No workflow selected. Please select or create a workflow first.');
       return;
     }
 
+    const loadingToast = toast.loading('Importing workflow...');
     try {
       const sessionId = currentWorkflow.sessionId;
       const result = await ipcBridge.workflow.import(sessionId);
+      toast.dismiss(loadingToast);
+
       if (result.success && result.workflow) {
-        alert(`Workflow "${result.workflow.name}" imported successfully!`);
+        toast.success(`Workflow "${result.workflow.name}" imported successfully!`);
         // Optionally reload workflows here
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else if (result.canceled) {
         // User cancelled the dialog, do nothing
       } else {
-        alert('Failed to import workflow');
+        toast.error('Failed to import workflow');
       }
     } catch (error) {
+      toast.dismiss(loadingToast);
       console.error('Import error:', error);
-      alert(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

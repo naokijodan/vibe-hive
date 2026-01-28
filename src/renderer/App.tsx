@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { KanbanBoard } from './components/Kanban';
 import { TerminalPanel, TerminalTabs, AgentOutputPanel } from './components/Terminal';
 import { OrgChart } from './components/Organization';
@@ -369,9 +370,21 @@ function App(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-hive-bg text-hive-text">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-hive-border bg-hive-surface flex flex-col">
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            border: '1px solid #374151',
+          },
+        }}
+      />
+      <div className="flex h-screen w-screen bg-hive-bg text-hive-text">
+        {/* Sidebar */}
+        <aside className="w-64 border-r border-hive-border bg-hive-surface flex flex-col">
         <div className="p-4 border-b border-hive-border drag-region" style={{ paddingTop: '28px' }}>
           <h1 className="text-xl font-bold text-hive-accent flex items-center gap-2 no-drag">
             <span>🐝</span> Vibe Hive
@@ -632,7 +645,8 @@ function App(): React.ReactElement {
         isOpen={isSettingsPanelOpen}
         onClose={handleCloseSettings}
       />
-    </div>
+      </div>
+    </>
   );
 }
 
