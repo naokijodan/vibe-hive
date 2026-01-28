@@ -60,6 +60,11 @@ function App(): React.ReactElement {
   const [isGitPanelOpen, setIsGitPanelOpen] = useState(false);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
   const [selectedTaskForDependencies, setSelectedTaskForDependencies] = useState<string | null>(null);
+
+  // Memoized close handler for settings panel
+  const handleCloseSettings = useCallback(() => {
+    setIsSettingsPanelOpen(false);
+  }, []);
   const [selectedExecution, setSelectedExecution] = useState<ExecutionRecord | null>(null);
 
   // Get tasks that are currently running (in_progress)
@@ -621,7 +626,7 @@ function App(): React.ReactElement {
       {/* Settings Panel */}
       <SettingsPanel
         isOpen={isSettingsPanelOpen}
-        onClose={() => setIsSettingsPanelOpen(false)}
+        onClose={handleCloseSettings}
       />
     </div>
   );

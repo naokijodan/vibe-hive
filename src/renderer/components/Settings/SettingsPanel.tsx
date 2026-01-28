@@ -23,14 +23,20 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
   } = useSettingsStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('git');
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setIsVisible(true);
       loadSettings();
+    } else {
+      setIsVisible(false);
     }
-  }, [isOpen, loadSettings]);
+  }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   const handleResetAll = async () => {
     if (confirm('Are you sure you want to reset all settings to defaults?')) {
@@ -38,10 +44,20 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
     }
   };
 
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+    }, 100);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="bg-hive-bg border border-hive-border rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col"
@@ -51,7 +67,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
         <div className="flex items-center justify-between px-6 py-4 border-b border-hive-border">
           <h2 className="text-xl font-semibold text-white">Settings</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-hive-muted hover:text-white transition-colors"
           >
             ✕
@@ -205,7 +221,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
         {/* Footer */}
         <div className="border-t border-hive-border px-6 py-4 flex items-center justify-end">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-6 py-2 bg-hive-surface text-white font-medium rounded-md hover:bg-hive-surface/80 transition-colors text-sm"
           >
             Close
