@@ -10,6 +10,7 @@ import { TaskDependencyTree } from './components/TaskDependencyTree';
 import { HistoryView } from './components/HistoryView';
 import { ExecutionPanel } from './components/Execution/ExecutionPanel';
 import { ExecutionLog } from './components/Execution/ExecutionLog';
+import { WorkflowCanvas } from './components/Workflow/WorkflowCanvas';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -18,7 +19,7 @@ import { useExecutionStore } from './stores/executionStore';
 import { useCommandPalette } from './hooks/useCommandPalette';
 import type { ExecutionRecord } from '../shared/types/execution';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -350,6 +351,8 @@ function App(): React.ReactElement {
         );
       case 'history':
         return <HistoryView />;
+      case 'workflow':
+        return <WorkflowCanvas />;
       case 'settings':
         // Open settings panel instead of inline view
         if (!isSettingsPanelOpen) {
@@ -381,6 +384,7 @@ function App(): React.ReactElement {
             {renderNavButton('organization', '🏢', '組織構造')}
             {renderNavButton('dependencies', '🔗', '依存関係')}
             {renderNavButton('execution', '⚙', '実行管理')}
+            {renderNavButton('workflow', '🔄', 'ワークフロー')}
             {renderNavButton('history', '📜', '履歴')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>

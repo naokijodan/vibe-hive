@@ -6,6 +6,7 @@ import { registerDbHandlers } from './ipc/dbHandlers';
 import { registerAgentHandlers } from './ipc/agentHandlers';
 import { registerExecutionHandlers, executionEngine } from './ipc/executionHandlers';
 import { registerTemplateHandlers } from './ipc/templateHandlers';
+import { registerWorkflowHandlers, workflowEngine } from './ipc/workflowHandlers';
 import { ptyService } from './services/PtyService';
 import { agentService } from './services/AgentService';
 import { getDatabase, closeDatabase } from './services/db';
@@ -61,14 +62,16 @@ app.whenReady().then(() => {
   registerAgentHandlers();
   registerExecutionHandlers();
   registerTemplateHandlers();
+  registerWorkflowHandlers();
 
   createWindow();
 
-  // Set main window for PTY service, Agent service, and Execution engine
+  // Set main window for PTY service, Agent service, Execution engine, and Workflow engine
   if (mainWindow) {
     ptyService.setMainWindow(mainWindow);
     agentService.setMainWindow(mainWindow);
     executionEngine.setMainWindow(mainWindow);
+    workflowEngine.setMainWindow(mainWindow);
   }
 
   app.on('activate', () => {
@@ -78,6 +81,7 @@ app.whenReady().then(() => {
         ptyService.setMainWindow(mainWindow);
         agentService.setMainWindow(mainWindow);
         executionEngine.setMainWindow(mainWindow);
+        workflowEngine.setMainWindow(mainWindow);
       }
     }
   });

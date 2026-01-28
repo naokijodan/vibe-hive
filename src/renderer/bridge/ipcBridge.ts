@@ -11,6 +11,14 @@ import type {
   TaskTemplateCreateInput,
   TaskTemplateUpdateInput,
 } from '../../shared/types/taskTemplate';
+import type {
+  Workflow,
+  WorkflowExecution,
+  CreateWorkflowParams,
+  UpdateWorkflowParams,
+  ExecuteWorkflowParams,
+  WorkflowExecutionResult,
+} from '../../shared/types/workflow';
 
 export const ipcBridge = {
   // Session operations
@@ -131,6 +139,33 @@ export const ipcBridge = {
       window.electronAPI.templateDelete(id),
     search: (query: string) =>
       window.electronAPI.templateSearch(query) as Promise<TaskTemplate[]>,
+  },
+
+  // Workflow operations
+  workflow: {
+    create: (params: CreateWorkflowParams) =>
+      window.electronAPI.workflowCreate(params) as Promise<Workflow>,
+    update: (params: UpdateWorkflowParams) =>
+      window.electronAPI.workflowUpdate(params) as Promise<Workflow>,
+    delete: (id: number) => window.electronAPI.workflowDelete(id),
+    getById: (id: number) =>
+      window.electronAPI.workflowGetById(id) as Promise<Workflow | null>,
+    getAll: () => window.electronAPI.workflowGetAll() as Promise<Workflow[]>,
+    getBySession: (sessionId: number) =>
+      window.electronAPI.workflowGetBySession(sessionId) as Promise<Workflow[]>,
+    execute: (params: ExecuteWorkflowParams) =>
+      window.electronAPI.workflowExecute(params) as Promise<WorkflowExecutionResult>,
+    cancel: (executionId: number) => window.electronAPI.workflowCancel(executionId),
+    getExecution: (executionId: number) =>
+      window.electronAPI.workflowGetExecution(executionId) as Promise<WorkflowExecution | null>,
+    getExecutions: (workflowId: number) =>
+      window.electronAPI.workflowGetExecutions(workflowId) as Promise<WorkflowExecution[]>,
+    onExecutionStarted: (callback: (data: { executionId: number; workflowId: number }) => void) =>
+      window.electronAPI.onWorkflowExecutionStarted?.(callback),
+    onExecutionCompleted: (callback: (data: { executionId: number; status: string; error?: string }) => void) =>
+      window.electronAPI.onWorkflowExecutionCompleted?.(callback),
+    onExecutionCancelled: (callback: (data: { executionId: number }) => void) =>
+      window.electronAPI.onWorkflowExecutionCancelled?.(callback),
   },
 };
 

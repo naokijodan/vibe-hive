@@ -195,6 +195,33 @@ contextBridge.exposeInMainWorld('electronAPI', {
   templateIncrementUsage: (id: string) => ipcRenderer.invoke('template:incrementUsage', id),
   templateDelete: (id: string) => ipcRenderer.invoke('template:delete', id),
   templateSearch: (query: string) => ipcRenderer.invoke('template:search', query),
+
+  // Workflow
+  workflowCreate: (params: unknown) => ipcRenderer.invoke('workflow:create', params),
+  workflowUpdate: (params: unknown) => ipcRenderer.invoke('workflow:update', params),
+  workflowDelete: (id: number) => ipcRenderer.invoke('workflow:delete', id),
+  workflowGetById: (id: number) => ipcRenderer.invoke('workflow:getById', id),
+  workflowGetAll: () => ipcRenderer.invoke('workflow:getAll'),
+  workflowGetBySession: (sessionId: number) => ipcRenderer.invoke('workflow:getBySession', sessionId),
+  workflowExecute: (params: unknown) => ipcRenderer.invoke('workflow:execute', params),
+  workflowCancel: (executionId: number) => ipcRenderer.invoke('workflow:cancel', executionId),
+  workflowGetExecution: (executionId: number) => ipcRenderer.invoke('workflow:getExecution', executionId),
+  workflowGetExecutions: (workflowId: number) => ipcRenderer.invoke('workflow:getExecutions', workflowId),
+  onWorkflowExecutionStarted: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('workflow:execution:started', listener);
+    return () => ipcRenderer.removeListener('workflow:execution:started', listener);
+  },
+  onWorkflowExecutionCompleted: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('workflow:execution:completed', listener);
+    return () => ipcRenderer.removeListener('workflow:execution:completed', listener);
+  },
+  onWorkflowExecutionCancelled: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('workflow:execution:cancelled', listener);
+    return () => ipcRenderer.removeListener('workflow:execution:cancelled', listener);
+  },
 });
 
 // Type declarations for the exposed API
@@ -306,6 +333,20 @@ export interface ElectronAPI {
   templateIncrementUsage: (id: string) => Promise<void>;
   templateDelete: (id: string) => Promise<void>;
   templateSearch: (query: string) => Promise<unknown[]>;
+  // Workflow
+  workflowCreate: (params: unknown) => Promise<unknown>;
+  workflowUpdate: (params: unknown) => Promise<unknown>;
+  workflowDelete: (id: number) => Promise<void>;
+  workflowGetById: (id: number) => Promise<unknown>;
+  workflowGetAll: () => Promise<unknown[]>;
+  workflowGetBySession: (sessionId: number) => Promise<unknown[]>;
+  workflowExecute: (params: unknown) => Promise<unknown>;
+  workflowCancel: (executionId: number) => Promise<void>;
+  workflowGetExecution: (executionId: number) => Promise<unknown>;
+  workflowGetExecutions: (workflowId: number) => Promise<unknown[]>;
+  onWorkflowExecutionStarted?: (callback: (data: unknown) => void) => () => void;
+  onWorkflowExecutionCompleted?: (callback: (data: unknown) => void) => () => void;
+  onWorkflowExecutionCancelled?: (callback: (data: unknown) => void) => () => void;
 }
 
 declare global {
