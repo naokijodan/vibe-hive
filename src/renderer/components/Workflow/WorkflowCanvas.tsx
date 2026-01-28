@@ -10,10 +10,12 @@ import {
   Connection,
   NodeTypes,
   Panel,
+  type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { TaskNode, TriggerNode, ConditionalNode } from './nodes';
 import { NodePalette } from './NodePalette';
+import { NodeSettingsPanel } from './settings/NodeSettingsPanel';
 import { useWorkflowStore } from '../../stores/workflowStore';
 import type { NodeType, WorkflowNodeData } from '../../../shared/types/workflow';
 
@@ -30,6 +32,7 @@ interface WorkflowCanvasProps {
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette = false }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [selectedNode, setSelectedNode] = useState<Node<WorkflowNodeData> | null>(null);
 
   const {
     currentWorkflow,
@@ -147,6 +150,13 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
     }
   };
 
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node<WorkflowNodeData>) => {
+      setSelectedNode(node);
+    },
+    []
+  );
+
   // Show empty state if no workflow selected
   if (!currentWorkflow) {
     return (
@@ -176,6 +186,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
           onInit={setReactFlowInstance}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          onNodeClick={handleNodeClick}
           nodeTypes={nodeTypes}
           fitView
           className="bg-gray-900"
@@ -235,6 +246,13 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
           </Panel>
         </ReactFlow>
       </div>
+
+      {selectedNode && (
+        <NodeSettingsPanel
+          selectedNode={selectedNode}
+          onClose={() => setSelectedNode(null)}
+        />
+      )}
     </div>
   );
 };
