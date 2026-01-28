@@ -7,6 +7,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { GitPanel } from './components/Git/GitPanel';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
 import { TaskDependencyTree } from './components/TaskDependencyTree';
+import { HistoryView } from './components/HistoryView';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -325,11 +326,7 @@ function App(): React.ReactElement {
           </div>
         );
       case 'history':
-        return (
-          <div className="flex items-center justify-center h-full text-hive-muted">
-            <p>履歴機能は開発中です...</p>
-          </div>
-        );
+        return <HistoryView />;
       case 'settings':
         // Open settings panel instead of inline view
         if (!isSettingsPanelOpen) {
