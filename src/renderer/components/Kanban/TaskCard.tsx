@@ -5,6 +5,7 @@ import { Task, AgentStatus } from '../../../shared/types';
 import { useAgentStore } from '../../stores/agentStore';
 import { useTaskStore } from '../../stores/taskStore';
 import { useExecutionStore } from '../../stores/executionStore';
+import { useTemplateStore } from '../../stores/templateStore';
 import ipcBridge from '../../bridge/ipcBridge';
 
 interface TaskCardProps {
@@ -51,17 +52,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
   const { agents, assignTaskToAgent } = useAgentStore();
   const { updateTask, updateTaskStatus, tasks, checkDependencies, setReviewFeedback, createSubtasks, setDependencies } = useTaskStore();
   const { startExecution, runningExecutions } = useExecutionStore();
+  const { createTemplate } = useTemplateStore();
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showSubtaskModal, setShowSubtaskModal] = useState(false);
   const [showDependencyModal, setShowDependencyModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [subtaskText, setSubtaskText] = useState('');
   const [roleText, setRoleText] = useState(task.role || '');
   const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task.dependsOn || []);
   const [depInfo, setDepInfo] = useState<DependencyInfo | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [templateCategory, setTemplateCategory] = useState('');
 
   // Check dependencies on mount and when task changes
   useEffect(() => {
@@ -127,6 +133,43 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
     e.stopPropagation();
     await updateTask(task.id, { role: roleText.trim() || undefined });
     setShowRoleModal(false);
+  };
+
+  // Handle save as template
+  const handleSaveAsTemplate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!templateName.trim()) {
+      alert('テンプレート名は必須です');
+      return;
+    }
+
+    try {
+      await createTemplate({
+        name: templateName.trim(),
+        description: templateDescription.trim() || undefined,
+        category: templateCategory.trim() || undefined,
+        taskData: {
+          title: task.title,
+          description: task.description,
+          priority: task.priority,
+          status: 'todo', // Reset status to todo for template
+          role: task.role,
+        },
+        subtasks: task.subtasks?.map((st) => ({
+          title: st.title,
+          description: st.description,
+        })),
+      });
+
+      setTemplateName('');
+      setTemplateDescription('');
+      setTemplateCategory('');
+      setShowSaveTemplateModal(false);
+      alert('テンプレートを保存しました');
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      alert('テンプレートの保存に失敗しました');
+    }
   };
 
   // Handle start execution
@@ -414,6 +457,21 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
         >
           🔗 依存
         </button>
+
+        {/* Save as Template button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setTemplateName(task.title);
+            setTemplateDescription(task.description || '');
+            setTemplateCategory('');
+            setShowSaveTemplateModal(true);
+          }}
+          className="text-[10px] px-1.5 py-0.5 bg-purple-900/50 text-purple-300 rounded hover:bg-purple-800/50 transition-colors"
+          title="テンプレートとして保存"
+        >
+          💾 保存
+        </button>
       </div>
 
       {/* Feedback Modal */}
@@ -605,6 +663,77 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
               <button
                 onClick={handleRoleSubmit}
                 className="px-3 py-1.5 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-500 transition-colors"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save as Template Modal */}
+      {showSaveTemplateModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowSaveTemplateModal(false);
+          }}
+        >
+          <div
+            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-[500px] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-white font-medium mb-3">💾 テンプレートとして保存</h3>
+            <p className="text-hive-muted text-xs mb-3">
+              このタスクをテンプレートとして保存し、後で再利用できます
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-hive-muted mb-1">
+                  テンプレート名 *
+                </label>
+                <input
+                  type="text"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="テンプレート名を入力"
+                  className="w-full bg-hive-bg border border-hive-border rounded p-2 text-white text-sm focus:outline-none focus:border-hive-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-hive-muted mb-1">説明</label>
+                <textarea
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  placeholder="テンプレートの説明（オプション）"
+                  className="w-full h-20 bg-hive-bg border border-hive-border rounded p-2 text-white text-sm resize-none focus:outline-none focus:border-hive-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-hive-muted mb-1">カテゴリ</label>
+                <input
+                  type="text"
+                  value={templateCategory}
+                  onChange={(e) => setTemplateCategory(e.target.value)}
+                  placeholder="例：フロントエンド, バックエンド"
+                  className="w-full bg-hive-bg border border-hive-border rounded p-2 text-white text-sm focus:outline-none focus:border-hive-accent"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSaveTemplateModal(false);
+                }}
+                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveAsTemplate}
+                className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-500 transition-colors"
               >
                 保存
               </button>

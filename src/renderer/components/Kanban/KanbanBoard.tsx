@@ -13,6 +13,7 @@ import {
 import { Task, TaskStatus, TaskPriority } from '../../../shared/types';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskCard } from './TaskCard';
+import { TemplateBrowser } from '../Template';
 import { useTaskStore } from '../../stores/taskStore';
 import ipcBridge from '../../bridge/ipcBridge';
 
@@ -47,6 +48,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('medium');
   const [showOnlyReady, setShowOnlyReady] = useState(false);
   const [readyTaskIds, setReadyTaskIds] = useState<Set<string>>(new Set());
+  const [showTemplateBrowser, setShowTemplateBrowser] = useState(false);
   const { createTask } = useTaskStore();
 
   const sensors = useSensors(
@@ -148,6 +150,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             title="実行準備完了タスクのみ表示"
           >
             {showOnlyReady ? '✓ Ready のみ' : 'すべて表示'}
+          </button>
+          <button
+            onClick={() => setShowTemplateBrowser(true)}
+            className="px-4 py-2 bg-purple-600 text-white font-medium rounded hover:bg-purple-500 text-sm"
+            title="テンプレートから作成"
+          >
+            📋 テンプレート
           </button>
           <button
             onClick={() => setIsAddingTask(true)}
@@ -252,6 +261,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </DragOverlay>
         </DndContext>
       </div>
+
+      {/* Template Browser */}
+      <TemplateBrowser
+        isOpen={showTemplateBrowser}
+        onClose={() => setShowTemplateBrowser(false)}
+        sessionId={tasks.length > 0 ? tasks[0].sessionId : 'default-session'}
+      />
     </div>
   );
 };
