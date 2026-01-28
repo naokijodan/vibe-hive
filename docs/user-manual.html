@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Hive ユーザーマニュアル</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-surface: #1a1a1a;
+            --bg-hover: #2a2a2a;
+            --border: #333;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666;
+            --accent: #fbbf24;
+            --accent-dark: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header .tagline {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        nav {
+            position: sticky;
+            top: 0;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-size: 0.95rem;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 80px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem;
+            color: var(--text-primary);
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .feature-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        code {
+            background: var(--bg-hover);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            color: var(--accent);
+        }
+
+        pre {
+            background: var(--bg-hover);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-primary);
+        }
+
+        ol, ul {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .badge-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+        }
+
+        .steps {
+            counter-reset: step;
+        }
+
+        .step {
+            position: relative;
+            padding-left: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--accent);
+            color: var(--bg-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .step-title {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-desc {
+            color: var(--text-secondary);
+        }
+
+        .shortcut-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .shortcut-table th,
+        .shortcut-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .shortcut-table th {
+            background: var(--bg-surface);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .shortcut-table td:first-child {
+            font-family: 'Monaco', 'Menlo', monospace;
+            color: var(--accent);
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 0;
+            border-top: 2px solid var(--border);
+            margin-top: 4rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐝 Vibe Hive</h1>
+            <p class="tagline">"Vibe with your AI swarm"</p>
+            <p style="margin-top: 1rem; color: var(--text-secondary);">AIエージェント並列作業環境 - 完全ユーザーマニュアル</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">概要</a></li>
+                <li><a href="#installation">インストール</a></li>
+                <li><a href="#getting-started">はじめに</a></li>
+                <li><a href="#features">機能一覧</a></li>
+                <li><a href="#kanban">Kanban</a></li>
+                <li><a href="#organization">組織構造</a></li>
+                <li><a href="#templates">テンプレート</a></li>
+                <li><a href="#execution">実行管理</a></li>
+                <li><a href="#git">Git統合</a></li>
+                <li><a href="#settings">設定</a></li>
+                <li><a href="#shortcuts">ショートカット</a></li>
+                <li><a href="#troubleshooting">トラブルシューティング</a></li>
+            </ul>
+        </nav>
+
+        <!-- 概要 -->
+        <section id="overview">
+            <h2>📖 概要</h2>
+            <p>
+                <strong>Vibe Hive</strong>は、複数のAIエージェント（Claude Code、Codex CLI）やターミナルを
+                1つの画面で統合管理できるElectronアプリケーションです。
+            </p>
+            <p>
+                Kanbanボードでタスクを管理し、それぞれのタスクを独立したAIエージェントやターミナルで並列実行できます。
+                組織構造の可視化、タスクテンプレート、実行履歴、Git統合など、開発作業を効率化する多数の機能を備えています。
+            </p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <div class="feature-title">Kanban UI</div>
+                    <div class="feature-desc">ドラッグ&ドロップでタスク管理。優先度・ステータスを可視化</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-title">マルチエージェント</div>
+                    <div class="feature-desc">複数のAIエージェントを並列実行し、リアルタイムで出力を表示</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <div class="feature-title">組織構造</div>
+                    <div class="feature-desc">React Flowでエージェント階層を可視化・管理</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <div class="feature-title">タスクテンプレート</div>
+                    <div class="feature-desc">よく使うタスクをテンプレート化して再利用</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📜</div>
+                    <div class="feature-title">実行履歴</div>
+                    <div class="feature-desc">全タスクの実行ログを永続化・検索可能</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">Git統合</div>
+                    <div class="feature-desc">アプリ内でGit操作（status、add、commit、push）</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- インストール -->
+        <section id="installation">
+            <h2>⚙️ インストール</h2>
+
+            <h3>前提条件</h3>
+            <ul>
+                <li><strong>macOS</strong>（Apple Silicon推奨、Intel対応）</li>
+                <li><strong>Node.js 20+</strong></li>
+                <li><strong>Claude Code</strong> または <strong>Codex CLI</strong></li>
+            </ul>
+
+            <h3>インストール手順</h3>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-title">リポジトリをクローン</div>
+                    <div class="step-desc">
+                        <pre><code>git clone https://github.com/naokijodan/vibe-hive.git
+cd vibe-hive</code></pre>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">依存関係をインストール</div>
+                    <div class="step-desc">
+                        <pre><code>npm install</code></pre>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">開発サーバーを起動</div>
+                    <div class="step-desc">
+                        <pre><code>npm run dev</code></pre>
+                        <p>別のターミナルで：</p>
+                        <pre><code>npm run electron:dev</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>ℹ️ ヒント：</strong> プロダクションビルドを作成する場合は <code>npm run build</code> を実行し、
+                <code>npm run dist</code> でインストーラーを生成できます。
+            </div>
+        </section>
+
+        <!-- はじめに -->
+        <section id="getting-started">
+            <h2>🚀 はじめに</h2>
+
+            <h3>初回起動</h3>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-title">セッションを作成</div>
+                    <div class="step-desc">
+                        画面右下の「<strong>+ 新規セッション</strong>」ボタンをクリックし、プロジェクト名を入力します。
+                        セッションは独立したプロジェクト空間で、タスクやエージェントを管理する単位です。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">タスクを作成</div>
+                    <div class="step-desc">
+                        Kanbanボードの「<strong>+ 新規タスク</strong>」ボタンをクリックし、
+                        タスクのタイトル、説明、優先度を入力します。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">タスクを実行</div>
+                    <div class="step-desc">
+                        タスクカードの「<strong>▶ 実行</strong>」ボタンをクリックすると、
+                        そのタスクがClaude Code または ターミナルで実行されます。
+                        実行結果は右側のパネルにリアルタイムで表示されます。
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-box">
+                <strong>✅ 完了！</strong> 最初のタスクを実行できました。
+                次は各機能を詳しく見ていきましょう。
+            </div>
+        </section>
+
+        <!-- 機能一覧 -->
+        <section id="features">
+            <h2>✨ 主要機能一覧</h2>
+
+            <div class="card">
+                <div class="card-title">コア機能</div>
+                <ul>
+                    <li><strong>📋 Kanban UI</strong> - タスクをドラッグ&ドロップで管理</li>
+                    <li><strong>🤖 マルチエージェント</strong> - 複数のAIエージェントを並列実行</li>
+                    <li><strong>🏢 組織構造</strong> - React Flowでエージェント階層を可視化</li>
+                    <li><strong>⚡ リアルタイム実行</strong> - Claude Code / Codex CLIをバックグラウンド実行</li>
+                    <li><strong>📜 実行履歴</strong> - 全タスクの実行ログを永続化・検索可能</li>
+                    <li><strong>💾 タスクテンプレート</strong> - よく使うタスクをテンプレート化</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-title">高度な機能</div>
+                <ul>
+                    <li><strong>🔗 タスク依存関係</strong> - タスク間の依存を定義し、実行順序を自動制御</li>
+                    <li><strong>🎯 Ready状態検知</strong> - 依存を満たしたタスクを自動検出</li>
+                    <li><strong>🎭 エージェント役割設定</strong> - タスクごとにAIの役割・プロンプトを設定</li>
+                    <li><strong>📊 実行管理</strong> - 実行中タスクのステータス監視、ログ閲覧</li>
+                    <li><strong>⌨️ コマンドパレット</strong> - ⌘K で全機能に高速アクセス</li>
+                    <li><strong>🔧 Git統合</strong> - アプリ内でGit操作（status、add、commit、push）</li>
+                    <li><strong>💻 ターミナルパネル</strong> - エージェント出力 / Bash Terminal切り替え</li>
+                    <li><strong>🔄 セッション管理</strong> - 複数プロジェクトをセッションで分離管理</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Kanban -->
+        <section id="kanban">
+            <h2>📋 Kanbanボード</h2>
+            <p>
+                Kanbanボードは、タスクを視覚的に管理するためのメインUIです。
+                タスクを列（ステータス）ごとに整理し、ドラッグ&ドロップで移動できます。
+            </p>
+
+            <h3>タスクの作成</h3>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-title">新規タスクボタンをクリック</div>
+                    <div class="step-desc">
+                        Kanbanボード上部の「<strong>+ 新規タスク</strong>」ボタンをクリックします。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">タスク情報を入力</div>
+                    <div class="step-desc">
+                        <ul>
+                            <li><strong>タイトル：</strong> タスクの名前（必須）</li>
+                            <li><strong>説明：</strong> タスクの詳細説明</li>
+                            <li><strong>優先度：</strong> Low / Medium / High</li>
+                            <li><strong>ステータス：</strong> Backlog / Ready / In Progress / Review / Done</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">保存</div>
+                    <div class="step-desc">
+                        「<strong>作成</strong>」ボタンをクリックして保存します。
+                    </div>
+                </div>
+            </div>
+
+            <h3>タスクの編集</h3>
+            <p>タスクカードをクリックすると編集モーダルが開き、以下の操作ができます：</p>
+            <ul>
+                <li>タイトル・説明・優先度の変更</li>
+                <li>エージェントの割り当て</li>
+                <li>依存関係の設定</li>
+                <li>役割（プロンプト）の設定</li>
+            </ul>
+
+            <h3>タスクの実行</h3>
+            <p>タスクカードの「<strong>▶ 実行</strong>」ボタンをクリックすると、以下のプロセスが開始されます：</p>
+            <ol>
+                <li>割り当てられたエージェント（またはBashターミナル）が起動</li>
+                <li>タスクの説明と役割がプロンプトとして渡される</li>
+                <li>実行中、右側のパネルにリアルタイムで出力が表示される</li>
+                <li>完了すると「確認待ち」状態になり、黄色で強調表示される</li>
+            </ol>
+
+            <div class="warning-box">
+                <strong>⚠️ 注意：</strong> タスクを実行する前に、依存関係が解決されていることを確認してください。
+                依存関係が未完了の場合、タスクは「Blocked」状態になります。
+            </div>
+
+            <h3>ステータスの変更</h3>
+            <p>タスクカードを列間でドラッグ&ドロップすることで、ステータスを変更できます：</p>
+            <ul>
+                <li><strong>Backlog：</strong> まだ作業していないタスク</li>
+                <li><strong>Ready：</strong> 依存関係が解決され、作業可能なタスク</li>
+                <li><strong>In Progress：</strong> 現在作業中のタスク</li>
+                <li><strong>Review：</strong> レビュー待ちのタスク</li>
+                <li><strong>Done：</strong> 完了したタスク</li>
+            </ul>
+
+            <h3>タスク依存関係</h3>
+            <p>タスクカードの「<strong>🔗 依存</strong>」ボタンから、他のタスクに依存関係を設定できます：</p>
+            <ol>
+                <li>「🔗 依存」ボタンをクリック</li>
+                <li>依存するタスク（前提タスク）を選択</li>
+                <li>「保存」をクリック</li>
+            </ol>
+            <p>依存関係が設定されたタスクは、前提タスクが完了するまで「Blocked」状態になります。</p>
+
+            <div class="info-box">
+                <strong>ℹ️ ヒント：</strong> サイドバーの「<strong>🔗 依存関係</strong>」ビューから、
+                タスク間の依存関係をツリー形式で確認できます。
+            </div>
+        </section>
+
+        <!-- 組織構造 -->
+        <section id="organization">
+            <h2>🏢 組織構造</h2>
+            <p>
+                組織構造モードでは、React Flowを使ってAIエージェントの階層構造を可視化・管理できます。
+                エージェント間の関係性を視覚的に理解し、タスクに適切なエージェントを割り当てることができます。
+            </p>
+
+            <h3>組織構造の表示</h3>
+            <ol>
+                <li>左サイドバーの「<strong>🏢 組織構造</strong>」をクリック</li>
+                <li>エージェントノードが階層構造で表示されます</li>
+                <li>ノードをドラッグして位置を調整できます</li>
+            </ol>
+
+            <h3>エージェントの追加</h3>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-title">「+ エージェント追加」をクリック</div>
+                    <div class="step-desc">
+                        画面上部の「<strong>+ エージェント追加</strong>」ボタンをクリックします。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">エージェント情報を入力</div>
+                    <div class="step-desc">
+                        <ul>
+                            <li><strong>名前：</strong> エージェントの名前</li>
+                            <li><strong>役割：</strong> エージェントの役割（Frontend、Backend、DevOps など）</li>
+                            <li><strong>親エージェント：</strong> 上位のエージェント（任意）</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">保存</div>
+                    <div class="step-desc">
+                        「<strong>作成</strong>」ボタンをクリックして保存します。
+                    </div>
+                </div>
+            </div>
+
+            <h3>エージェントをタスクに割り当て</h3>
+            <ol>
+                <li>Kanbanボードでタスクカードをクリック</li>
+                <li>「<strong>エージェント</strong>」ドロップダウンから選択</li>
+                <li>選択したエージェントがそのタスクを実行します</li>
+            </ol>
+
+            <div class="info-box">
+                <strong>ℹ️ ヒント：</strong> 組織構造モードでエージェントノードをクリックすると、
+                そのエージェントに割り当てられているタスクの一覧が表示されます。
+            </div>
+        </section>
+
+        <!-- テンプレート -->
+        <section id="templates">
+            <h2>💾 タスクテンプレート</h2>
+            <p>
+                タスクテンプレート機能を使うと、よく使うタスクをテンプレート化して再利用できます。
+                定型的なワークフローやタスクセットを素早く作成できます。
+            </p>
+
+            <h3>テンプレートの作成</h3>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-title">タスクを作成・完成させる</div>
+                    <div class="step-desc">
+                        まず、通常通りにタスクを作成し、内容を完成させます。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">「💾 保存」ボタンをクリック</div>
+                    <div class="step-desc">
+                        タスクカードの「<strong>💾 テンプレートとして保存</strong>」ボタンをクリックします。
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">テンプレート情報を入力</div>
+                    <div class="step-desc">
+                        <ul>
+                            <li><strong>テンプレート名：</strong> わかりやすい名前</li>
+                            <li><strong>カテゴリ：</strong> Development、Testing、Deployment など</li>
+                            <li><strong>説明：</strong> テンプレートの用途</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">保存</div>
+                    <div class="step-desc">
+                        「<strong>保存</strong>」ボタンをクリックして完了です。
+                    </div>
+                </div>
+            </div>
+
+            <h3>テンプレートからタスクを作成</h3>
+            <ol>
+                <li>Kanbanボード上部の「<strong>📋 テンプレート</strong>」ボタンをクリック</li>
+                <li>テンプレート一覧が表示されるので、使いたいテンプレートを選択</li>
+                <li>「<strong>使用</strong>」ボタンをクリック</li>
+                <li>テンプレートの内容でタスクが自動作成されます</li>
+            </ol>
+
+            <div class="success-box">
+                <strong>✅ 活用例：</strong>
+                <ul>
+                    <li>「API実装タスク」テンプレート（バックエンド開発で繰り返し使用）</li>
+                    <li>「UIコンポーネント作成」テンプレート（フロントエンド開発）</li>
+                    <li>「デプロイ準備」テンプレート（リリース前チェックリスト）</li>
+                </ul>
+            </div>
+
+            <h3>サブタスク機能</h3>
+            <p>テンプレートには複数のサブタスクを含めることができます：</p>
+            <ol>
+                <li>テンプレート編集画面で「<strong>+ サブタスク追加</strong>」をクリック</li>
+                <li>サブタスクの名前と説明を入力</li>
+                <li>テンプレートから作成すると、サブタスクも同時に作成されます</li>
+            </ol>
+        </section>
+
+        <!-- 実行管理 -->
+        <section id="execution">
+            <h2>📊 実行管理</h2>
+            <p>
+                実行管理機能では、タスクの実行状況をリアルタイムで監視し、
+                実行履歴を確認できます。
+            </p>
+
+            <h3>実行パネル</h3>
+            <p>画面右側の実行パネルには、以下の情報が表示されます：</p>
+            <ul>
+                <li><strong>エージェント出力タブ：</strong> 実行中のエージェントのリアルタイム出力</li>
+                <li><strong>ターミナルタブ：</strong> Bashターミナルで直接コマンドを実行</li>
+                <li><strong>タブ切り替え：</strong> 複数の実行中タスクをタブで切り替え</li>
+            </ul>
+
+            <h3>実行履歴</h3>
+            <ol>
+                <li>左サイドバーの「<strong>📜 実行履歴</strong>」をクリック</li>
+                <li>過去の全実行履歴が一覧表示されます</li>
+                <li>各エントリには以下の情報が含まれます：
+                    <ul>
+                        <li>実行日時</li>
+                        <li>タスク名</li>
+                        <li>エージェント名</li>
+                        <li>実行結果（成功/失敗）</li>
+                        <li>実行ログ</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>ログの検索</h3>
+            <p>実行履歴ビューでは、以下の条件でログを検索できます：</p>
+            <ul>
+                <li>タスク名で検索</li>
+                <li>エージェント名で検索</li>
+                <li>日付範囲で絞り込み</li>
+                <li>成功/失敗でフィルター</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>ℹ️ ヒント：</strong> 実行ログはSQLiteデータベースに永続化されるため、
+                アプリを再起動しても履歴は保持されます。
+            </div>
+        </section>
+
+        <!-- Git統合 -->
+        <section id="git">
+            <h2>🔧 Git統合</h2>
+            <p>
+                Vibe HiveにはGitクライアント機能が統合されており、
+                アプリ内でGit操作を完結できます。
+            </p>
+
+            <h3>Gitパネルを開く</h3>
+            <ol>
+                <li>左サイドバーの「<strong>🔧 Git</strong>」をクリック</li>
+                <li>現在のセッションのGitステータスが表示されます</li>
+            </ol>
+
+            <h3>利用可能なGit操作</h3>
+            <div class="card">
+                <h4>git status</h4>
+                <p>変更されたファイルの一覧を表示します。</p>
+            </div>
+            <div class="card">
+                <h4>git add</h4>
+                <p>ファイルをステージングエリアに追加します。個別ファイルまたは全ファイルを選択できます。</p>
+            </div>
+            <div class="card">
+                <h4>git commit</h4>
+                <p>ステージングされた変更をコミットします。コミットメッセージを入力してください。</p>
+            </div>
+            <div class="card">
+                <h4>git push</h4>
+                <p>コミットをリモートリポジトリにプッシュします。</p>
+            </div>
+
+            <h3>Git設定</h3>
+            <p>右上の⚙️アイコン → 「Git」タブで以下の設定を行えます：</p>
+            <ul>
+                <li><strong>ユーザー名：</strong> Git commit時の名前</li>
+                <li><strong>メールアドレス：</strong> Git commit時のメール</li>
+                <li><strong>デフォルトリポジトリ：</strong> デフォルトで使用するリポジトリパス</li>
+            </ul>
+
+            <div class="warning-box">
+                <strong>⚠️ 注意：</strong> Git操作を実行する前に、正しいリポジトリパスが設定されていることを確認してください。
+            </div>
+        </section>
+
+        <!-- 設定 -->
+        <section id="settings">
+            <h2>⚙️ 設定</h2>
+            <p>
+                画面右上の⚙️アイコンをクリックすると、設定パネルが開きます。
+            </p>
+
+            <h3>Git設定</h3>
+            <ul>
+                <li><strong>User Name：</strong> Gitコミット時の名前</li>
+                <li><strong>User Email：</strong> Gitコミット時のメールアドレス</li>
+                <li><strong>Default Repository：</strong> デフォルトのリポジトリパス</li>
+            </ul>
+            <p>変更後、「<strong>Save</strong>」ボタンをクリックして保存します。保存が成功すると緑色のメッセージが表示されます。</p>
+
+            <h3>App設定</h3>
+            <ul>
+                <li><strong>Theme：</strong> ダークモード / ライトモード / システムに従う</li>
+                <li><strong>Auto Save Interval：</strong> 自動保存の間隔（秒）</li>
+                <li><strong>Terminal Font Size：</strong> ターミナルのフォントサイズ（10-24px）</li>
+                <li><strong>Max Log Entries：</strong> 保存する最大ログエントリ数（1000-50000）</li>
+            </ul>
+
+            <h3>About</h3>
+            <p>アプリのバージョン情報、ライセンス、リンク集が表示されます。</p>
+
+            <h3>Danger Zone</h3>
+            <p>「<strong>Reset All Settings</strong>」ボタンをクリックすると、すべての設定がデフォルトに戻ります。</p>
+
+            <div class="info-box">
+                <strong>ℹ️ 設定パネルの閉じ方：</strong>
+                <ul>
+                    <li>画面背景をクリック</li>
+                    <li>右上の✕ボタンをクリック</li>
+                    <li>下部の「Close」ボタンをクリック</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ショートカット -->
+        <section id="shortcuts">
+            <h2>⌨️ キーボードショートカット</h2>
+            <p>
+                Vibe Hiveは効率的な作業のために、多数のキーボードショートカットをサポートしています。
+            </p>
+
+            <table class="shortcut-table">
+                <thead>
+                    <tr>
+                        <th>ショートカット</th>
+                        <th>機能</th>
+                        <th>説明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>⌘K / Ctrl+K</td>
+                        <td>コマンドパレット</td>
+                        <td>全機能に高速アクセスできるコマンドパレットを開く</td>
+                    </tr>
+                    <tr>
+                        <td>⌘1-9 / Ctrl+1-9</td>
+                        <td>セッション切り替え</td>
+                        <td>セッション1〜9に素早く切り替え</td>
+                    </tr>
+                    <tr>
+                        <td>⌘N / Ctrl+N</td>
+                        <td>新規タスク作成</td>
+                        <td>新しいタスクを作成</td>
+                    </tr>
+                    <tr>
+                        <td>⌘S / Ctrl+S</td>
+                        <td>保存</td>
+                        <td>現在の編集内容を保存</td>
+                    </tr>
+                    <tr>
+                        <td>⌘W / Ctrl+W</td>
+                        <td>閉じる</td>
+                        <td>現在のモーダル/パネルを閉じる</td>
+                    </tr>
+                    <tr>
+                        <td>Esc</td>
+                        <td>キャンセル</td>
+                        <td>モーダルを閉じる、編集をキャンセル</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>コマンドパレット</h3>
+            <p>
+                <code>⌘K</code>（macOS）または<code>Ctrl+K</code>（Windows/Linux）を押すと、
+                コマンドパレットが開きます。以下の操作が可能です：
+            </p>
+            <ul>
+                <li>タスク検索・作成</li>
+                <li>エージェント検索・選択</li>
+                <li>ビュー切り替え（Kanban、組織構造、実行履歴など）</li>
+                <li>設定へのアクセス</li>
+                <li>Gitコマンド実行</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>ℹ️ ヒント：</strong> コマンドパレットはファジー検索に対応しているため、
+                部分一致で素早く目的の機能を見つけられます。
+            </div>
+        </section>
+
+        <!-- トラブルシューティング -->
+        <section id="troubleshooting">
+            <h2>🔧 トラブルシューティング</h2>
+
+            <div class="card">
+                <h3>Electronが起動しない</h3>
+                <p><strong>症状：</strong> <code>npm run electron:dev</code> を実行してもアプリが起動しない</p>
+                <p><strong>解決策：</strong></p>
+                <pre><code># node_modulesを再インストール
+rm -rf node_modules package-lock.json
+npm install
+
+# electron-rebuildを実行
+npm run rebuild</code></pre>
+            </div>
+
+            <div class="card">
+                <h3>ターミナルが表示されない</h3>
+                <p><strong>症状：</strong> ターミナルパネルが空白、または出力が表示されない</p>
+                <p><strong>解決策：</strong></p>
+                <pre><code># node-ptyの再ビルド
+npm rebuild node-pty
+
+# それでも解決しない場合
+npm run rebuild</code></pre>
+            </div>
+
+            <div class="card">
+                <h3>データベースをリセットしたい</h3>
+                <p><strong>症状：</strong> データが破損した、または最初からやり直したい</p>
+                <p><strong>解決策：</strong></p>
+                <pre><code># Electronのユーザーデータをクリア（macOS）
+rm -rf ~/Library/Application\ Support/vibe-hive/
+
+# または設定パネルから「Reset All Settings」を実行</code></pre>
+            </div>
+
+            <div class="card">
+                <h3>設定パネルが閉じられない</h3>
+                <p><strong>症状：</strong> 設定パネルの✕ボタンやCloseボタンが反応しない</p>
+                <p><strong>解決策：</strong></p>
+                <ul>
+                    <li>画面背景（暗い部分）をクリックして閉じる</li>
+                    <li>Escキーを押す</li>
+                    <li>アプリを再起動する</li>
+                </ul>
+                <p><strong>最新版では修正済み：</strong> 2026-01-28のアップデートで解決されました。</p>
+            </div>
+
+            <div class="card">
+                <h3>Git操作がエラーになる</h3>
+                <p><strong>症状：</strong> git commit や git push がエラーで失敗する</p>
+                <p><strong>解決策：</strong></p>
+                <ol>
+                    <li>設定パネル → Gitタブで、ユーザー名とメールアドレスが正しく設定されているか確認</li>
+                    <li>リポジトリパスが正しいか確認</li>
+                    <li>ターミナルで直接Gitコマンドを実行して、認証が通るか確認</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <h3>タスクが実行されない</h3>
+                <p><strong>症状：</strong> 「▶ 実行」ボタンをクリックしても何も起こらない</p>
+                <p><strong>原因：</strong></p>
+                <ul>
+                    <li>依存関係が解決されていない（Blocked状態）</li>
+                    <li>エージェントが正しく設定されていない</li>
+                    <li>Claude Code / Codex CLIがインストールされていない</li>
+                </ul>
+                <p><strong>解決策：</strong></p>
+                <ol>
+                    <li>タスクカードで依存関係を確認し、前提タスクを完了させる</li>
+                    <li>エージェント設定を確認する</li>
+                    <li>ターミナルで<code>claude --version</code>または<code>codex --version</code>を実行して、CLIが正しくインストールされているか確認</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <h3>パフォーマンスが悪い</h3>
+                <p><strong>症状：</strong> アプリの動作が重い、ログ表示が遅い</p>
+                <p><strong>解決策：</strong></p>
+                <ol>
+                    <li>設定パネル → App → Max Log Entries を減らす（例：5000 → 1000）</li>
+                    <li>不要なセッションを削除する</li>
+                    <li>完了したタスクを定期的にアーカイブする</li>
+                    <li>実行履歴をクリアする（データベースのサイズを減らす）</li>
+                </ol>
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ サポート：</strong> 上記で解決しない場合は、
+                <a href="https://github.com/naokijodan/vibe-hive/issues" target="_blank" style="color: var(--accent);">GitHub Issues</a>
+                で問題を報告してください。
+            </div>
+        </section>
+
+        <!-- Tips -->
+        <section id="tips">
+            <h2>💡 Tips & ベストプラクティス</h2>
+
+            <div class="card">
+                <h3>タスクを小さく分割する</h3>
+                <p>
+                    大きなタスクは小さなサブタスクに分割することで、進捗を追いやすくなります。
+                    テンプレート機能を活用して、定型的なサブタスクセットを作成しましょう。
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>エージェントを役割で分ける</h3>
+                <p>
+                    「Frontend」「Backend」「DevOps」などの役割別にエージェントを作成し、
+                    それぞれに適切なタスクを割り当てることで、専門性を持たせることができます。
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>依存関係を積極的に使う</h3>
+                <p>
+                    タスク間の依存関係を明示的に設定することで、実行順序が明確になり、
+                    誤った順序での実行を防げます。
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>テンプレートで効率化</h3>
+                <p>
+                    頻繁に繰り返すワークフローはテンプレート化しましょう。
+                    「API実装」「UI実装」「テスト作成」など、プロジェクト特有のテンプレートを作成すると便利です。
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>実行履歴を活用</h3>
+                <p>
+                    実行履歴から過去の成功パターンを学び、同様のタスクに応用しましょう。
+                    エラーが発生した場合も、履歴から原因を追跡できます。
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>コマンドパレットを使いこなす</h3>
+                <p>
+                    <code>⌘K</code>でコマンドパレットを開き、マウスを使わずに素早く操作できます。
+                    慣れると作業効率が大幅に向上します。
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>定期的にデータベースをメンテナンス</h3>
+                <p>
+                    完了したタスクや古いログを定期的にアーカイブ・削除することで、
+                    パフォーマンスを維持できます。
+                </p>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 Vibe Hive - "Vibe with your AI swarm"</p>
+            <p style="margin-top: 0.5rem;">
+                <a href="https://github.com/naokijodan/vibe-hive" target="_blank" style="color: var(--accent); text-decoration: none;">GitHub</a> |
+                <a href="https://github.com/naokijodan/vibe-hive/issues" target="_blank" style="color: var(--accent); text-decoration: none;">Issues</a> |
+                <span style="color: var(--text-muted);">Version 0.2.0</span>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
