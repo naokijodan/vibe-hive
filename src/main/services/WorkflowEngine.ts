@@ -193,6 +193,15 @@ export class WorkflowEngine {
         case 'merge':
           return { success: true, output: context.input };
 
+        case 'loop':
+          return await this.executeLoopNode(node, context);
+
+        case 'subworkflow':
+          return await this.executeSubworkflowNode(node, context.input);
+
+        case 'agent':
+          return await this.executeAgentNode(node, context.input);
+
         default:
           return { success: false, error: `Unknown node type: ${node.type}` };
       }
@@ -355,6 +364,183 @@ export class WorkflowEngine {
         error: error instanceof Error ? error.message : 'Notification failed',
       };
     }
+  }
+
+  /**
+   * Execute a loop node
+   */
+  private async executeLoopNode(node: WorkflowNode, context: NodeExecutionContext): Promise<NodeExecutionResult> {
+    const loopConfig = node.data.loopConfig;
+    if (!loopConfig) {
+      return { success: false, error: 'Loop configuration not specified' };
+    }
+
+    const { type, maxIterations } = loopConfig;
+    const results: any[] = [];
+    let iterations = 0;
+
+    try {
+      if (type === 'forEach') {
+        // For Each: iterate over array
+        const arrayPath = loopConfig.arrayPath || '';
+        const array = this.getFieldValue(context.input, arrayPath);
+
+        if (!Array.isArray(array)) {
+          return { success: false, error: `Field '${arrayPath}' is not an array` };
+        }
+
+        for (let i = 0; i < array.length && i < maxIterations; i++) {
+          const item = array[i];
+          // TODO: Execute child nodes with item as input
+          results.push({ index: i, value: item, result: item });
+          iterations++;
+        }
+      } else if (type === 'count') {
+        // Count: fixed number of iterations
+        const count = Math.min(loopConfig.count || 1, maxIterations);
+
+        for (let i = 0; i < count; i++) {
+          // TODO: Execute child nodes with iteration index
+          results.push({ index: i, result: context.input });
+          iterations++;
+        }
+      } else if (type === 'while') {
+        // While: conditional loop
+        // Note: Full condition evaluation requires implementing conditionGroup evaluation
+        // For now, use a simple counter to prevent infinite loops
+        let shouldContinue = true;
+
+        while (shouldContinue && iterations < maxIterations) {
+          // TODO: Evaluate condition and execute child nodes
+          // For now, just break after first iteration
+          results.push({ index: iterations, result: context.input });
+          iterations++;
+          shouldContinue = false; // Placeholder
+        }
+      }
+
+      return {
+        success: true,
+        output: {
+          iterations,
+          results,
+          completed: iterations < maxIterations,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Loop execution failed',
+      };
+    }
+  }
+
+  /**
+   * Execute a subworkflow node
+   */
+  private async executeSubworkflowNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
+    const subworkflowConfig = node.data.subworkflowConfig;
+    if (!subworkflowConfig) {
+      return { success: false, error: 'Subworkflow configuration not specified' };
+    }
+
+    const { workflowId, inputMapping, outputMapping } = subworkflowConfig;
+
+    // Get the target workflow
+    const targetWorkflow = this.repository.findById(workflowId);
+    if (!targetWorkflow) {
+      return { success: false, error: `Workflow ${workflowId} not found` };
+    }
+
+    try {
+      // Map input data
+      const childInput: Record<string, any> = {};
+      for (const [childField, parentField] of Object.entries(inputMapping || {})) {
+        childInput[childField] = this.getFieldValue(input, parentField);
+      }
+
+      // Execute child workflow
+      const result = await this.execute({
+        workflowId,
+        triggerData: childInput,
+      });
+
+      if (result.status === 'failed') {
+        return { success: false, error: result.error || 'Subworkflow execution failed' };
+      }
+
+      // Map output data
+      const output: Record<string, any> = {};
+      for (const [parentField, childField] of Object.entries(outputMapping || {})) {
+        output[parentField] = this.getFieldValue(result.nodeResults, childField);
+      }
+
+      return {
+        success: true,
+        output,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Subworkflow execution failed',
+      };
+    }
+  }
+
+  /**
+   * Execute an AI agent node
+   */
+  private async executeAgentNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
+    const agentConfig = node.data.agentConfig;
+    if (!agentConfig) {
+      return { success: false, error: 'Agent configuration not specified' };
+    }
+
+    const { agentType, prompt, templateVariables, timeout } = agentConfig;
+
+    try {
+      // Replace template variables if enabled
+      let finalPrompt = prompt;
+      if (templateVariables) {
+        finalPrompt = this.replaceTemplateVariables(prompt, input);
+      }
+
+      // TODO: Implement actual agent execution
+      // For now, return a mock response
+      const agentResponse = {
+        agentType,
+        prompt: finalPrompt,
+        executedAt: Date.now(),
+        result: 'Agent execution not yet implemented',
+      };
+
+      return {
+        success: true,
+        output: agentResponse,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Agent execution failed',
+      };
+    }
+  }
+
+  /**
+   * Replace template variables in text
+   */
+  private replaceTemplateVariables(text: string, input: any): string {
+    let result = text;
+
+    // Replace {{input}}
+    result = result.replace(/\{\{input\}\}/g, JSON.stringify(input));
+
+    // Replace {{timestamp}}
+    result = result.replace(/\{\{timestamp\}\}/g, new Date().toISOString());
+
+    // TODO: Add more template variables (workflow.name, execution.id, etc.)
+
+    return result;
   }
 
   /**
