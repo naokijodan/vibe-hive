@@ -205,6 +205,43 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_task_templates_created_at ON task_templates(created_at);
       `,
     },
+    {
+      name: '008_add_workflows',
+      sql: `
+        -- Workflows table for visual workflow automation
+        CREATE TABLE IF NOT EXISTS workflows (
+          id TEXT PRIMARY KEY,
+          session_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          nodes TEXT NOT NULL,
+          edges TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'draft',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+        );
+
+        -- Workflow executions table for tracking workflow runs
+        CREATE TABLE IF NOT EXISTS workflow_executions (
+          id TEXT PRIMARY KEY,
+          workflow_id TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'running',
+          started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          completed_at TEXT,
+          error TEXT,
+          execution_data TEXT,
+          FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
+        );
+
+        -- Create indexes for workflows
+        CREATE INDEX IF NOT EXISTS idx_workflows_session_id ON workflows(session_id);
+        CREATE INDEX IF NOT EXISTS idx_workflows_status ON workflows(status);
+        CREATE INDEX IF NOT EXISTS idx_workflow_executions_workflow_id ON workflow_executions(workflow_id);
+        CREATE INDEX IF NOT EXISTS idx_workflow_executions_status ON workflow_executions(status);
+        CREATE INDEX IF NOT EXISTS idx_workflow_executions_started_at ON workflow_executions(started_at);
+      `,
+    },
   ];
 
   const appliedMigrations = database
