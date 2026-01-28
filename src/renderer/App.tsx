@@ -10,7 +10,7 @@ import { TaskDependencyTree } from './components/TaskDependencyTree';
 import { HistoryView } from './components/HistoryView';
 import { ExecutionPanel } from './components/Execution/ExecutionPanel';
 import { ExecutionLog } from './components/Execution/ExecutionLog';
-import { WorkflowCanvas } from './components/Workflow/WorkflowCanvas';
+import { WorkflowManager } from './components/Workflow/WorkflowManager';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -352,7 +352,7 @@ function App(): React.ReactElement {
       case 'history':
         return <HistoryView />;
       case 'workflow':
-        return <WorkflowCanvas />;
+        return <WorkflowManager />;
       case 'settings':
         // Open settings panel instead of inline view
         if (!isSettingsPanelOpen) {
