@@ -161,6 +161,28 @@ function runMigrations(database: Database.Database): void {
         ALTER TABLE tasks ADD COLUMN role TEXT;
       `,
     },
+    {
+      name: '006_add_execution_history',
+      sql: `
+        -- Execution history table for tracking task executions
+        CREATE TABLE IF NOT EXISTS execution_history (
+          id TEXT PRIMARY KEY,
+          task_id TEXT NOT NULL,
+          session_id TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'running',
+          started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          completed_at TEXT,
+          exit_code INTEGER,
+          error_message TEXT,
+          FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        );
+
+        -- Create indexes for execution_history
+        CREATE INDEX IF NOT EXISTS idx_execution_history_task_id ON execution_history(task_id);
+        CREATE INDEX IF NOT EXISTS idx_execution_history_status ON execution_history(status);
+        CREATE INDEX IF NOT EXISTS idx_execution_history_started_at ON execution_history(started_at);
+      `,
+    },
   ];
 
   const appliedMigrations = database

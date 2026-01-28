@@ -161,6 +161,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
   dbAgentUpdate: (id: string, updates: unknown) => ipcRenderer.invoke('db:agent:update', id, updates),
   dbAgentUpdateStatus: (id: string, status: string) => ipcRenderer.invoke('db:agent:updateStatus', id, status),
   dbAgentDelete: (id: string) => ipcRenderer.invoke('db:agent:delete', id),
+
+  // Execution
+  executionStart: (request: unknown) => ipcRenderer.invoke('execution:start', request),
+  executionCancel: (executionId: string) => ipcRenderer.invoke('execution:cancel', executionId),
+  executionGet: (executionId: string) => ipcRenderer.invoke('execution:get', executionId),
+  executionGetByTask: (taskId: string) => ipcRenderer.invoke('execution:getByTask', taskId),
+  executionGetAll: () => ipcRenderer.invoke('execution:getAll'),
+  executionGetRunning: () => ipcRenderer.invoke('execution:getRunning'),
+  onExecutionStarted: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('execution:started', listener);
+    return () => ipcRenderer.removeListener('execution:started', listener);
+  },
+  onExecutionCompleted: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('execution:completed', listener);
+    return () => ipcRenderer.removeListener('execution:completed', listener);
+  },
+  onExecutionCancelled: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('execution:cancelled', listener);
+    return () => ipcRenderer.removeListener('execution:cancelled', listener);
+  },
 });
 
 // Type declarations for the exposed API
@@ -252,6 +275,16 @@ export interface ElectronAPI {
   dbAgentUpdate: (id: string, updates: unknown) => Promise<unknown>;
   dbAgentUpdateStatus: (id: string, status: string) => Promise<unknown>;
   dbAgentDelete: (id: string) => Promise<boolean>;
+  // Execution
+  executionStart: (request: unknown) => Promise<unknown>;
+  executionCancel: (executionId: string) => Promise<void>;
+  executionGet: (executionId: string) => Promise<unknown>;
+  executionGetByTask: (taskId: string) => Promise<unknown[]>;
+  executionGetAll: () => Promise<unknown[]>;
+  executionGetRunning: () => Promise<unknown[]>;
+  onExecutionStarted: (callback: (data: unknown) => void) => () => void;
+  onExecutionCompleted: (callback: (data: unknown) => void) => () => void;
+  onExecutionCancelled: (callback: (data: unknown) => void) => () => void;
 }
 
 declare global {

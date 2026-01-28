@@ -1,6 +1,11 @@
 // IPC Bridge - Renderer process API abstraction
 // This module provides type-safe access to Electron IPC
 import type { Task, TaskCreateInput, TaskStatus } from '../../shared/types/task';
+import type {
+  ExecutionRecord,
+  StartExecutionRequest,
+  StartExecutionResponse,
+} from '../../shared/types/execution';
 
 export const ipcBridge = {
   // Session operations
@@ -80,6 +85,25 @@ export const ipcBridge = {
     updateGit: (gitSettings: unknown) => window.electronAPI.settingsUpdateGit(gitSettings),
     updateApp: (appSettings: unknown) => window.electronAPI.settingsUpdateApp(appSettings),
     reset: () => window.electronAPI.settingsReset(),
+  },
+
+  // Execution operations
+  execution: {
+    start: (request: StartExecutionRequest) =>
+      window.electronAPI.executionStart(request) as Promise<StartExecutionResponse>,
+    cancel: (executionId: string) => window.electronAPI.executionCancel(executionId),
+    get: (executionId: string) =>
+      window.electronAPI.executionGet(executionId) as Promise<ExecutionRecord | null>,
+    getByTask: (taskId: string) =>
+      window.electronAPI.executionGetByTask(taskId) as Promise<ExecutionRecord[]>,
+    getAll: () => window.electronAPI.executionGetAll() as Promise<ExecutionRecord[]>,
+    getRunning: () => window.electronAPI.executionGetRunning() as Promise<ExecutionRecord[]>,
+    onStarted: (callback: (data: { executionId: string; taskId: string }) => void) =>
+      window.electronAPI.onExecutionStarted(callback),
+    onCompleted: (callback: (execution: ExecutionRecord) => void) =>
+      window.electronAPI.onExecutionCompleted(callback),
+    onCancelled: (callback: (execution: ExecutionRecord) => void) =>
+      window.electronAPI.onExecutionCancelled(callback),
   },
 };
 

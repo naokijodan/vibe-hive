@@ -4,6 +4,7 @@ import { registerIpcHandlers } from './ipc/handlers';
 import { registerPtyHandlers } from './ipc/ptyHandlers';
 import { registerDbHandlers } from './ipc/dbHandlers';
 import { registerAgentHandlers } from './ipc/agentHandlers';
+import { registerExecutionHandlers, executionEngine } from './ipc/executionHandlers';
 import { ptyService } from './services/PtyService';
 import { agentService } from './services/AgentService';
 import { getDatabase, closeDatabase } from './services/db';
@@ -57,13 +58,15 @@ app.whenReady().then(() => {
   registerPtyHandlers();
   registerDbHandlers();
   registerAgentHandlers();
+  registerExecutionHandlers();
 
   createWindow();
 
-  // Set main window for PTY service and Agent service
+  // Set main window for PTY service, Agent service, and Execution engine
   if (mainWindow) {
     ptyService.setMainWindow(mainWindow);
     agentService.setMainWindow(mainWindow);
+    executionEngine.setMainWindow(mainWindow);
   }
 
   app.on('activate', () => {
@@ -72,15 +75,17 @@ app.whenReady().then(() => {
       if (mainWindow) {
         ptyService.setMainWindow(mainWindow);
         agentService.setMainWindow(mainWindow);
+        executionEngine.setMainWindow(mainWindow);
       }
     }
   });
 });
 
 app.on('window-all-closed', () => {
-  // Close all PTY sessions and Agent sessions
+  // Close all PTY sessions, Agent sessions, and Executions
   ptyService.closeAll();
   agentService.stopAll();
+  executionEngine.cleanup();
 
   if (process.platform !== 'darwin') {
     app.quit();
@@ -90,5 +95,6 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   ptyService.closeAll();
   agentService.stopAll();
+  executionEngine.cleanup();
   closeDatabase();
 });
