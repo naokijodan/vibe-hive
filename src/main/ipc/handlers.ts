@@ -55,12 +55,6 @@ export function registerIpcHandlers(): void {
     ptyService.resize(sessionId, cols, rows);
   });
 
-  // Agent handlers
-  ipcMain.handle(IPC_CHANNELS.AGENT_SEND, async (_event, sessionId, message) => {
-    // TODO: Implement AgentRunner
-    console.log('agent:send', sessionId, message);
-  });
-
   // Organization handlers
   ipcMain.handle(IPC_CHANNELS.ORG_GET, async () => {
     // TODO: Implement OrgManager

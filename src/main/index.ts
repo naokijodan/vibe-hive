@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
+import { registerIpcHandlers } from './ipc/handlers';
 import { registerPtyHandlers } from './ipc/ptyHandlers';
 import { registerDbHandlers } from './ipc/dbHandlers';
 import { registerAgentHandlers } from './ipc/agentHandlers';
@@ -52,6 +53,7 @@ app.whenReady().then(() => {
   getDatabase();
 
   // Register IPC handlers
+  registerIpcHandlers(); // Session, Git, Settings
   registerPtyHandlers();
   registerDbHandlers();
   registerAgentHandlers();
