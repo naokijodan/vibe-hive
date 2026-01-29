@@ -132,6 +132,10 @@ export class WorkflowEngine {
     // Store trigger data
     nodeResults['__trigger__'] = triggerData;
 
+    // Store workflow metadata for loop nodes
+    nodeResults['__edges__'] = workflow.edges;
+    nodeResults['__nodes__'] = workflow.nodes;
+
     // Group nodes by execution level for parallel execution
     const levels = this.groupNodesByLevel(workflow.nodes, workflow.edges);
 
@@ -398,6 +402,22 @@ export class WorkflowEngine {
     let iterations = 0;
 
     try {
+      // Get child nodes (nodes connected after this loop node)
+      const childNodeIds = this.getLoopChildNodes(node.id, context.workflowData['__edges__'] || []);
+
+      if (childNodeIds.length === 0) {
+        // No child nodes - loop does nothing but still succeeds
+        return {
+          success: true,
+          output: {
+            iterations: 0,
+            results: [],
+            completed: true,
+            message: 'Loop has no child nodes to execute',
+          },
+        };
+      }
+
       if (type === 'forEach') {
         // For Each: iterate over array
         const arrayPath = loopConfig.arrayPath || '';
@@ -409,8 +429,24 @@ export class WorkflowEngine {
 
         for (let i = 0; i < array.length && i < maxIterations; i++) {
           const item = array[i];
-          // TODO: Execute child nodes with item as input
-          results.push({ index: i, value: item, result: item });
+
+          // Execute child nodes with current item as input
+          const iterationContext = {
+            ...context.workflowData,
+            __loop_index__: i,
+            __loop_item__: item,
+            __loop_total__: array.length,
+          };
+
+          const iterationResult = await this.executeSubgraph(
+            childNodeIds,
+            context.workflowData['__edges__'] || [],
+            context.workflowData['__nodes__'] || [],
+            item,
+            iterationContext
+          );
+
+          results.push({ index: i, value: item, result: iterationResult });
           iterations++;
         }
       } else if (type === 'count') {
@@ -418,8 +454,22 @@ export class WorkflowEngine {
         const count = Math.min(loopConfig.count || 1, maxIterations);
 
         for (let i = 0; i < count; i++) {
-          // TODO: Execute child nodes with iteration index
-          results.push({ index: i, result: context.input });
+          // Execute child nodes with iteration index
+          const iterationContext = {
+            ...context.workflowData,
+            __loop_index__: i,
+            __loop_total__: count,
+          };
+
+          const iterationResult = await this.executeSubgraph(
+            childNodeIds,
+            context.workflowData['__edges__'] || [],
+            context.workflowData['__nodes__'] || [],
+            context.input,
+            iterationContext
+          );
+
+          results.push({ index: i, result: iterationResult });
           iterations++;
         }
       } else if (type === 'while') {
@@ -430,18 +480,35 @@ export class WorkflowEngine {
         }
 
         let shouldContinue = true;
+        let currentInput = context.input;
 
         while (shouldContinue && iterations < maxIterations) {
           // Evaluate condition
-          const conditionMet = this.evaluateConditionGroup(condition, context.input);
+          const conditionMet = this.evaluateConditionGroup(condition, currentInput);
 
           if (!conditionMet) {
             shouldContinue = false;
             break;
           }
 
-          // TODO: Execute child nodes with current input
-          results.push({ index: iterations, result: context.input });
+          // Execute child nodes with current input
+          const iterationContext = {
+            ...context.workflowData,
+            __loop_index__: iterations,
+          };
+
+          const iterationResult = await this.executeSubgraph(
+            childNodeIds,
+            context.workflowData['__edges__'] || [],
+            context.workflowData['__nodes__'] || [],
+            currentInput,
+            iterationContext
+          );
+
+          results.push({ index: iterations, result: iterationResult });
+
+          // Update input for next iteration (use result as next input)
+          currentInput = iterationResult;
           iterations++;
         }
       }
@@ -759,6 +826,108 @@ ${JSON.stringify(nodeResults, null, 2)}
     }
 
     return result;
+  }
+
+  /**
+   * Get child nodes that are part of a loop's scope
+   */
+  private getLoopChildNodes(loopNodeId: string, edges: WorkflowEdge[]): string[] {
+    const childNodes: string[] = [];
+    const visited = new Set<string>();
+
+    // Find all nodes reachable from the loop node
+    const queue: string[] = [];
+
+    // Start with direct children
+    edges
+      .filter(e => e.source === loopNodeId)
+      .forEach(e => queue.push(e.target));
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+
+      if (visited.has(current)) continue;
+      visited.add(current);
+      childNodes.push(current);
+
+      // Add children of current node
+      edges
+        .filter(e => e.source === current)
+        .forEach(e => {
+          // Don't follow edges that go back to the loop node (would create infinite loop)
+          if (e.target !== loopNodeId && !visited.has(e.target)) {
+            queue.push(e.target);
+          }
+        });
+    }
+
+    return childNodes;
+  }
+
+  /**
+   * Execute a subgraph (subset of workflow nodes)
+   */
+  private async executeSubgraph(
+    nodeIds: string[],
+    edges: WorkflowEdge[],
+    allNodes: WorkflowNode[],
+    initialInput: any,
+    workflowData: Record<string, any>
+  ): Promise<any> {
+    const subgraphResults: Record<string, any> = { ...workflowData };
+    subgraphResults['__subgraph_input__'] = initialInput;
+
+    // Filter edges to only include those within the subgraph
+    const subgraphEdges = edges.filter(e =>
+      nodeIds.includes(e.source) && nodeIds.includes(e.target)
+    );
+
+    // Get the actual node objects
+    const subgraphNodes = allNodes.filter(n => nodeIds.includes(n.id));
+
+    if (subgraphNodes.length === 0) {
+      return initialInput;
+    }
+
+    // Group nodes by execution level
+    const levels = this.groupNodesByLevel(subgraphNodes, subgraphEdges);
+
+    // Execute nodes level by level
+    for (const level of levels) {
+      const levelPromises = level.map(async (nodeId) => {
+        const node = subgraphNodes.find(n => n.id === nodeId);
+        if (!node) return;
+
+        // Get input from previous nodes or use initial input
+        const input = this.getNodeInput(nodeId, subgraphEdges, subgraphResults) || initialInput;
+
+        // Execute node
+        const result = await this.executeNode({
+          nodeId,
+          input,
+          workflowData: subgraphResults,
+        }, node);
+
+        if (!result.success) {
+          throw new Error(`Subgraph node ${nodeId} execution failed: ${result.error}`);
+        }
+
+        return { nodeId, result };
+      });
+
+      const levelResults = await Promise.all(levelPromises);
+
+      // Store results
+      levelResults.forEach(item => {
+        if (item) {
+          subgraphResults[item.nodeId] = item.result.output;
+        }
+      });
+    }
+
+    // Return the output of the last node in the subgraph
+    const lastLevelNodeId = levels[levels.length - 1]?.[0];
+    return lastLevelNodeId ? subgraphResults[lastLevelNodeId] : initialInput;
   }
 
   /**
