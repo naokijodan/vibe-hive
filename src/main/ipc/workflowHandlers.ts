@@ -4,6 +4,7 @@ import { getWorkflowEngine } from '../services/WorkflowEngine';
 import { WorkflowRepository } from '../services/db/WorkflowRepository';
 import { WorkflowTemplateRepository } from '../services/db/WorkflowTemplateRepository';
 import { getDatabase } from '../services/db/Database';
+import { WorkflowValidator } from '../services/WorkflowValidator';
 import type {
   CreateWorkflowParams,
   UpdateWorkflowParams,
@@ -90,14 +91,42 @@ export function registerWorkflowHandlers(): void {
     });
 
     if (!result.canceled && result.filePath) {
+      // Detect advanced features
+      const advancedFeatures: string[] = [];
+      workflow.nodes.forEach(node => {
+        if (node.type === 'loop' && !advancedFeatures.includes('loop')) {
+          advancedFeatures.push('loop');
+        }
+        if (node.type === 'subworkflow' && !advancedFeatures.includes('subworkflow')) {
+          advancedFeatures.push('subworkflow');
+        }
+        if (node.type === 'conditional' && node.data.conditionGroup?.groups) {
+          if (!advancedFeatures.includes('expert-condition')) {
+            advancedFeatures.push('expert-condition');
+          }
+        }
+      });
+
+      // Determine complexity
+      let complexity: 'simple' | 'medium' | 'complex' = 'simple';
+      if (workflow.nodes.length > 20 || advancedFeatures.length > 2) {
+        complexity = 'complex';
+      } else if (workflow.nodes.length > 10 || advancedFeatures.length > 0) {
+        complexity = 'medium';
+      }
+
       const exportData = {
+        formatVersion: '2.0',
+        exportedAt: new Date().toISOString(),
         name: workflow.name,
         description: workflow.description,
         nodes: workflow.nodes,
         edges: workflow.edges,
         autoCreateTask: workflow.autoCreateTask,
-        exportedAt: new Date().toISOString(),
-        version: '1.0',
+        nodeCount: workflow.nodes.length,
+        edgeCount: workflow.edges.length,
+        usesAdvancedFeatures: advancedFeatures.length > 0 ? advancedFeatures : undefined,
+        complexity,
       };
 
       await fs.writeFile(result.filePath, JSON.stringify(exportData, null, 2), 'utf-8');
@@ -121,19 +150,61 @@ export function registerWorkflowHandlers(): void {
     if (!result.canceled && result.filePaths.length > 0) {
       const filePath = result.filePaths[0];
       const fileContent = await fs.readFile(filePath, 'utf-8');
-      const importData = JSON.parse(fileContent);
+
+      let importData;
+      try {
+        importData = JSON.parse(fileContent);
+      } catch (error) {
+        return {
+          success: false,
+          errors: ['Invalid JSON file'],
+        };
+      }
+
+      // Validate imported data
+      const validator = new WorkflowValidator();
+      const validationResult = validator.validate(importData);
+
+      if (!validationResult.valid) {
+        return {
+          success: false,
+          errors: validationResult.errors,
+          warnings: validationResult.warnings,
+          validationReport: {
+            nodeCount: validationResult.nodeCount,
+            edgeCount: validationResult.edgeCount,
+            hasAdvancedFeatures: validationResult.hasAdvancedFeatures,
+            advancedFeatures: validationResult.advancedFeatures,
+            compatibility: validationResult.compatibility,
+          },
+        };
+      }
+
+      // Migrate old format if needed
+      const migratedData = validator.migrateFormat(importData);
 
       // Create new workflow from imported data
       const newWorkflow = await workflowRepository.create({
         sessionId,
-        name: importData.name || 'Imported Workflow',
-        description: importData.description,
-        nodes: importData.nodes || [],
-        edges: importData.edges || [],
-        autoCreateTask: importData.autoCreateTask || false,
+        name: migratedData.name || 'Imported Workflow',
+        description: migratedData.description,
+        nodes: migratedData.nodes || [],
+        edges: migratedData.edges || [],
+        autoCreateTask: migratedData.autoCreateTask || false,
       });
 
-      return { success: true, workflow: newWorkflow };
+      return {
+        success: true,
+        workflow: newWorkflow,
+        warnings: validationResult.warnings.length > 0 ? validationResult.warnings : undefined,
+        validationReport: {
+          nodeCount: validationResult.nodeCount,
+          edgeCount: validationResult.edgeCount,
+          hasAdvancedFeatures: validationResult.hasAdvancedFeatures,
+          advancedFeatures: validationResult.advancedFeatures,
+          compatibility: validationResult.compatibility,
+        },
+      };
     }
 
     return { success: false, canceled: true };
@@ -187,6 +258,27 @@ export function registerWorkflowHandlers(): void {
     };
 
     return workflowRepository.create(workflowParams);
+  });
+
+  // Export workflow as template (saves directly to template repository)
+  ipcMain.handle('workflow:exportAsTemplate', async (_event, workflowId: number, templateData: { category?: 'automation' | 'notification' | 'data-processing' | 'custom' }) => {
+    const workflow = workflowEngine.getWorkflow(workflowId);
+    if (!workflow) {
+      throw new Error(`Workflow ${workflowId} not found`);
+    }
+
+    const templateRepo = getTemplateRepository();
+
+    const templateInput: TemplateCreateInput = {
+      name: workflow.name,
+      description: workflow.description || '',
+      category: templateData.category || 'custom',
+      nodes: workflow.nodes,
+      edges: workflow.edges,
+    };
+
+    const newTemplate = templateRepo.create(templateInput);
+    return { success: true, template: newTemplate };
   });
 }
 

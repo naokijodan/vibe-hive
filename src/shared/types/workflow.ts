@@ -145,3 +145,55 @@ export interface WorkflowExecutionResult {
   error?: string;
   nodeResults: Record<string, any>;
 }
+
+// Workflow Export/Import types
+export type WorkflowComplexity = 'simple' | 'medium' | 'complex';
+
+export interface WorkflowExportData {
+  // Format metadata
+  formatVersion: string;      // '2.0'
+  exportedAt: string;         // ISO 8601
+  exportedBy?: string;        // Optional exporter name/email
+
+  // Workflow data
+  name: string;
+  description?: string;
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+  autoCreateTask?: boolean;
+
+  // Additional metadata
+  tags?: string[];
+  category?: string;
+  complexity?: WorkflowComplexity;
+
+  // Statistics
+  nodeCount: number;
+  edgeCount: number;
+  usesAdvancedFeatures?: string[];  // ['loop', 'subworkflow', 'expert-condition']
+}
+
+export interface WorkflowImportResult {
+  success: boolean;
+  workflow?: Workflow;
+  canceled?: boolean;
+  errors?: string[];
+  warnings?: string[];
+  validationReport?: {
+    nodeCount: number;
+    edgeCount: number;
+    hasAdvancedFeatures: boolean;
+    advancedFeatures: string[];
+    compatibility: 'full' | 'partial' | 'none';
+  };
+}
+
+export interface WorkflowExportResult {
+  success: boolean;
+  filePath?: string;
+  canceled?: boolean;
+  error?: string;
+}
+
+// Type alias for backward compatibility with old node types
+export type WorkflowNodeType = NodeType | 'start' | 'end';
