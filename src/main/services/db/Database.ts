@@ -248,6 +248,26 @@ function runMigrations(database: Database.Database): void {
         ALTER TABLE workflows ADD COLUMN auto_create_task INTEGER DEFAULT 0;
       `,
     },
+    {
+      name: '010_create_workflow_templates',
+      sql: `
+        CREATE TABLE IF NOT EXISTS workflow_templates (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          category TEXT NOT NULL CHECK(category IN ('automation', 'notification', 'data-processing', 'custom')),
+          nodes TEXT NOT NULL,
+          edges TEXT NOT NULL,
+          thumbnail TEXT,
+          is_built_in INTEGER NOT NULL DEFAULT 0,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_workflow_templates_category ON workflow_templates(category);
+        CREATE INDEX IF NOT EXISTS idx_workflow_templates_is_built_in ON workflow_templates(is_built_in);
+      `,
+    },
   ];
 
   const appliedMigrations = database

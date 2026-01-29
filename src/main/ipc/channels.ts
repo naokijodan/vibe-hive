@@ -43,6 +43,15 @@ export const IPC_CHANNELS = {
   SETTINGS_UPDATE_GIT: 'settings:update-git',
   SETTINGS_UPDATE_APP: 'settings:update-app',
   SETTINGS_RESET: 'settings:reset',
+
+  // Template channels
+  TEMPLATE_GET_ALL: 'template:getAll',
+  TEMPLATE_GET: 'template:get',
+  TEMPLATE_GET_BY_CATEGORY: 'template:getByCategory',
+  TEMPLATE_CREATE: 'template:create',
+  TEMPLATE_UPDATE: 'template:update',
+  TEMPLATE_DELETE: 'template:delete',
+  TEMPLATE_APPLY: 'template:apply',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

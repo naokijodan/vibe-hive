@@ -2,15 +2,25 @@ import { ipcMain, dialog } from 'electron';
 import { promises as fs } from 'fs';
 import { getWorkflowEngine } from '../services/WorkflowEngine';
 import { WorkflowRepository } from '../services/db/WorkflowRepository';
+import { WorkflowTemplateRepository } from '../services/db/WorkflowTemplateRepository';
+import { getDatabase } from '../services/db/Database';
 import type {
   CreateWorkflowParams,
   UpdateWorkflowParams,
   ExecuteWorkflowParams,
   Workflow,
 } from '../../shared/types/workflow';
+import type {
+  TemplateCreateInput,
+  TemplateUpdateInput,
+} from '../../shared/types/template';
 
 const workflowEngine = getWorkflowEngine();
 const workflowRepository = new WorkflowRepository();
+
+function getTemplateRepository(): WorkflowTemplateRepository {
+  return new WorkflowTemplateRepository(getDatabase());
+}
 
 export function registerWorkflowHandlers(): void {
   // Create workflow
@@ -127,6 +137,56 @@ export function registerWorkflowHandlers(): void {
     }
 
     return { success: false, canceled: true };
+  });
+
+  // Workflow Template handlers
+  ipcMain.handle('template:getAll', () => {
+    const templateRepo = getTemplateRepository();
+    return templateRepo.findAll();
+  });
+
+  ipcMain.handle('template:get', (_event, id: number) => {
+    const templateRepo = getTemplateRepository();
+    return templateRepo.findById(id);
+  });
+
+  ipcMain.handle('template:getByCategory', (_event, category: string) => {
+    const templateRepo = getTemplateRepository();
+    return templateRepo.findByCategory(category);
+  });
+
+  ipcMain.handle('template:create', (_event, input: TemplateCreateInput) => {
+    const templateRepo = getTemplateRepository();
+    return templateRepo.create(input);
+  });
+
+  ipcMain.handle('template:update', (_event, id: number, input: TemplateUpdateInput) => {
+    const templateRepo = getTemplateRepository();
+    return templateRepo.update(id, input);
+  });
+
+  ipcMain.handle('template:delete', (_event, id: number) => {
+    const templateRepo = getTemplateRepository();
+    templateRepo.delete(id);
+  });
+
+  ipcMain.handle('template:apply', (_event, templateId: number, sessionId: number) => {
+    const templateRepo = getTemplateRepository();
+    const template = templateRepo.findById(templateId);
+
+    if (!template) {
+      throw new Error(`Template ${templateId} not found`);
+    }
+
+    const workflowParams: CreateWorkflowParams = {
+      sessionId,
+      name: `${template.name} (from template)`,
+      description: template.description,
+      nodes: template.nodes,
+      edges: template.edges,
+    };
+
+    return workflowRepository.create(workflowParams);
   });
 }
 
