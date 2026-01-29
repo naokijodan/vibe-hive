@@ -62,6 +62,24 @@ export interface AgentConfig {
   timeout: number;  // milliseconds
 }
 
+export interface RetryConfig {
+  enabled: boolean;
+  maxAttempts: number;           // Maximum retry attempts (default: 3)
+  delayMs: number;               // Delay between retries in ms (default: 1000)
+  backoffMultiplier: number;     // Exponential backoff multiplier (default: 2)
+  retryOnErrorTypes?: string[];  // Only retry on specific error types (optional)
+}
+
+export interface TimeoutConfig {
+  enabled: boolean;
+  timeoutMs: number;  // Timeout in milliseconds (default: 30000)
+}
+
+export interface ErrorHandlingConfig {
+  continueOnError: boolean;  // Continue workflow on error (default: false)
+  errorOutput?: any;         // Fallback output value on error
+}
+
 export interface WorkflowNodeData {
   label: string;
   config: Record<string, any>;
@@ -75,6 +93,10 @@ export interface WorkflowNodeData {
   loopConfig?: LoopConfig;            // For loop nodes
   subworkflowConfig?: SubworkflowConfig;  // For subworkflow nodes
   agentConfig?: AgentConfig;          // For agent nodes
+  // Error handling & retry config
+  retryConfig?: RetryConfig;          // Retry configuration
+  timeoutConfig?: TimeoutConfig;      // Timeout configuration
+  errorHandlingConfig?: ErrorHandlingConfig;  // Error handling configuration
 }
 
 export interface WorkflowNode {

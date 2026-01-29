@@ -26,6 +26,7 @@ interface NodeExecutionResult {
   success: boolean;
   output?: any;
   error?: string;
+  metadata?: Record<string, any>;
 }
 
 export class WorkflowEngine {
@@ -159,8 +160,8 @@ export class WorkflowEngine {
         // Get input from previous nodes
         const input = this.getNodeInput(nodeId, workflow.edges, nodeResults);
 
-        // Execute node
-        const result = await this.executeNode({
+        // Execute node with retry and error handling
+        const result = await this.executeNodeWithRetry({
           nodeId,
           input,
           workflowData: nodeResults,
@@ -186,6 +187,96 @@ export class WorkflowEngine {
     }
 
     return nodeResults;
+  }
+
+  /**
+   * Execute a node with retry, timeout, and error handling support
+   */
+  private async executeNodeWithRetry(
+    context: NodeExecutionContext,
+    node: WorkflowNode
+  ): Promise<NodeExecutionResult> {
+    const retryConfig = node.data.retryConfig || { enabled: false, maxAttempts: 1, delayMs: 1000, backoffMultiplier: 2 };
+    const timeoutConfig = node.data.timeoutConfig || { enabled: false, timeoutMs: 30000 };
+    const errorHandlingConfig = node.data.errorHandlingConfig || { continueOnError: false };
+
+    let lastError: Error | undefined;
+    const maxAttempts = retryConfig.enabled ? retryConfig.maxAttempts : 1;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        // Execute with timeout if enabled
+        const result = timeoutConfig.enabled
+          ? await this.executeWithTimeout(context, node, timeoutConfig.timeoutMs)
+          : await this.executeNode(context, node);
+
+        if (result.success) {
+          // Success - add retry metadata if retried
+          if (attempt > 1) {
+            return {
+              ...result,
+              metadata: {
+                ...result.metadata,
+                retriedAttempts: attempt - 1,
+              },
+            };
+          }
+          return result;
+        }
+
+        lastError = new Error(result.error);
+
+        // Check if we should retry
+        if (!this.shouldRetry(result, retryConfig, attempt)) {
+          break;
+        }
+
+        // Wait before retry with exponential backoff
+        if (attempt < maxAttempts) {
+          const delay = this.calculateBackoff(retryConfig, attempt);
+          await this.sleep(delay);
+        }
+      } catch (error) {
+        lastError = error as Error;
+
+        // Check if we should retry
+        const fakeResult = { success: false, error: (error as Error).message };
+        if (!this.shouldRetry(fakeResult, retryConfig, attempt)) {
+          break;
+        }
+
+        // Wait before retry with exponential backoff
+        if (attempt < maxAttempts) {
+          const delay = this.calculateBackoff(retryConfig, attempt);
+          await this.sleep(delay);
+        }
+      }
+    }
+
+    // All retries exhausted
+    const errorMessage = lastError?.message || 'Unknown error after retries';
+
+    // Continue on error if configured
+    if (errorHandlingConfig.continueOnError) {
+      return {
+        success: true,
+        output: errorHandlingConfig.errorOutput !== undefined ? errorHandlingConfig.errorOutput : null,
+        metadata: {
+          error: errorMessage,
+          continuedOnError: true,
+          retriedAttempts: maxAttempts - 1,
+        },
+      };
+    }
+
+    // Return failure
+    return {
+      success: false,
+      error: errorMessage,
+      metadata: {
+        retriedAttempts: maxAttempts - 1,
+      },
+    };
   }
 
   /**
@@ -956,8 +1047,8 @@ ${JSON.stringify(nodeResults, null, 2)}
         // Get input from previous nodes or use initial input
         const input = this.getNodeInput(nodeId, subgraphEdges, subgraphResults) || initialInput;
 
-        // Execute node
-        const result = await this.executeNode({
+        // Execute node with retry and error handling
+        const result = await this.executeNodeWithRetry({
           nodeId,
           input,
           workflowData: subgraphResults,
@@ -984,6 +1075,62 @@ ${JSON.stringify(nodeResults, null, 2)}
     // Return the output of the last node in the subgraph
     const lastLevelNodeId = levels[levels.length - 1]?.[0];
     return lastLevelNodeId ? subgraphResults[lastLevelNodeId] : initialInput;
+  }
+
+  /**
+   * Sleep for specified milliseconds
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Calculate backoff delay with exponential multiplier
+   */
+  private calculateBackoff(config: any, attempt: number): number {
+    const baseDelay = config.delayMs || 1000;
+    const multiplier = config.backoffMultiplier || 2;
+    return baseDelay * Math.pow(multiplier, attempt - 1);
+  }
+
+  /**
+   * Determine if node execution should be retried
+   */
+  private shouldRetry(
+    result: NodeExecutionResult,
+    config: any,
+    attempt: number
+  ): boolean {
+    if (!config.enabled || attempt >= config.maxAttempts) {
+      return false;
+    }
+
+    // If specific error types are defined, only retry on those errors
+    if (config.retryOnErrorTypes && config.retryOnErrorTypes.length > 0) {
+      const errorMessage = result.error || '';
+      return config.retryOnErrorTypes.some((type: string) => errorMessage.includes(type));
+    }
+
+    return true;
+  }
+
+  /**
+   * Execute node with timeout
+   */
+  private async executeWithTimeout(
+    context: NodeExecutionContext,
+    node: WorkflowNode,
+    timeoutMs: number
+  ): Promise<NodeExecutionResult> {
+    return Promise.race([
+      this.executeNode(context, node),
+      new Promise<NodeExecutionResult>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`Node ${node.id} timed out after ${timeoutMs}ms`)),
+          timeoutMs
+        )
+      ),
+    ]);
   }
 
   /**
