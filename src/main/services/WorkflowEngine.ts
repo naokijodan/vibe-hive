@@ -19,6 +19,7 @@ interface NodeExecutionContext {
   nodeId: string;
   input: any;
   workflowData: Record<string, any>;
+  executionStack?: number[];  // Stack of workflow IDs currently being executed (for recursion detection)
 }
 
 interface NodeExecutionResult {
@@ -60,8 +61,9 @@ export class WorkflowEngine {
       // Notify renderer that execution started
       this.notifyRenderer('workflow:execution:started', { executionId: execution.id, workflowId: params.workflowId });
 
-      // Execute workflow nodes
-      const nodeResults = await this.executeWorkflow(workflow, params.triggerData || {}, abortController.signal);
+      // Execute workflow nodes with execution stack for recursion detection
+      const executionStack = [params.workflowId];
+      const nodeResults = await this.executeWorkflow(workflow, params.triggerData || {}, abortController.signal, executionStack);
 
       // Update execution as successful
       this.repository.updateExecution(execution.id, {
@@ -125,7 +127,8 @@ export class WorkflowEngine {
   private async executeWorkflow(
     workflow: Workflow,
     triggerData: Record<string, any>,
-    signal: AbortSignal
+    signal: AbortSignal,
+    executionStack: number[] = []
   ): Promise<Record<string, any>> {
     const nodeResults: Record<string, any> = {};
 
@@ -135,6 +138,9 @@ export class WorkflowEngine {
     // Store workflow metadata for loop nodes
     nodeResults['__edges__'] = workflow.edges;
     nodeResults['__nodes__'] = workflow.nodes;
+
+    // Store execution stack for subworkflow nodes (recursion detection)
+    nodeResults['__execution_stack__'] = executionStack;
 
     // Group nodes by execution level for parallel execution
     const levels = this.groupNodesByLevel(workflow.nodes, workflow.edges);
@@ -158,6 +164,7 @@ export class WorkflowEngine {
           nodeId,
           input,
           workflowData: nodeResults,
+          executionStack,
         }, node);
 
         if (!result.success) {
@@ -209,7 +216,7 @@ export class WorkflowEngine {
           return await this.executeLoopNode(node, context);
 
         case 'subworkflow':
-          return await this.executeSubworkflowNode(node, context.input);
+          return await this.executeSubworkflowNode(node, context.input, context.executionStack);
 
         case 'agent':
           return await this.executeAgentNode(node, context.input);
@@ -532,13 +539,26 @@ export class WorkflowEngine {
   /**
    * Execute a subworkflow node
    */
-  private async executeSubworkflowNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
+  private async executeSubworkflowNode(
+    node: WorkflowNode,
+    input: any,
+    executionStack: number[] = []
+  ): Promise<NodeExecutionResult> {
     const subworkflowConfig = node.data.subworkflowConfig;
     if (!subworkflowConfig) {
       return { success: false, error: 'Subworkflow node error: Subworkflow not selected. Please select a subworkflow in node settings.' };
     }
 
     const { workflowId, inputMapping, outputMapping } = subworkflowConfig;
+
+    // Recursion detection
+    if (executionStack.includes(workflowId)) {
+      const stackTrace = [...executionStack, workflowId].join(' → ');
+      return {
+        success: false,
+        error: `Recursive subworkflow detected: Workflow ${workflowId} is already in the execution stack.\nCall chain: ${stackTrace}`,
+      };
+    }
 
     // Get the target workflow
     const targetWorkflow = this.repository.findById(workflowId);
@@ -549,9 +569,24 @@ export class WorkflowEngine {
     try {
       // Map input data
       const childInput: Record<string, any> = {};
-      for (const [childField, parentField] of Object.entries(inputMapping || {})) {
-        childInput[childField] = this.getFieldValue(input, parentField);
+      const missingFields: string[] = [];
+
+      // Validate and map input
+      if (!inputMapping || Object.keys(inputMapping).length === 0) {
+        // No input mapping - pass empty object to child workflow
+        // This is not an error, just a warning in development
+      } else {
+        for (const [childField, parentField] of Object.entries(inputMapping)) {
+          const value = this.getFieldValue(input, parentField);
+          if (value === undefined) {
+            missingFields.push(parentField);
+          }
+          childInput[childField] = value;
+        }
       }
+
+      // Add execution stack for recursion detection
+      const newStack = [...executionStack, workflowId];
 
       // Execute child workflow
       const result = await this.execute({
@@ -560,13 +595,32 @@ export class WorkflowEngine {
       });
 
       if (result.status === 'failed') {
-        return { success: false, error: result.error || 'Subworkflow execution failed' };
+        return {
+          success: false,
+          error: `Subworkflow execution failed: ${result.error || 'Unknown error'}
+Workflow: ${targetWorkflow.name} (ID: ${workflowId})
+Input: ${JSON.stringify(childInput, null, 2)}`,
+        };
       }
 
       // Map output data
       const output: Record<string, any> = {};
-      for (const [parentField, childField] of Object.entries(outputMapping || {})) {
-        output[parentField] = this.getFieldValue(result.nodeResults, childField);
+      const unmappedFields: string[] = [];
+
+      if (!outputMapping || Object.keys(outputMapping).length === 0) {
+        // No output mapping - return entire result
+        return {
+          success: true,
+          output: result.nodeResults,
+        };
+      } else {
+        for (const [parentField, childField] of Object.entries(outputMapping)) {
+          const value = this.getFieldValue(result.nodeResults, childField);
+          if (value === undefined) {
+            unmappedFields.push(childField);
+          }
+          output[parentField] = value;
+        }
       }
 
       return {
@@ -576,7 +630,8 @@ export class WorkflowEngine {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Subworkflow execution failed',
+        error: `Subworkflow execution failed: ${error instanceof Error ? error.message : 'Unknown error'}
+Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
       };
     }
   }
@@ -906,6 +961,7 @@ ${JSON.stringify(nodeResults, null, 2)}
           nodeId,
           input,
           workflowData: subgraphResults,
+          executionStack: workflowData['__execution_stack__'] || [],
         }, node);
 
         if (!result.success) {
