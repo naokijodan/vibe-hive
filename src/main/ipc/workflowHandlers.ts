@@ -140,37 +140,37 @@ export function registerWorkflowHandlers(): void {
   });
 
   // Workflow Template handlers
-  ipcMain.handle('template:getAll', () => {
+  ipcMain.handle('workflow:template:getAll', () => {
     const templateRepo = getTemplateRepository();
     return templateRepo.findAll();
   });
 
-  ipcMain.handle('template:get', (_event, id: number) => {
+  ipcMain.handle('workflow:template:get', (_event, id: number) => {
     const templateRepo = getTemplateRepository();
     return templateRepo.findById(id);
   });
 
-  ipcMain.handle('template:getByCategory', (_event, category: string) => {
+  ipcMain.handle('workflow:template:getByCategory', (_event, category: string) => {
     const templateRepo = getTemplateRepository();
     return templateRepo.findByCategory(category);
   });
 
-  ipcMain.handle('template:create', (_event, input: TemplateCreateInput) => {
+  ipcMain.handle('workflow:template:create', (_event, input: TemplateCreateInput) => {
     const templateRepo = getTemplateRepository();
     return templateRepo.create(input);
   });
 
-  ipcMain.handle('template:update', (_event, id: number, input: TemplateUpdateInput) => {
+  ipcMain.handle('workflow:template:update', (_event, id: number, input: TemplateUpdateInput) => {
     const templateRepo = getTemplateRepository();
     return templateRepo.update(id, input);
   });
 
-  ipcMain.handle('template:delete', (_event, id: number) => {
+  ipcMain.handle('workflow:template:delete', (_event, id: number) => {
     const templateRepo = getTemplateRepository();
     templateRepo.delete(id);
   });
 
-  ipcMain.handle('template:apply', (_event, templateId: number, sessionId: number) => {
+  ipcMain.handle('workflow:template:apply', (_event, templateId: number, sessionId: number) => {
     const templateRepo = getTemplateRepository();
     const template = templateRepo.findById(templateId);
 

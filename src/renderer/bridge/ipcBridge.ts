@@ -201,19 +201,19 @@ export const ipcBridge = {
   // Workflow Template operations
   workflowTemplate: {
     getAll: (): Promise<WorkflowTemplate[]> =>
-      window.electronAPI.invoke('template:getAll'),
+      window.electronAPI.invoke('workflow:template:getAll'),
     get: (id: number): Promise<WorkflowTemplate | null> =>
-      window.electronAPI.invoke('template:get', id),
+      window.electronAPI.invoke('workflow:template:get', id),
     getByCategory: (category: string): Promise<WorkflowTemplate[]> =>
-      window.electronAPI.invoke('template:getByCategory', category),
+      window.electronAPI.invoke('workflow:template:getByCategory', category),
     create: (input: TemplateCreateInput): Promise<WorkflowTemplate> =>
-      window.electronAPI.invoke('template:create', input),
+      window.electronAPI.invoke('workflow:template:create', input),
     update: (id: number, input: TemplateUpdateInput): Promise<WorkflowTemplate | null> =>
-      window.electronAPI.invoke('template:update', id, input),
+      window.electronAPI.invoke('workflow:template:update', id, input),
     delete: (id: number): Promise<void> =>
-      window.electronAPI.invoke('template:delete', id),
+      window.electronAPI.invoke('workflow:template:delete', id),
     apply: (templateId: number, sessionId: number): Promise<Workflow> =>
-      window.electronAPI.invoke('template:apply', templateId, sessionId),
+      window.electronAPI.invoke('workflow:template:apply', templateId, sessionId),
   },
 };
 
