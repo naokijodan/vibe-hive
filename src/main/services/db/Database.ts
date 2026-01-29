@@ -268,6 +268,65 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_workflow_templates_is_built_in ON workflow_templates(is_built_in);
       `,
     },
+    {
+      name: '011_seed_workflow_templates',
+      sql: `
+        -- Built-in Template: Task Completion Notification
+        INSERT INTO workflow_templates (name, description, category, nodes, edges, is_built_in)
+        VALUES (
+          'Task Completion Notification',
+          'Execute a task and send notification when complete. Perfect for keeping your team updated on important task completions.',
+          'notification',
+          '[{"id":"trigger-1","type":"trigger","position":{"x":100,"y":100},"data":{"label":"Manual Trigger","config":{},"triggerType":"manual"}},{"id":"task-1","type":"task","position":{"x":300,"y":100},"data":{"label":"Execute Task","config":{}}},{"id":"notify-1","type":"notification","position":{"x":500,"y":100},"data":{"label":"Send Notification","config":{},"notificationType":"slack"}}]',
+          '[{"id":"e1","source":"trigger-1","target":"task-1"},{"id":"e2","source":"task-1","target":"notify-1"}]',
+          1
+        );
+
+        -- Built-in Template: Scheduled Task Executor
+        INSERT INTO workflow_templates (name, description, category, nodes, edges, is_built_in)
+        VALUES (
+          'Scheduled Task Executor',
+          'Automatically execute tasks on a schedule using cron expressions. Ideal for recurring maintenance tasks and regular updates.',
+          'automation',
+          '[{"id":"trigger-1","type":"trigger","position":{"x":100,"y":100},"data":{"label":"Schedule Trigger","config":{"schedule":"0 0 * * *"},"triggerType":"schedule"}},{"id":"task-1","type":"task","position":{"x":350,"y":100},"data":{"label":"Execute Task","config":{}}}]',
+          '[{"id":"e1","source":"trigger-1","target":"task-1"}]',
+          1
+        );
+
+        -- Built-in Template: Conditional Workflow
+        INSERT INTO workflow_templates (name, description, category, nodes, edges, is_built_in)
+        VALUES (
+          'Conditional Workflow',
+          'Execute a task and take different actions based on success or failure. Send success notification to team or alert on failure.',
+          'automation',
+          '[{"id":"trigger-1","type":"trigger","position":{"x":100,"y":150},"data":{"label":"Manual Trigger","config":{},"triggerType":"manual"}},{"id":"task-1","type":"task","position":{"x":300,"y":150},"data":{"label":"Execute Task","config":{}}},{"id":"conditional-1","type":"conditional","position":{"x":500,"y":150},"data":{"label":"Check Result","config":{},"condition":{"field":"status","operator":"equals","value":"success"}}},{"id":"notify-success","type":"notification","position":{"x":700,"y":50},"data":{"label":"Success Notification","config":{},"notificationType":"slack"}},{"id":"notify-failure","type":"notification","position":{"x":700,"y":250},"data":{"label":"Failure Alert","config":{},"notificationType":"email"}}]',
+          '[{"id":"e1","source":"trigger-1","target":"task-1"},{"id":"e2","source":"task-1","target":"conditional-1"},{"id":"e3","source":"conditional-1","target":"notify-success","sourceHandle":"true"},{"id":"e4","source":"conditional-1","target":"notify-failure","sourceHandle":"false"}]',
+          1
+        );
+
+        -- Built-in Template: Webhook Handler
+        INSERT INTO workflow_templates (name, description, category, nodes, edges, is_built_in)
+        VALUES (
+          'Webhook Handler',
+          'Process incoming webhook requests by executing a task and sending confirmation notification. Great for integrating with external services.',
+          'data-processing',
+          '[{"id":"trigger-1","type":"trigger","position":{"x":100,"y":100},"data":{"label":"Webhook Trigger","config":{},"triggerType":"webhook"}},{"id":"task-1","type":"task","position":{"x":300,"y":100},"data":{"label":"Process Data","config":{}}},{"id":"notify-1","type":"notification","position":{"x":500,"y":100},"data":{"label":"Send Confirmation","config":{},"notificationType":"slack"}}]',
+          '[{"id":"e1","source":"trigger-1","target":"task-1"},{"id":"e2","source":"task-1","target":"notify-1"}]',
+          1
+        );
+
+        -- Built-in Template: AI Agent Workflow
+        INSERT INTO workflow_templates (name, description, category, nodes, edges, is_built_in)
+        VALUES (
+          'AI Agent Workflow',
+          'Trigger an AI agent to analyze data and send results as notification. Combine AI capabilities with automated workflows.',
+          'automation',
+          '[{"id":"trigger-1","type":"trigger","position":{"x":100,"y":100},"data":{"label":"Manual Trigger","config":{},"triggerType":"manual"}},{"id":"agent-1","type":"agent","position":{"x":300,"y":100},"data":{"label":"AI Analysis","config":{},"agentConfig":{"agentType":"claude-code","prompt":"Analyze the input data","templateVariables":true,"timeout":300000}}},{"id":"notify-1","type":"notification","position":{"x":500,"y":100},"data":{"label":"Send Results","config":{},"notificationType":"slack"}}]',
+          '[{"id":"e1","source":"trigger-1","target":"agent-1"},{"id":"e2","source":"agent-1","target":"notify-1"}]',
+          1
+        );
+      `,
+    },
   ];
 
   const appliedMigrations = database

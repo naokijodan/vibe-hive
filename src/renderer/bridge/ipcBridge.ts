@@ -19,6 +19,11 @@ import type {
   ExecuteWorkflowParams,
   WorkflowExecutionResult,
 } from '../../shared/types/workflow';
+import type {
+  WorkflowTemplate,
+  TemplateCreateInput,
+  TemplateUpdateInput,
+} from '../../shared/types/template';
 
 export const ipcBridge = {
   // Session operations
@@ -119,8 +124,8 @@ export const ipcBridge = {
       window.electronAPI.onExecutionCancelled(callback),
   },
 
-  // Template operations
-  template: {
+  // Task Template operations
+  taskTemplate: {
     create: (input: TaskTemplateCreateInput) =>
       window.electronAPI.templateCreate(input) as Promise<TaskTemplate>,
     get: (id: string) =>
@@ -191,6 +196,24 @@ export const ipcBridge = {
         port?: number;
         url?: string;
       }>,
+  },
+
+  // Workflow Template operations
+  workflowTemplate: {
+    getAll: (): Promise<WorkflowTemplate[]> =>
+      window.electronAPI.invoke('template:getAll'),
+    get: (id: number): Promise<WorkflowTemplate | null> =>
+      window.electronAPI.invoke('template:get', id),
+    getByCategory: (category: string): Promise<WorkflowTemplate[]> =>
+      window.electronAPI.invoke('template:getByCategory', category),
+    create: (input: TemplateCreateInput): Promise<WorkflowTemplate> =>
+      window.electronAPI.invoke('template:create', input),
+    update: (id: number, input: TemplateUpdateInput): Promise<WorkflowTemplate | null> =>
+      window.electronAPI.invoke('template:update', id, input),
+    delete: (id: number): Promise<void> =>
+      window.electronAPI.invoke('template:delete', id),
+    apply: (templateId: number, sessionId: number): Promise<Workflow> =>
+      window.electronAPI.invoke('template:apply', templateId, sessionId),
   },
 };
 

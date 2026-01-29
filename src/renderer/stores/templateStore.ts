@@ -41,7 +41,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     loadTemplates: async () => {
       set({ isLoading: true, error: null });
       try {
-        const templates = await ipcBridge.template.getAll();
+        const templates = await ipcBridge.taskTemplate.getAll();
         set({ templates, isLoading: false });
       } catch (error) {
         set({
@@ -54,7 +54,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     loadTemplatesByCategory: async (category: string) => {
       set({ isLoading: true, error: null, selectedCategory: category });
       try {
-        const templates = await ipcBridge.template.getByCategory(category);
+        const templates = await ipcBridge.taskTemplate.getByCategory(category);
         set({ templates, isLoading: false });
       } catch (error) {
         set({
@@ -67,7 +67,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     loadPopularTemplates: async (limit?: number) => {
       set({ isLoading: true, error: null });
       try {
-        const templates = await ipcBridge.template.getPopular(limit);
+        const templates = await ipcBridge.taskTemplate.getPopular(limit);
         set({ templates, isLoading: false });
       } catch (error) {
         set({
@@ -80,7 +80,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     createTemplate: async (input: TaskTemplateCreateInput) => {
       set({ isLoading: true, error: null });
       try {
-        const template = await ipcBridge.template.create(input);
+        const template = await ipcBridge.taskTemplate.create(input);
         set((state) => ({
           templates: [...state.templates, template],
           isLoading: false,
@@ -98,7 +98,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     updateTemplate: async (id: string, updates: TaskTemplateUpdateInput) => {
       set({ isLoading: true, error: null });
       try {
-        const updatedTemplate = await ipcBridge.template.update(id, updates);
+        const updatedTemplate = await ipcBridge.taskTemplate.update(id, updates);
         if (updatedTemplate) {
           set((state) => ({
             templates: state.templates.map((t) => (t.id === id ? updatedTemplate : t)),
@@ -119,7 +119,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     deleteTemplate: async (id: string) => {
       set({ isLoading: true, error: null });
       try {
-        await ipcBridge.template.delete(id);
+        await ipcBridge.taskTemplate.delete(id);
         set((state) => ({
           templates: state.templates.filter((t) => t.id !== id),
           selectedTemplateId: state.selectedTemplateId === id ? null : state.selectedTemplateId,
@@ -137,7 +137,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     searchTemplates: async (query: string) => {
       set({ isLoading: true, error: null, searchQuery: query });
       try {
-        const templates = await ipcBridge.template.search(query);
+        const templates = await ipcBridge.taskTemplate.search(query);
         set({ templates, isLoading: false });
       } catch (error) {
         set({
@@ -149,7 +149,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
     incrementUsageCount: async (id: string) => {
       try {
-        await ipcBridge.template.incrementUsage(id);
+        await ipcBridge.taskTemplate.incrementUsage(id);
         // Reload templates to get updated usage count
         const state = get();
         if (state.selectedCategory) {
