@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTaskStore } from '../../../stores/taskStore';
+import { RetrySettings } from './RetrySettings';
 import type { WorkflowNodeData } from '../../../../shared/types/workflow';
 
 interface TaskNodeSettingsProps {
@@ -105,6 +106,14 @@ export const TaskNodeSettings: React.FC<TaskNodeSettingsProps> = ({ data, onChan
           Override working directory
         </p>
       </div>
+
+      {/* Retry, Timeout, and Error Handling Settings */}
+      <RetrySettings
+        retryConfig={data.retryConfig}
+        timeoutConfig={data.timeoutConfig}
+        errorHandlingConfig={data.errorHandlingConfig}
+        onChange={(config) => onChange(config)}
+      />
     </div>
   );
 };
