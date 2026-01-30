@@ -20,6 +20,7 @@ interface NodeExecutionContext {
   input: any;
   workflowData: Record<string, any>;
   executionStack?: number[];  // Stack of workflow IDs currently being executed (for recursion detection)
+  signal?: AbortSignal;  // Abort signal for cancellation
 }
 
 interface NodeExecutionResult {
@@ -166,6 +167,7 @@ export class WorkflowEngine {
           input,
           workflowData: nodeResults,
           executionStack,
+          signal,
         }, node);
 
         if (!result.success) {
@@ -307,7 +309,7 @@ export class WorkflowEngine {
           return await this.executeLoopNode(node, context);
 
         case 'subworkflow':
-          return await this.executeSubworkflowNode(node, context.input, context.executionStack);
+          return await this.executeSubworkflowNode(node, context.input, context.executionStack, context.signal);
 
         case 'agent':
           return await this.executeAgentNode(node, context.input);
@@ -633,7 +635,8 @@ export class WorkflowEngine {
   private async executeSubworkflowNode(
     node: WorkflowNode,
     input: any,
-    executionStack: number[] = []
+    executionStack: number[] = [],
+    signal?: AbortSignal
   ): Promise<NodeExecutionResult> {
     const subworkflowConfig = node.data.subworkflowConfig;
     if (!subworkflowConfig) {
@@ -665,7 +668,7 @@ export class WorkflowEngine {
       // Validate and map input
       if (!inputMapping || Object.keys(inputMapping).length === 0) {
         // No input mapping - pass empty object to child workflow
-        // This is not an error, just a warning in development
+        console.warn(`Subworkflow node: No input mapping defined for workflow "${targetWorkflow.name}" (ID: ${workflowId})`);
       } else {
         for (const [childField, parentField] of Object.entries(inputMapping)) {
           const value = this.getFieldValue(input, parentField);
@@ -674,25 +677,26 @@ export class WorkflowEngine {
           }
           childInput[childField] = value;
         }
+
+        // Warn about missing fields
+        if (missingFields.length > 0) {
+          console.warn(`Subworkflow input mapping: Fields not found in parent data: ${missingFields.join(', ')}`);
+          console.warn(`Available parent fields: ${Object.keys(input).join(', ')}`);
+        }
       }
 
       // Add execution stack for recursion detection
       const newStack = [...executionStack, workflowId];
 
-      // Execute child workflow
-      const result = await this.execute({
-        workflowId,
-        triggerData: childInput,
-      });
-
-      if (result.status === 'failed') {
-        return {
-          success: false,
-          error: `Subworkflow execution failed: ${result.error || 'Unknown error'}
-Workflow: ${targetWorkflow.name} (ID: ${workflowId})
-Input: ${JSON.stringify(childInput, null, 2)}`,
-        };
-      }
+      // Execute child workflow directly (not via execute() to preserve execution stack)
+      // This ensures recursion detection works correctly
+      const abortController = signal ? { signal } : new AbortController();
+      const childResults = await this.executeWorkflow(
+        targetWorkflow,
+        childInput,
+        abortController.signal || new AbortController().signal,
+        newStack
+      );
 
       // Map output data
       const output: Record<string, any> = {};
@@ -700,17 +704,24 @@ Input: ${JSON.stringify(childInput, null, 2)}`,
 
       if (!outputMapping || Object.keys(outputMapping).length === 0) {
         // No output mapping - return entire result
+        console.warn(`Subworkflow node: No output mapping defined for workflow "${targetWorkflow.name}" (ID: ${workflowId})`);
         return {
           success: true,
-          output: result.nodeResults,
+          output: childResults,
         };
       } else {
         for (const [parentField, childField] of Object.entries(outputMapping)) {
-          const value = this.getFieldValue(result.nodeResults, childField);
+          const value = this.getFieldValue(childResults, childField);
           if (value === undefined) {
             unmappedFields.push(childField);
           }
           output[parentField] = value;
+        }
+
+        // Warn about unmapped fields
+        if (unmappedFields.length > 0) {
+          console.warn(`Subworkflow output mapping: Fields not found in child results: ${unmappedFields.join(', ')}`);
+          console.warn(`Available child fields: ${Object.keys(childResults).join(', ')}`);
         }
       }
 

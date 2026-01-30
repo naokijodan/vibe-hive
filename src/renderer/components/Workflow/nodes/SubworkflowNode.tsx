@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { WorkflowNodeData } from '../../../../shared/types/workflow';
+import { useWorkflowStore } from '../../../stores/workflowStore';
 
 export const SubworkflowNode: React.FC<NodeProps<WorkflowNodeData>> = ({ data, selected }) => {
   const subworkflowConfig = data.subworkflowConfig;
   const workflowId = subworkflowConfig?.workflowId;
+  const { workflows, loadWorkflows } = useWorkflowStore();
+  const [workflowName, setWorkflowName] = useState<string>('');
+
+  useEffect(() => {
+    if (workflows.length === 0) {
+      loadWorkflows();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (workflowId && workflows.length > 0) {
+      const targetWorkflow = workflows.find(w => w.id === workflowId);
+      setWorkflowName(targetWorkflow?.name || `Workflow #${workflowId}`);
+    } else {
+      setWorkflowName('');
+    }
+  }, [workflowId, workflows]);
 
   return (
     <div
@@ -23,25 +41,31 @@ export const SubworkflowNode: React.FC<NodeProps<WorkflowNodeData>> = ({ data, s
       </div>
 
       <div className="text-xs space-y-1">
-        <div className="flex items-center space-x-2">
-          <span className="text-gray-500">Workflow ID:</span>
-          <span className="px-2 py-0.5 bg-indigo-900/50 text-indigo-300 rounded font-mono">
-            {workflowId || 'Not set'}
-          </span>
-        </div>
-        {subworkflowConfig && (
+        {workflowName ? (
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-500">Target:</span>
+            <span className="px-2 py-0.5 bg-indigo-900/50 text-indigo-300 rounded font-medium truncate">
+              {workflowName}
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-500">Workflow:</span>
+            <span className="px-2 py-0.5 bg-red-900/50 text-red-300 rounded font-mono text-[10px]">
+              Not configured
+            </span>
+          </div>
+        )}
+        {subworkflowConfig && workflowId && (
           <>
             <div className="text-gray-400 text-[10px]">
-              Inputs: {Object.keys(subworkflowConfig.inputMapping || {}).length}
+              Inputs: {Object.keys(subworkflowConfig.inputMapping || {}).length} mapped
             </div>
             <div className="text-gray-400 text-[10px]">
-              Outputs: {Object.keys(subworkflowConfig.outputMapping || {}).length}
+              Outputs: {Object.keys(subworkflowConfig.outputMapping || {}).length} mapped
             </div>
           </>
         )}
-        <div className="text-gray-400 text-[10px]">
-          Calls another workflow
-        </div>
       </div>
 
       <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-indigo-400" />
