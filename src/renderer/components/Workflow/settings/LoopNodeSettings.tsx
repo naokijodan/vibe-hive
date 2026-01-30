@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
-import type { WorkflowNodeData, LoopType, LoopConfig } from '../../../../shared/types/workflow';
+import type {
+  WorkflowNodeData,
+  LoopType,
+  LoopConfig,
+  ConditionalOperator,
+  SimpleCondition,
+} from '../../../../shared/types/workflow';
 
 interface LoopNodeSettingsProps {
   data: WorkflowNodeData;
   onChange: (data: Partial<WorkflowNodeData>) => void;
 }
+
+const operators: { value: ConditionalOperator; label: string }[] = [
+  { value: 'equals', label: 'Equals (==)' },
+  { value: 'not_equals', label: 'Not Equals (!=)' },
+  { value: 'greater_than', label: 'Greater Than (>)' },
+  { value: 'less_than', label: 'Less Than (<)' },
+  { value: 'contains', label: 'Contains' },
+  { value: 'not_contains', label: 'Not Contains' },
+];
 
 export const LoopNodeSettings: React.FC<LoopNodeSettingsProps> = ({ data, onChange }) => {
   const loopConfig = data.loopConfig || {
@@ -89,13 +104,122 @@ export const LoopNodeSettings: React.FC<LoopNodeSettingsProps> = ({ data, onChan
 
       {/* While Configuration */}
       {config.type === 'while' && (
-        <div className="p-3 bg-gray-700/50 rounded-lg border border-gray-600">
-          <div className="text-sm text-gray-300 mb-2">While Condition</div>
-          <div className="text-xs text-gray-400 mb-2">
-            Condition configuration is complex. For now, use simple mode with a condition field.
+        <div className="space-y-3">
+          <div className="text-sm font-medium text-gray-300 mb-2">While Condition</div>
+          <p className="text-xs text-gray-500 mb-3">
+            Loop will continue while this condition is true. The condition is re-evaluated after each iteration.
+          </p>
+
+          {/* Condition configuration */}
+          <div className="p-3 bg-gray-700/50 rounded-lg border border-gray-600 space-y-3">
+            {/* Field Path */}
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1">Field Path</label>
+              <input
+                type="text"
+                value={config.condition?.conditions?.[0]?.field || ''}
+                onChange={(e) => {
+                  const condition: SimpleCondition = {
+                    field: e.target.value,
+                    operator: config.condition?.conditions?.[0]?.operator || 'equals',
+                    value: config.condition?.conditions?.[0]?.value || '',
+                  };
+                  handleChange({
+                    condition: {
+                      operator: 'AND',
+                      conditions: [condition],
+                    },
+                  });
+                }}
+                placeholder="e.g., status, iteration.count"
+                className="
+                  w-full px-2 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm
+                  text-white placeholder-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-orange-500
+                "
+              />
+              <p className="text-xs text-gray-500 mt-1">Path to field to check (use dot notation)</p>
+            </div>
+
+            {/* Operator */}
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1">Operator</label>
+              <select
+                value={config.condition?.conditions?.[0]?.operator || 'equals'}
+                onChange={(e) => {
+                  const condition: SimpleCondition = {
+                    field: config.condition?.conditions?.[0]?.field || '',
+                    operator: e.target.value as ConditionalOperator,
+                    value: config.condition?.conditions?.[0]?.value || '',
+                  };
+                  handleChange({
+                    condition: {
+                      operator: 'AND',
+                      conditions: [condition],
+                    },
+                  });
+                }}
+                className="
+                  w-full px-2 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm
+                  text-white focus:outline-none focus:ring-2 focus:ring-orange-500
+                "
+              >
+                {operators.map(op => (
+                  <option key={op.value} value={op.value}>
+                    {op.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Value */}
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1">Value</label>
+              <input
+                type="text"
+                value={config.condition?.conditions?.[0]?.value || ''}
+                onChange={(e) => {
+                  const condition: SimpleCondition = {
+                    field: config.condition?.conditions?.[0]?.field || '',
+                    operator: config.condition?.conditions?.[0]?.operator || 'equals',
+                    value: e.target.value,
+                  };
+                  handleChange({
+                    condition: {
+                      operator: 'AND',
+                      conditions: [condition],
+                    },
+                  });
+                }}
+                placeholder="comparison value"
+                className="
+                  w-full px-2 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm
+                  text-white placeholder-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-orange-500
+                "
+              />
+              <p className="text-xs text-gray-500 mt-1">Value to compare against</p>
+            </div>
+
+            {/* Condition Preview */}
+            {config.condition?.conditions?.[0] && (
+              <div className="pt-2 border-t border-gray-600">
+                <div className="text-xs text-gray-400 mb-1">Preview:</div>
+                <code className="text-xs text-orange-300 font-mono">
+                  {config.condition.conditions[0].field || '(field)'}{' '}
+                  {config.condition.conditions[0].operator}{' '}
+                  {config.condition.conditions[0].value || '(value)'}
+                </code>
+              </div>
+            )}
           </div>
-          <div className="text-xs text-gray-500">
-            Note: Advanced condition group support will be added in future updates.
+
+          {/* Info Box */}
+          <div className="p-2 bg-orange-900/20 rounded border border-orange-700/50">
+            <div className="text-xs text-orange-200">
+              <strong>Note:</strong> Loop will exit when condition becomes false or max iterations is reached.
+              For complex conditions with AND/OR logic, use the Conditional node instead.
+            </div>
           </div>
         </div>
       )}
@@ -142,6 +266,20 @@ export const LoopNodeSettings: React.FC<LoopNodeSettingsProps> = ({ data, onChan
             <div>
               <span className="text-gray-500">Iterations:</span>{' '}
               <span className="font-mono">{config.count || 1}</span>
+            </div>
+          )}
+          {config.type === 'while' && (
+            <div>
+              <span className="text-gray-500">Condition:</span>{' '}
+              {config.condition?.conditions?.[0] ? (
+                <code className="font-mono text-orange-300">
+                  {config.condition.conditions[0].field || '(field)'}{' '}
+                  {config.condition.conditions[0].operator}{' '}
+                  {config.condition.conditions[0].value || '(value)'}
+                </code>
+              ) : (
+                <span className="text-red-400">(not set)</span>
+              )}
             </div>
           )}
           <div>
