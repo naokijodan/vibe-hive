@@ -13,7 +13,6 @@ import {
   type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { toPng } from 'html-to-image';
 import { TaskNode, TriggerNode, ConditionalNode, NotificationNode, MergeNode, DelayNode, LoopNode, SubworkflowNode, AgentNode } from './nodes';
 import { NodePalette } from './NodePalette';
 import { NodeSettingsPanel } from './settings/NodeSettingsPanel';
@@ -262,6 +261,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
     }
 
     try {
+      // Dynamic import to avoid SSR issues
+      const { toPng } = await import('html-to-image');
+
       // Find the React Flow viewport element
       const viewportElement = reactFlowWrapper.current.querySelector('.react-flow__viewport');
       if (!viewportElement) {
