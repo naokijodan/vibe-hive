@@ -37,6 +37,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
 
   const [editingTemplate, setEditingTemplate] = useState<WorkflowTemplate | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadTemplates();
@@ -61,6 +62,24 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
     setShowEditDialog(false);
     setEditingTemplate(null);
   };
+
+  // Filter templates by category and search query
+  const filteredTemplates = templates.filter((template) => {
+    // Category filter
+    if (selectedCategory && template.category !== selectedCategory) {
+      return false;
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchName = template.name.toLowerCase().includes(query);
+      const matchDesc = template.description?.toLowerCase().includes(query);
+      return matchName || matchDesc;
+    }
+
+    return true;
+  });
 
   if (error) {
     return (
@@ -87,6 +106,58 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
               Save Current as Template
             </button>
           )}
+        </div>
+
+        {/* Search Box */}
+        <div className="mt-4 relative">
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg
+                className="h-5 w-5 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="
+                block w-full rounded-lg border border-gray-300 bg-white
+                py-2 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-500
+                focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+              "
+              placeholder="Search templates..."
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Category Filters */}
@@ -116,7 +187,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
           <div className="flex items-center justify-center p-8">
             <div className="text-gray-500">Loading templates...</div>
           </div>
-        ) : templates.length === 0 ? (
+        ) : filteredTemplates.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <svg
               className="h-12 w-12 text-gray-400"
@@ -133,14 +204,16 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
             </svg>
             <p className="mt-4 text-lg font-medium text-gray-900">No templates found</p>
             <p className="mt-1 text-sm text-gray-500">
-              {selectedCategory
+              {searchQuery
+                ? `No templates match "${searchQuery}"`
+                : selectedCategory
                 ? 'Try selecting a different category'
                 : 'Create your first template to get started'}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {templates.map((template) => (
+            {filteredTemplates.map((template) => (
               <TemplateCard
                 key={template.id}
                 template={template}
