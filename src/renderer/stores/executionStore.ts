@@ -21,37 +21,45 @@ interface ExecutionState {
 export const useExecutionStore = create<ExecutionState>((set, get) => {
   // Setup IPC event listeners
   const setupListeners = () => {
-    // Execution started event
-    ipcBridge.execution.onStarted((data: { executionId: string; taskId: string }) => {
-      console.log('Execution started:', data);
-      get().loadRunningExecutions();
-    });
+    // Check if methods exist before calling them
+    if (typeof ipcBridge.execution?.onStarted === 'function') {
+      ipcBridge.execution.onStarted((data: { executionId: string; taskId: string }) => {
+        console.log('Execution started:', data);
+        get().loadRunningExecutions();
+      });
+    }
 
-    // Execution completed event
-    ipcBridge.execution.onCompleted((execution: ExecutionRecord) => {
-      console.log('Execution completed:', execution);
-      set((state) => ({
-        executions: state.executions.map((e) =>
-          e.id === execution.id ? execution : e
-        ),
-        runningExecutions: state.runningExecutions.filter((e) => e.id !== execution.id),
-      }));
-    });
+    if (typeof ipcBridge.execution?.onCompleted === 'function') {
+      ipcBridge.execution.onCompleted((execution: ExecutionRecord) => {
+        console.log('Execution completed:', execution);
+        set((state) => ({
+          executions: state.executions.map((e) =>
+            e.id === execution.id ? execution : e
+          ),
+          runningExecutions: state.runningExecutions.filter((e) => e.id !== execution.id),
+        }));
+      });
+    }
 
-    // Execution cancelled event
-    ipcBridge.execution.onCancelled((execution: ExecutionRecord) => {
-      console.log('Execution cancelled:', execution);
-      set((state) => ({
-        executions: state.executions.map((e) =>
-          e.id === execution.id ? execution : e
-        ),
-        runningExecutions: state.runningExecutions.filter((e) => e.id !== execution.id),
-      }));
-    });
+    if (typeof ipcBridge.execution?.onCancelled === 'function') {
+      ipcBridge.execution.onCancelled((execution: ExecutionRecord) => {
+        console.log('Execution cancelled:', execution);
+        set((state) => ({
+          executions: state.executions.map((e) =>
+            e.id === execution.id ? execution : e
+          ),
+          runningExecutions: state.runningExecutions.filter((e) => e.id !== execution.id),
+        }));
+      });
+    }
   };
 
-  // Initialize listeners
-  setupListeners();
+  // Initialize listeners safely
+  try {
+    setupListeners();
+  } catch (error) {
+    console.error('Failed to setup execution store listeners:', error);
+  }
 
   return {
     executions: [],
