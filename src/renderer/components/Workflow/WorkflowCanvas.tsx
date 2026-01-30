@@ -17,10 +17,12 @@ import { TaskNode, TriggerNode, ConditionalNode, NotificationNode, MergeNode, De
 import { NodePalette } from './NodePalette';
 import { NodeSettingsPanel } from './settings/NodeSettingsPanel';
 import { WorkflowSettingsModal } from './WorkflowSettingsModal';
+import { ImportValidationDialog } from './ImportValidationDialog';
+import { ExportTemplateDialog } from './ExportTemplateDialog';
 import { useWorkflowStore } from '../../stores/workflowStore';
 import { ipcBridge } from '../../bridge/ipcBridge';
 import { useToast } from '../../hooks/useToast';
-import type { NodeType, WorkflowNodeData } from '../../../shared/types/workflow';
+import type { NodeType, WorkflowNodeData, WorkflowImportResult } from '../../../shared/types/workflow';
 
 const nodeTypes: NodeTypes = {
   task: TaskNode,
@@ -43,6 +45,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<Node<WorkflowNodeData> | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importResult, setImportResult] = useState<WorkflowImportResult | null>(null);
+  const [showExportTemplateDialog, setShowExportTemplateDialog] = useState(false);
   const toast = useToast();
 
   const {
@@ -211,22 +216,42 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
       const result = await ipcBridge.workflow.import(sessionId);
       toast.dismiss(loadingToast);
 
-      if (result.success && result.workflow) {
-        toast.success(`Workflow "${result.workflow.name}" imported successfully!`);
-        // Optionally reload workflows here
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else if (result.canceled) {
+      if (result.canceled) {
         // User cancelled the dialog, do nothing
-      } else {
-        toast.error('Failed to import workflow');
+        return;
       }
+
+      // Show ImportValidationDialog with result
+      setImportResult(result);
+      setShowImportDialog(true);
     } catch (error) {
       toast.dismiss(loadingToast);
       console.error('Import error:', error);
       toast.error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  };
+
+  const handleImportConfirm = () => {
+    setShowImportDialog(false);
+    if (importResult?.success && importResult.workflow) {
+      toast.success(`Workflow "${importResult.workflow.name}" imported successfully!`);
+      // Reload workflows
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+  };
+
+  const handleExportTemplate = () => {
+    if (!currentWorkflow) {
+      toast.warning('No workflow selected');
+      return;
+    }
+    setShowExportTemplateDialog(true);
+  };
+
+  const handleExportTemplateSuccess = () => {
+    toast.success('Workflow saved as template successfully!');
   };
 
   const handleNodeClick = useCallback(
@@ -339,6 +364,18 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
               </svg>
             </button>
             <button
+              onClick={handleExportTemplate}
+              className="
+                px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg
+                font-medium shadow-lg transition-colors
+              "
+              title="Save as template"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
+            <button
               onClick={handleSave}
               className="
                 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg
@@ -389,6 +426,21 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
           workflow={currentWorkflow}
         />
       )}
+
+      <ImportValidationDialog
+        isOpen={showImportDialog}
+        result={importResult}
+        onClose={() => setShowImportDialog(false)}
+        onConfirm={handleImportConfirm}
+      />
+
+      <ExportTemplateDialog
+        isOpen={showExportTemplateDialog}
+        workflowId={currentWorkflow?.id || null}
+        workflowName={currentWorkflow?.name || ''}
+        onClose={() => setShowExportTemplateDialog(false)}
+        onSuccess={handleExportTemplateSuccess}
+      />
     </div>
   );
 };
