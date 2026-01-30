@@ -48,9 +48,12 @@ export const IPC_CHANNELS = {
   TEMPLATE_GET_ALL: 'template:getAll',
   TEMPLATE_GET: 'template:get',
   TEMPLATE_GET_BY_CATEGORY: 'template:getByCategory',
+  TEMPLATE_GET_POPULAR: 'template:getPopular',
   TEMPLATE_CREATE: 'template:create',
   TEMPLATE_UPDATE: 'template:update',
+  TEMPLATE_INCREMENT_USAGE: 'template:incrementUsage',
   TEMPLATE_DELETE: 'template:delete',
+  TEMPLATE_SEARCH: 'template:search',
   TEMPLATE_APPLY: 'template:apply',
 
   // Workflow Template channels
