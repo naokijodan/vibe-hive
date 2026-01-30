@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWorkflowTemplateStore } from '../stores/workflowTemplateStore';
 import { TemplateCard } from './TemplateCard';
-import type { TemplateCategory } from '../../shared/types/template';
+import { EditTemplateDialog } from './EditTemplateDialog';
+import type { TemplateCategory, WorkflowTemplate, TemplateUpdateInput } from '../../shared/types/template';
 
 interface TemplateGalleryProps {
   onApply: (templateId: number) => void;
@@ -31,7 +32,11 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
     error,
     loadTemplates,
     setSelectedCategory,
+    updateTemplate,
   } = useWorkflowTemplateStore();
+
+  const [editingTemplate, setEditingTemplate] = useState<WorkflowTemplate | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -39,6 +44,22 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
 
   const handleCategoryChange = (category: TemplateCategory | null) => {
     setSelectedCategory(category);
+  };
+
+  const handleEdit = (templateId: number) => {
+    const template = templates.find((t) => t.id === templateId);
+    if (template) {
+      setEditingTemplate(template);
+      setShowEditDialog(true);
+    }
+    // Also call the optional onEdit prop if provided
+    onEdit?.(templateId);
+  };
+
+  const handleEditSave = async (id: number, data: TemplateUpdateInput) => {
+    await updateTemplate(id, data);
+    setShowEditDialog(false);
+    setEditingTemplate(null);
   };
 
   if (error) {
@@ -124,13 +145,24 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
                 key={template.id}
                 template={template}
                 onApply={onApply}
-                onEdit={onEdit}
+                onEdit={handleEdit}
                 onDelete={onDelete}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Template Dialog */}
+      <EditTemplateDialog
+        isOpen={showEditDialog}
+        template={editingTemplate}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingTemplate(null);
+        }}
+        onSave={handleEditSave}
+      />
     </div>
   );
 };
