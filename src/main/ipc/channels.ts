@@ -44,7 +44,7 @@ export const IPC_CHANNELS = {
   SETTINGS_UPDATE_APP: 'settings:update-app',
   SETTINGS_RESET: 'settings:reset',
 
-  // Template channels
+  // Template channels (Task Templates)
   TEMPLATE_GET_ALL: 'template:getAll',
   TEMPLATE_GET: 'template:get',
   TEMPLATE_GET_BY_CATEGORY: 'template:getByCategory',
@@ -52,6 +52,15 @@ export const IPC_CHANNELS = {
   TEMPLATE_UPDATE: 'template:update',
   TEMPLATE_DELETE: 'template:delete',
   TEMPLATE_APPLY: 'template:apply',
+
+  // Workflow Template channels
+  WORKFLOW_TEMPLATE_GET_ALL: 'workflow:template:getAll',
+  WORKFLOW_TEMPLATE_GET: 'workflow:template:get',
+  WORKFLOW_TEMPLATE_GET_BY_CATEGORY: 'workflow:template:getByCategory',
+  WORKFLOW_TEMPLATE_CREATE: 'workflow:template:create',
+  WORKFLOW_TEMPLATE_UPDATE: 'workflow:template:update',
+  WORKFLOW_TEMPLATE_DELETE: 'workflow:template:delete',
+  WORKFLOW_TEMPLATE_APPLY: 'workflow:template:apply',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

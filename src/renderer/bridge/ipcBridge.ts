@@ -203,19 +203,19 @@ export const ipcBridge = {
   // Workflow Template operations
   workflowTemplate: {
     getAll: (): Promise<WorkflowTemplate[]> =>
-      window.electronAPI.invoke('workflow:template:getAll'),
+      window.electronAPI.workflowTemplateGetAll() as Promise<WorkflowTemplate[]>,
     get: (id: number): Promise<WorkflowTemplate | null> =>
-      window.electronAPI.invoke('workflow:template:get', id),
+      window.electronAPI.workflowTemplateGet(id) as Promise<WorkflowTemplate | null>,
     getByCategory: (category: string): Promise<WorkflowTemplate[]> =>
-      window.electronAPI.invoke('workflow:template:getByCategory', category),
+      window.electronAPI.workflowTemplateGetByCategory(category) as Promise<WorkflowTemplate[]>,
     create: (input: TemplateCreateInput): Promise<WorkflowTemplate> =>
-      window.electronAPI.invoke('workflow:template:create', input),
+      window.electronAPI.workflowTemplateCreate(input) as Promise<WorkflowTemplate>,
     update: (id: number, input: TemplateUpdateInput): Promise<WorkflowTemplate | null> =>
-      window.electronAPI.invoke('workflow:template:update', id, input),
+      window.electronAPI.workflowTemplateUpdate(id, input) as Promise<WorkflowTemplate | null>,
     delete: (id: number): Promise<void> =>
-      window.electronAPI.invoke('workflow:template:delete', id),
+      window.electronAPI.workflowTemplateDelete(id),
     apply: (templateId: number, sessionId: number): Promise<Workflow> =>
-      window.electronAPI.invoke('workflow:template:apply', templateId, sessionId),
+      window.electronAPI.workflowTemplateApply(templateId, sessionId) as Promise<Workflow>,
   },
 };
 

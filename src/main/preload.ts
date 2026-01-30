@@ -223,6 +223,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('workflow:execution:cancelled', listener);
   },
 
+  // Workflow Template
+  workflowTemplateGetAll: () => ipcRenderer.invoke('workflow:template:getAll'),
+  workflowTemplateGet: (id: number) => ipcRenderer.invoke('workflow:template:get', id),
+  workflowTemplateGetByCategory: (category: string) => ipcRenderer.invoke('workflow:template:getByCategory', category),
+  workflowTemplateCreate: (input: unknown) => ipcRenderer.invoke('workflow:template:create', input),
+  workflowTemplateUpdate: (id: number, input: unknown) => ipcRenderer.invoke('workflow:template:update', id, input),
+  workflowTemplateDelete: (id: number) => ipcRenderer.invoke('workflow:template:delete', id),
+  workflowTemplateApply: (templateId: number, sessionId: number) => ipcRenderer.invoke('workflow:template:apply', templateId, sessionId),
+
   // Notification
   notificationTest: (params: unknown) => ipcRenderer.invoke('notification:test', params),
   notificationSetWebhookUrl: (params: unknown) => ipcRenderer.invoke('notification:setWebhookUrl', params),
@@ -356,6 +365,14 @@ export interface ElectronAPI {
   onWorkflowExecutionStarted?: (callback: (data: unknown) => void) => () => void;
   onWorkflowExecutionCompleted?: (callback: (data: unknown) => void) => () => void;
   onWorkflowExecutionCancelled?: (callback: (data: unknown) => void) => () => void;
+  // Workflow Template
+  workflowTemplateGetAll: () => Promise<unknown[]>;
+  workflowTemplateGet: (id: number) => Promise<unknown>;
+  workflowTemplateGetByCategory: (category: string) => Promise<unknown[]>;
+  workflowTemplateCreate: (input: unknown) => Promise<unknown>;
+  workflowTemplateUpdate: (id: number, input: unknown) => Promise<unknown>;
+  workflowTemplateDelete: (id: number) => Promise<void>;
+  workflowTemplateApply: (templateId: number, sessionId: number) => Promise<unknown>;
   // Notification
   notificationTest: (params: unknown) => Promise<unknown>;
   notificationSetWebhookUrl: (params: unknown) => Promise<unknown>;

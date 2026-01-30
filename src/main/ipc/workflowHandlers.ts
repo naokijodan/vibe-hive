@@ -5,6 +5,7 @@ import { WorkflowRepository } from '../services/db/WorkflowRepository';
 import { WorkflowTemplateRepository } from '../services/db/WorkflowTemplateRepository';
 import { getDatabase } from '../services/db/Database';
 import { WorkflowValidator } from '../services/WorkflowValidator';
+import { IPC_CHANNELS } from './channels';
 import type {
   CreateWorkflowParams,
   UpdateWorkflowParams,
@@ -211,37 +212,37 @@ export function registerWorkflowHandlers(): void {
   });
 
   // Workflow Template handlers
-  ipcMain.handle('workflow:template:getAll', () => {
+  ipcMain.handle(IPC_CHANNELS.WORKFLOW_TEMPLATE_GET_ALL, () => {
     const templateRepo = getTemplateRepository();
     return templateRepo.findAll();
   });
 
-  ipcMain.handle('workflow:template:get', (_event, id: number) => {
+  ipcMain.handle(IPC_CHANNELS.WORKFLOW_TEMPLATE_GET, (_event, id: number) => {
     const templateRepo = getTemplateRepository();
     return templateRepo.findById(id);
   });
 
-  ipcMain.handle('workflow:template:getByCategory', (_event, category: string) => {
+  ipcMain.handle(IPC_CHANNELS.WORKFLOW_TEMPLATE_GET_BY_CATEGORY, (_event, category: string) => {
     const templateRepo = getTemplateRepository();
     return templateRepo.findByCategory(category);
   });
 
-  ipcMain.handle('workflow:template:create', (_event, input: TemplateCreateInput) => {
+  ipcMain.handle(IPC_CHANNELS.WORKFLOW_TEMPLATE_CREATE, (_event, input: TemplateCreateInput) => {
     const templateRepo = getTemplateRepository();
     return templateRepo.create(input);
   });
 
-  ipcMain.handle('workflow:template:update', (_event, id: number, input: TemplateUpdateInput) => {
+  ipcMain.handle(IPC_CHANNELS.WORKFLOW_TEMPLATE_UPDATE, (_event, id: number, input: TemplateUpdateInput) => {
     const templateRepo = getTemplateRepository();
     return templateRepo.update(id, input);
   });
 
-  ipcMain.handle('workflow:template:delete', (_event, id: number) => {
+  ipcMain.handle(IPC_CHANNELS.WORKFLOW_TEMPLATE_DELETE, (_event, id: number) => {
     const templateRepo = getTemplateRepository();
     templateRepo.delete(id);
   });
 
-  ipcMain.handle('workflow:template:apply', (_event, templateId: number, sessionId: number) => {
+  ipcMain.handle(IPC_CHANNELS.WORKFLOW_TEMPLATE_APPLY, (_event, templateId: number, sessionId: number) => {
     const templateRepo = getTemplateRepository();
     const template = templateRepo.findById(templateId);
 
