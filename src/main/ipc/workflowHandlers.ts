@@ -262,7 +262,7 @@ export function registerWorkflowHandlers(): void {
   });
 
   // Export workflow as template (saves directly to template repository)
-  ipcMain.handle('workflow:exportAsTemplate', async (_event, workflowId: number, templateData: { category?: 'automation' | 'notification' | 'data-processing' | 'custom' }) => {
+  ipcMain.handle('workflow:exportAsTemplate', async (_event, workflowId: number, templateData: { category?: 'automation' | 'notification' | 'data-processing' | 'custom'; thumbnail?: string }) => {
     const workflow = workflowEngine.getWorkflow(workflowId);
     if (!workflow) {
       throw new Error(`Workflow ${workflowId} not found`);
@@ -276,6 +276,7 @@ export function registerWorkflowHandlers(): void {
       category: templateData.category || 'custom',
       nodes: workflow.nodes,
       edges: workflow.edges,
+      thumbnail: templateData.thumbnail,
     };
 
     const newTemplate = templateRepo.create(templateInput);

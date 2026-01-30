@@ -13,6 +13,7 @@ import {
   type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { toPng } from 'html-to-image';
 import { TaskNode, TriggerNode, ConditionalNode, NotificationNode, MergeNode, DelayNode, LoopNode, SubworkflowNode, AgentNode } from './nodes';
 import { NodePalette } from './NodePalette';
 import { NodeSettingsPanel } from './settings/NodeSettingsPanel';
@@ -254,6 +255,55 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
     toast.success('Workflow saved as template successfully!');
   };
 
+  const captureScreenshot = async (): Promise<string | null> => {
+    if (!reactFlowWrapper.current) {
+      console.error('React Flow wrapper not found');
+      return null;
+    }
+
+    try {
+      // Find the React Flow viewport element
+      const viewportElement = reactFlowWrapper.current.querySelector('.react-flow__viewport');
+      if (!viewportElement) {
+        console.error('React Flow viewport not found');
+        return null;
+      }
+
+      // Capture the viewport as PNG
+      const dataUrl = await toPng(viewportElement as HTMLElement, {
+        cacheBust: true,
+        pixelRatio: 2, // Higher quality
+        backgroundColor: '#111827', // gray-900
+      });
+
+      // Resize to max width 400px
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(null);
+            return;
+          }
+
+          const maxWidth = 400;
+          const ratio = Math.min(maxWidth / img.width, 1);
+          canvas.width = img.width * ratio;
+          canvas.height = img.height * ratio;
+
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = dataUrl;
+      });
+    } catch (error) {
+      console.error('Failed to capture screenshot:', error);
+      return null;
+    }
+  };
+
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node<WorkflowNodeData>) => {
       setSelectedNode(node);
@@ -440,6 +490,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
         workflowName={currentWorkflow?.name || ''}
         onClose={() => setShowExportTemplateDialog(false)}
         onSuccess={handleExportTemplateSuccess}
+        onCaptureScreenshot={captureScreenshot}
       />
     </div>
   );

@@ -7,6 +7,7 @@ interface ExportTemplateDialogProps {
   workflowName: string;
   onClose: () => void;
   onSuccess: () => void;
+  onCaptureScreenshot?: () => Promise<string | null>;
 }
 
 type TemplateCategory = 'automation' | 'notification' | 'data-processing' | 'custom';
@@ -17,6 +18,7 @@ export const ExportTemplateDialog: React.FC<ExportTemplateDialogProps> = ({
   workflowName,
   onClose,
   onSuccess,
+  onCaptureScreenshot,
 }) => {
   const [category, setCategory] = useState<TemplateCategory>('custom');
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,19 @@ export const ExportTemplateDialog: React.FC<ExportTemplateDialogProps> = ({
     setError(null);
 
     try {
-      const result = await ipcBridge.workflow.exportAsTemplate(workflowId, { category });
+      // Capture screenshot if available
+      let thumbnail: string | undefined;
+      if (onCaptureScreenshot) {
+        const screenshot = await onCaptureScreenshot();
+        if (screenshot) {
+          thumbnail = screenshot;
+        }
+      }
+
+      const result = await ipcBridge.workflow.exportAsTemplate(workflowId, {
+        category,
+        thumbnail,
+      });
 
       if (result.success) {
         onSuccess();
