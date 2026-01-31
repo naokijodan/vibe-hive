@@ -41,6 +41,57 @@ export class WorkflowEngine {
     this.taskRepository = new TaskRepository();
   }
 
+  /**
+   * Handle task completion event - trigger any event-based workflows
+   */
+  async onTaskCompleted(taskId: string, taskTitle: string, sessionId: string): Promise<void> {
+    try {
+      const workflows = this.repository.findAll();
+      const activeWorkflows = workflows.filter(w => w.status === 'active');
+
+      for (const workflow of activeWorkflows) {
+        const triggerNode = workflow.nodes.find(n => n.type === 'trigger');
+        if (!triggerNode || triggerNode.data.triggerType !== 'event') {
+          continue;
+        }
+
+        // Check event config
+        const eventType = triggerNode.data.config?.eventType;
+        if (eventType !== 'task_completed') {
+          continue;
+        }
+
+        // Optional: filter by session
+        const filterSessionId = triggerNode.data.config?.sessionId;
+        if (filterSessionId && filterSessionId.toString() !== sessionId) {
+          continue;
+        }
+
+        // Optional: filter by task title pattern
+        const titlePattern = triggerNode.data.config?.titlePattern;
+        if (titlePattern && !taskTitle.includes(titlePattern)) {
+          continue;
+        }
+
+        // Trigger the workflow
+        this.execute({
+          workflowId: workflow.id,
+          triggerData: {
+            event: 'task_completed',
+            taskId,
+            taskTitle,
+            sessionId,
+            triggeredAt: new Date().toISOString(),
+          },
+        }).catch(error => {
+          console.error(`Event-triggered workflow ${workflow.id} failed:`, error);
+        });
+      }
+    } catch (error) {
+      console.error('Error processing task completion event:', error);
+    }
+  }
+
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window;
   }
@@ -739,7 +790,7 @@ Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
   }
 
   /**
-   * Execute an AI agent node
+   * Execute an AI agent node via PTY
    */
   private async executeAgentNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
     const agentConfig = node.data.agentConfig;
@@ -756,18 +807,60 @@ Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
         finalPrompt = this.replaceTemplateVariables(prompt, input);
       }
 
-      // TODO: Implement actual agent execution
-      // For now, return a mock response
-      const agentResponse = {
-        agentType,
-        prompt: finalPrompt,
-        executedAt: Date.now(),
-        result: 'Agent execution not yet implemented',
-      };
+      // Build command based on agent type
+      let command: string;
+      const escapedPrompt = finalPrompt.replace(/'/g, "'\\''");
+
+      switch (agentType) {
+        case 'claude-code':
+          command = `claude -p '${escapedPrompt}' --no-input`;
+          break;
+        case 'codex':
+          command = `codex -q '${escapedPrompt}'`;
+          break;
+        case 'custom':
+          // Custom agent: prompt is the full command
+          command = finalPrompt;
+          break;
+        default:
+          return { success: false, error: `Unknown agent type: ${agentType}` };
+      }
+
+      // Execute via ExecutionEngine
+      const executionEngine = getExecutionEngine();
+      const workingDir = node.data.config?.workingDirectory || process.env.HOME || '/tmp';
+
+      const response = await executionEngine.startExecution({
+        taskId: `agent-${node.id}-${Date.now()}`,
+        command,
+        workingDirectory: workingDir,
+      });
+
+      // Wait for completion with timeout
+      const timeoutMs = timeout || 300000; // Default 5 min
+      const completed = await this.waitForExecutionWithTimeout(
+        response.executionId,
+        executionEngine,
+        timeoutMs
+      );
+
+      if (!completed) {
+        executionEngine.cancelExecution(response.executionId);
+        return { success: false, error: `Agent execution timed out after ${timeoutMs}ms` };
+      }
+
+      const execution = executionEngine.getExecution(response.executionId);
 
       return {
-        success: true,
-        output: agentResponse,
+        success: execution?.status === 'completed',
+        output: {
+          agentType,
+          prompt: finalPrompt,
+          executionId: response.executionId,
+          exitCode: execution?.exitCode,
+          executedAt: Date.now(),
+        },
+        error: execution?.status === 'failed' ? (execution.errorMessage || 'Agent execution failed') : undefined,
       };
     } catch (error) {
       return {
@@ -783,13 +876,25 @@ Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
   private replaceTemplateVariables(text: string, input: any): string {
     let result = text;
 
-    // Replace {{input}}
+    // Replace {{input}} - full input as JSON
     result = result.replace(/\{\{input\}\}/g, JSON.stringify(input));
 
-    // Replace {{timestamp}}
+    // Replace {{timestamp}} - ISO timestamp
     result = result.replace(/\{\{timestamp\}\}/g, new Date().toISOString());
 
-    // TODO: Add more template variables (workflow.name, execution.id, etc.)
+    // Replace {{date}} - date only
+    result = result.replace(/\{\{date\}\}/g, new Date().toISOString().split('T')[0]);
+
+    // Replace {{input.fieldName}} - access specific input fields
+    result = result.replace(/\{\{input\.([^}]+)\}\}/g, (_match, field) => {
+      const value = this.getFieldValue(input, field);
+      return value !== undefined ? String(value) : '';
+    });
+
+    // Replace {{env.VAR_NAME}} - environment variables
+    result = result.replace(/\{\{env\.([^}]+)\}\}/g, (_match, varName) => {
+      return process.env[varName] || '';
+    });
 
     return result;
   }
@@ -838,6 +943,29 @@ ${JSON.stringify(nodeResults, null, 2)}
         if (execution && execution.status !== 'running') {
           clearInterval(checkInterval);
           resolve();
+        }
+      }, 500);
+    });
+  }
+
+  /**
+   * Wait for execution to complete with timeout
+   */
+  private async waitForExecutionWithTimeout(
+    executionId: string,
+    engine: any,
+    timeoutMs: number
+  ): Promise<boolean> {
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      const checkInterval = setInterval(() => {
+        const execution = engine.getExecution(executionId);
+        if (execution && execution.status !== 'running') {
+          clearInterval(checkInterval);
+          resolve(true);
+        } else if (Date.now() - startTime > timeoutMs) {
+          clearInterval(checkInterval);
+          resolve(false);
         }
       }, 500);
     });

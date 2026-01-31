@@ -118,6 +118,19 @@ class ExecutionEngine {
           dns.notifyExecutionFailed(execution.taskId || executionId);
         }
       } catch { /* notification is non-critical */ }
+
+      // Trigger event-based workflows on task completion
+      if (status === 'completed' && execution.taskId && !execution.taskId.startsWith('agent-')) {
+        try {
+          const { getWorkflowEngine } = require('./WorkflowEngine');
+          const workflowEngine = getWorkflowEngine();
+          workflowEngine.onTaskCompleted(
+            execution.taskId,
+            execution.taskId, // title not available here, use taskId
+            execution.sessionId
+          );
+        } catch { /* workflow trigger is non-critical */ }
+      }
     }
   }
 

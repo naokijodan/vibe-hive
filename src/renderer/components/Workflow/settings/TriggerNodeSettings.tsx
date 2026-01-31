@@ -10,7 +10,7 @@ interface TriggerNodeSettingsProps {
 const triggerTypes: { value: TriggerType; label: string; description: string }[] = [
   { value: 'manual', label: 'Manual', description: 'Start manually by clicking Execute' },
   { value: 'schedule', label: 'Schedule', description: 'Run on a schedule' },
-  { value: 'event', label: 'Event', description: 'Triggered by system events (coming soon)' },
+  { value: 'event', label: 'Event', description: 'Triggered by task completion events' },
   { value: 'webhook', label: 'Webhook', description: 'Triggered by HTTP webhook' },
 ];
 
@@ -61,7 +61,6 @@ export const TriggerNodeSettings: React.FC<TriggerNodeSettingsProps> = ({ data, 
             <button
               key={type.value}
               onClick={() => handleTriggerTypeChange(type.value)}
-              disabled={type.value === 'event'}
               className={`
                 w-full px-4 py-3 rounded-lg text-left transition-colors
                 ${
@@ -69,7 +68,6 @@ export const TriggerNodeSettings: React.FC<TriggerNodeSettingsProps> = ({ data, 
                     ? 'bg-green-600 border-2 border-green-500'
                     : 'bg-gray-700 border-2 border-gray-600 hover:border-gray-500'
                 }
-                ${type.value === 'event' ? 'opacity-50 cursor-not-allowed' : ''}
               `}
             >
               <div className="flex items-center justify-between">
@@ -203,15 +201,57 @@ export const TriggerNodeSettings: React.FC<TriggerNodeSettingsProps> = ({ data, 
         </div>
       )}
 
-      {triggerType !== 'webhook' && (
+      {triggerType === 'event' && (
+        <div className="p-4 bg-purple-900/20 rounded-lg border border-purple-700">
+          <h4 className="text-sm font-semibold text-purple-300 mb-2">
+            Event Configuration
+          </h4>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Event Type</label>
+              <select
+                value={data.config?.eventType || 'task_completed'}
+                onChange={(e) => onChange({
+                  config: { ...data.config, eventType: e.target.value },
+                })}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="task_completed">Task Completed</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">
+                Title Filter (optional)
+              </label>
+              <input
+                type="text"
+                value={data.config?.titlePattern || ''}
+                onChange={(e) => onChange({
+                  config: { ...data.config, titlePattern: e.target.value },
+                })}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="e.g. deploy, test"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Only trigger when task title contains this text
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 p-2 bg-yellow-900/30 rounded">
+            <p className="text-xs text-yellow-300">
+              <strong>Note:</strong> The workflow must be in 'active' status. Trigger data will include taskId, taskTitle, and sessionId.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {triggerType === 'manual' && (
         <div className="p-3 bg-gray-700/50 rounded-lg border border-gray-600">
           <h4 className="text-xs font-semibold text-gray-400 mb-1 uppercase">
             Note
           </h4>
           <p className="text-xs text-gray-300">
-            {triggerType === 'manual'
-              ? 'Click the Execute button to start the workflow manually.'
-              : 'This trigger type will be available in future updates.'}
+            Click the Execute button to start the workflow manually.
           </p>
         </div>
       )}
