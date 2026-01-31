@@ -110,6 +110,16 @@ declare global {
       onWorkflowExecutionStarted?: (...args: any[]) => any;
       onWorkflowExecutionCompleted?: (...args: any[]) => any;
       onWorkflowExecutionCancelled?: (...args: any[]) => any;
+      // Coordination
+      coordinationSendMessage: (...args: any[]) => any;
+      coordinationDelegateTask: (...args: any[]) => any;
+      coordinationRespondDelegation: (...args: any[]) => any;
+      coordinationGetMessages: (...args: any[]) => any;
+      coordinationGetMessagesByAgent: (...args: any[]) => any;
+      coordinationGetDelegations: (...args: any[]) => any;
+      coordinationClearMessages: (...args: any[]) => any;
+      onCoordinationMessage: (...args: any[]) => any;
+      onCoordinationDelegation: (...args: any[]) => any;
       // Desktop Notification
       desktopNotificationGetSettings: (...args: any[]) => any;
       desktopNotificationUpdateSettings: (...args: any[]) => any;

@@ -236,6 +236,32 @@ contextBridge.exposeInMainWorld('electronAPI', {
   notificationTest: (params: unknown) => ipcRenderer.invoke('notification:test', params),
   notificationSetWebhookUrl: (params: unknown) => ipcRenderer.invoke('notification:setWebhookUrl', params),
 
+  // Coordination
+  coordinationSendMessage: (fromAgentId: string, toAgentId: string | null, type: string, content: string, metadata?: unknown) =>
+    ipcRenderer.invoke('coordination:sendMessage', fromAgentId, toAgentId, type, content, metadata),
+  coordinationDelegateTask: (taskId: string, fromAgentId: string, toAgentId: string, reason?: string) =>
+    ipcRenderer.invoke('coordination:delegateTask', taskId, fromAgentId, toAgentId, reason),
+  coordinationRespondDelegation: (delegationId: string, accepted: boolean) =>
+    ipcRenderer.invoke('coordination:respondDelegation', delegationId, accepted),
+  coordinationGetMessages: (limit?: number) =>
+    ipcRenderer.invoke('coordination:getMessages', limit),
+  coordinationGetMessagesByAgent: (agentId: string) =>
+    ipcRenderer.invoke('coordination:getMessagesByAgent', agentId),
+  coordinationGetDelegations: () =>
+    ipcRenderer.invoke('coordination:getDelegations'),
+  coordinationClearMessages: () =>
+    ipcRenderer.invoke('coordination:clearMessages'),
+  onCoordinationMessage: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('coordination:message', listener);
+    return () => ipcRenderer.removeListener('coordination:message', listener);
+  },
+  onCoordinationDelegation: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('coordination:delegation', listener);
+    return () => ipcRenderer.removeListener('coordination:delegation', listener);
+  },
+
   // Desktop Notification
   desktopNotificationGetSettings: () => ipcRenderer.invoke('desktopNotification:getSettings'),
   desktopNotificationUpdateSettings: (updates: unknown) => ipcRenderer.invoke('desktopNotification:updateSettings', updates),
@@ -382,6 +408,16 @@ export interface ElectronAPI {
   workflowTemplateUpdate: (id: number, input: unknown) => Promise<unknown>;
   workflowTemplateDelete: (id: number) => Promise<void>;
   workflowTemplateApply: (templateId: number, sessionId: number) => Promise<unknown>;
+  // Coordination
+  coordinationSendMessage: (fromAgentId: string, toAgentId: string | null, type: string, content: string, metadata?: unknown) => Promise<unknown>;
+  coordinationDelegateTask: (taskId: string, fromAgentId: string, toAgentId: string, reason?: string) => Promise<unknown>;
+  coordinationRespondDelegation: (delegationId: string, accepted: boolean) => Promise<unknown>;
+  coordinationGetMessages: (limit?: number) => Promise<unknown[]>;
+  coordinationGetMessagesByAgent: (agentId: string) => Promise<unknown[]>;
+  coordinationGetDelegations: () => Promise<unknown[]>;
+  coordinationClearMessages: () => Promise<unknown>;
+  onCoordinationMessage: (callback: (data: unknown) => void) => () => void;
+  onCoordinationDelegation: (callback: (data: unknown) => void) => () => void;
   // Desktop Notification
   desktopNotificationGetSettings: () => Promise<unknown>;
   desktopNotificationUpdateSettings: (updates: unknown) => Promise<unknown>;

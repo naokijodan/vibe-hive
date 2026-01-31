@@ -9,6 +9,8 @@ import { registerTemplateHandlers } from './ipc/templateHandlers';
 import { registerWorkflowHandlers, workflowEngine } from './ipc/workflowHandlers';
 import { registerNotificationHandlers } from './ipc/notificationHandlers';
 import { registerExportImportHandlers } from './ipc/exportImportHandlers';
+import { registerCoordinationHandlers } from './ipc/coordinationHandlers';
+import { getAgentCoordinationService } from './services/AgentCoordinationService';
 import { ptyService } from './services/PtyService';
 import { agentService } from './services/AgentService';
 import { getDatabase, closeDatabase } from './services/db';
@@ -68,6 +70,7 @@ app.whenReady().then(() => {
   registerWorkflowHandlers();
   registerNotificationHandlers();
   registerExportImportHandlers();
+  registerCoordinationHandlers();
 
   createWindow();
 
@@ -77,6 +80,7 @@ app.whenReady().then(() => {
     agentService.setMainWindow(mainWindow);
     executionEngine.setMainWindow(mainWindow);
     workflowEngine.setMainWindow(mainWindow);
+    getAgentCoordinationService().setMainWindow(mainWindow);
   }
 
   // Start webhook server
@@ -99,6 +103,7 @@ app.whenReady().then(() => {
         agentService.setMainWindow(mainWindow);
         executionEngine.setMainWindow(mainWindow);
         workflowEngine.setMainWindow(mainWindow);
+        getAgentCoordinationService().setMainWindow(mainWindow);
       }
     }
   });

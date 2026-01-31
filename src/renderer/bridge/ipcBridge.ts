@@ -200,6 +200,28 @@ export const ipcBridge = {
       }>,
   },
 
+  // Coordination operations
+  coordination: {
+    sendMessage: (fromAgentId: string, toAgentId: string | null, type: string, content: string, metadata?: Record<string, unknown>) =>
+      window.electronAPI.coordinationSendMessage(fromAgentId, toAgentId, type, content, metadata),
+    delegateTask: (taskId: string, fromAgentId: string, toAgentId: string, reason?: string) =>
+      window.electronAPI.coordinationDelegateTask(taskId, fromAgentId, toAgentId, reason),
+    respondDelegation: (delegationId: string, accepted: boolean) =>
+      window.electronAPI.coordinationRespondDelegation(delegationId, accepted),
+    getMessages: (limit?: number) =>
+      window.electronAPI.coordinationGetMessages(limit) as Promise<unknown[]>,
+    getMessagesByAgent: (agentId: string) =>
+      window.electronAPI.coordinationGetMessagesByAgent(agentId) as Promise<unknown[]>,
+    getDelegations: () =>
+      window.electronAPI.coordinationGetDelegations() as Promise<unknown[]>,
+    clearMessages: () =>
+      window.electronAPI.coordinationClearMessages(),
+    onMessage: (callback: (data: unknown) => void) =>
+      window.electronAPI.onCoordinationMessage(callback),
+    onDelegation: (callback: (data: unknown) => void) =>
+      window.electronAPI.onCoordinationDelegation(callback),
+  },
+
   // Desktop Notification operations
   desktopNotification: {
     getSettings: () =>

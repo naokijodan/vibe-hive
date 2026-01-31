@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Command } from '../components/CommandPalette';
 import { useSessionStore } from '../stores/sessionStore';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'settings';
 
 interface UseCommandPaletteProps {
   currentView: ViewType;
@@ -59,6 +59,14 @@ export function useCommandPalette({
         category: 'ビュー',
         keywords: ['analytics', 'dashboard', 'stats', 'ぶんせき', 'とうけい'],
         action: () => setCurrentView('analytics'),
+      },
+      {
+        id: 'view-coordination',
+        label: 'エージェント連携',
+        description: 'エージェント間通信・タスク委譲',
+        category: 'ビュー',
+        keywords: ['coordination', 'agent', 'れんけい', 'えーじぇんと', 'いじょう'],
+        action: () => setCurrentView('coordination'),
       },
       {
         id: 'view-notifications',
