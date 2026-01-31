@@ -1,8 +1,8 @@
 import React from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
 import type { WorkflowNodeData } from '../../../../shared/types/workflow';
 
-export const DelayNode: React.FC<NodeProps<WorkflowNodeData>> = ({ data, selected }) => {
+export const DelayNode: React.FC<NodeProps<Node<WorkflowNodeData>>> = ({ data, selected }) => {
   const delayMs = data.delayMs || 1000;
 
   const formatDelay = (ms: number): string => {

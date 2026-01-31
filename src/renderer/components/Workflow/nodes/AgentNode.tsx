@@ -1,8 +1,8 @@
 import React from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
 import type { WorkflowNodeData } from '../../../../shared/types/workflow';
 
-export const AgentNode: React.FC<NodeProps<WorkflowNodeData>> = ({ data, selected }) => {
+export const AgentNode: React.FC<NodeProps<Node<WorkflowNodeData>>> = ({ data, selected }) => {
   const agentConfig = data.agentConfig;
   const agentType = agentConfig?.agentType || 'claude-code';
   const timeout = agentConfig?.timeout || 300000; // 5 minutes default

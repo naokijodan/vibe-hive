@@ -112,7 +112,6 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
         title: template.taskData.title,
         description: template.taskData.description,
         priority: template.taskData.priority,
-        status: template.taskData.status,
         role: template.taskData.role,
       };
 

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
 import type { WorkflowNodeData } from '../../../../shared/types/workflow';
 
-export const LoopNode: React.FC<NodeProps<WorkflowNodeData>> = ({ data, selected }) => {
+export const LoopNode: React.FC<NodeProps<Node<WorkflowNodeData>>> = ({ data, selected }) => {
   const loopConfig = data.loopConfig;
   const loopType = loopConfig?.type || 'forEach';
   const maxIterations = loopConfig?.maxIterations || 100;

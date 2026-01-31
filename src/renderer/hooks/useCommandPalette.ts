@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Command } from '../components/CommandPalette';
 import { useSessionStore } from '../stores/sessionStore';
 
-type ViewType = 'kanban' | 'organization' | 'history' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'settings';
 
 interface UseCommandPaletteProps {
   currentView: ViewType;

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
 import type { WorkflowNodeData } from '../../../../shared/types/workflow';
 import { useWorkflowStore } from '../../../stores/workflowStore';
 
-export const SubworkflowNode: React.FC<NodeProps<WorkflowNodeData>> = ({ data, selected }) => {
+export const SubworkflowNode: React.FC<NodeProps<Node<WorkflowNodeData>>> = ({ data, selected }) => {
   const subworkflowConfig = data.subworkflowConfig;
   const workflowId = subworkflowConfig?.workflowId;
   const { workflows, loadWorkflows } = useWorkflowStore();

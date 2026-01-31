@@ -17,7 +17,7 @@ type TabType = 'canvas' | 'history' | 'templates';
 
 export const WorkflowManager: React.FC = () => {
   const { currentWorkflow, setCurrentWorkflow, loadWorkflow } = useWorkflowStore();
-  const { activeSession } = useSessionStore();
+  const { activeSessionId } = useSessionStore();
   const { createTemplate, applyTemplate } = useWorkflowTemplateStore();
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<number | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -64,9 +64,9 @@ export const WorkflowManager: React.FC = () => {
   };
 
   const handleApplyTemplateConfirm = async () => {
-    if (!selectedTemplate || !activeSession) return;
+    if (!selectedTemplate || !activeSessionId) return;
 
-    await applyTemplate(selectedTemplate.id, activeSession.id);
+    await applyTemplate(selectedTemplate.id, parseInt(activeSessionId));
     // Reload the workflow list after applying template
     setActiveTab('canvas');
   };

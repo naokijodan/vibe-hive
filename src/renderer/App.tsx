@@ -273,19 +273,6 @@ function App(): React.ReactElement {
       case 'organization':
         return (
           <OrgChart
-            organization={{
-              id: 'default-org',
-              name: 'Vibe Hive Organization',
-              agents,
-              connections: [],
-              whiteboard: {
-                id: 'default-whiteboard',
-                organizationId: 'default-org',
-                entries: [],
-              },
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }}
             onAgentClick={handleAgentClick}
           />
         );

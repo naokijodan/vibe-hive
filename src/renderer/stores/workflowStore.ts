@@ -224,8 +224,8 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        sourceHandle: edge.sourceHandle,
-        targetHandle: edge.targetHandle,
+        sourceHandle: edge.sourceHandle ?? undefined,
+        targetHandle: edge.targetHandle ?? undefined,
       }));
 
       await get().updateWorkflow({

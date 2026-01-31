@@ -1,8 +1,8 @@
 import React from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
 import type { WorkflowNodeData } from '../../../../shared/types/workflow';
 
-export const MergeNode: React.FC<NodeProps<WorkflowNodeData>> = ({ data, selected }) => {
+export const MergeNode: React.FC<NodeProps<Node<WorkflowNodeData>>> = ({ data, selected }) => {
   return (
     <div
       className={`px-4 py-3 rounded-lg border-2 bg-gray-800 min-w-[180px] ${

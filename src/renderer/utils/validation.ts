@@ -1,4 +1,6 @@
-import type { WorkflowNodeData, TriggerType, NotificationType } from '../../shared/types/workflow';
+import type { WorkflowNodeData, TriggerType } from '../../shared/types/workflow';
+
+type NotificationType = 'discord' | 'slack' | 'email';
 
 export interface ValidationResult {
   valid: boolean;

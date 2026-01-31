@@ -81,6 +81,7 @@ export interface ErrorHandlingConfig {
 }
 
 export interface WorkflowNodeData {
+  [key: string]: unknown;
   label: string;
   config: Record<string, any>;
   // Node-specific config

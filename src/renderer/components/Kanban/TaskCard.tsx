@@ -156,8 +156,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
           role: task.role,
         },
         subtasks: task.subtasks?.map((st) => ({
-          title: st.title,
-          description: st.description,
+          title: st,
+          description: '',
         })),
       });
 
@@ -207,7 +207,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
     e.stopPropagation();
     try {
       await assignTaskToAgent(task.id, agentId);
-      await updateTask(task.id, { assignedAgentId: agentId });
+      await updateTask(task.id, { assignedAgentId: agentId ?? undefined });
       setShowAgentDropdown(false);
     } catch (error) {
       console.error('Failed to assign agent:', error);

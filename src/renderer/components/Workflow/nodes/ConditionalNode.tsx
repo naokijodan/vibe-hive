@@ -1,8 +1,8 @@
 import React from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
 import type { WorkflowNodeData } from '../../../../shared/types/workflow';
 
-export const ConditionalNode: React.FC<NodeProps<WorkflowNodeData>> = ({ data, selected }) => {
+export const ConditionalNode: React.FC<NodeProps<Node<WorkflowNodeData>>> = ({ data, selected }) => {
   return (
     <div
       className={`

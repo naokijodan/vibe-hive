@@ -25,15 +25,15 @@ import { useToast } from '../../hooks/useToast';
 import type { NodeType, WorkflowNodeData, WorkflowImportResult } from '../../../shared/types/workflow';
 
 const nodeTypes: NodeTypes = {
-  task: TaskNode,
-  trigger: TriggerNode,
-  conditional: ConditionalNode,
-  notification: NotificationNode,
-  merge: MergeNode,
-  delay: DelayNode,
-  loop: LoopNode,
-  subworkflow: SubworkflowNode,
-  agent: AgentNode,
+  task: TaskNode as any,
+  trigger: TriggerNode as any,
+  conditional: ConditionalNode as any,
+  notification: NotificationNode as any,
+  merge: MergeNode as any,
+  delay: DelayNode as any,
+  loop: LoopNode as any,
+  subworkflow: SubworkflowNode as any,
+  agent: AgentNode as any,
 };
 
 interface WorkflowCanvasProps {
@@ -43,7 +43,7 @@ interface WorkflowCanvasProps {
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette = false }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const [selectedNode, setSelectedNode] = useState<Node<WorkflowNodeData> | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importResult, setImportResult] = useState<WorkflowImportResult | null>(null);
@@ -117,7 +117,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
         } as WorkflowNodeData,
       };
 
-      addStoreNode(newNode);
+      addStoreNode(newNode as Node);
     },
     [reactFlowInstance, addStoreNode]
   );
@@ -133,7 +133,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
       } as WorkflowNodeData,
     };
 
-    addStoreNode(newNode);
+    addStoreNode(newNode as Node);
   };
 
   const handleSave = async () => {
@@ -307,7 +307,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette 
   };
 
   const handleNodeClick = useCallback(
-    (_event: React.MouseEvent, node: Node<WorkflowNodeData>) => {
+    (_event: React.MouseEvent, node: Node) => {
       setSelectedNode(node);
     },
     []

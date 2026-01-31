@@ -13,7 +13,7 @@ import { AgentNodeSettings } from './AgentNodeSettings';
 import { validateWorkflowNode, type ValidationResult } from '../../../utils/validation';
 
 interface NodeSettingsPanelProps {
-  selectedNode: Node<WorkflowNodeData> | null;
+  selectedNode: Node | null;
   onClose: () => void;
 }
 
@@ -24,7 +24,7 @@ export const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ selectedNo
   // Validate node whenever data changes
   useEffect(() => {
     if (selectedNode) {
-      const result = validateWorkflowNode(selectedNode.type || '', selectedNode.data);
+      const result = validateWorkflowNode(selectedNode.type || '', selectedNode.data as WorkflowNodeData);
       setValidation(result);
     }
   }, [selectedNode]);
@@ -54,10 +54,12 @@ export const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ selectedNo
     );
   }
 
+  const nodeData = selectedNode.data as WorkflowNodeData;
+
   const handleChange = (updates: Partial<WorkflowNodeData>) => {
     updateNode(selectedNode.id, {
       data: {
-        ...selectedNode.data,
+        ...nodeData,
         ...updates,
       },
     });
@@ -66,21 +68,21 @@ export const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ selectedNo
   const renderSettings = () => {
     switch (selectedNode.type) {
       case 'task':
-        return <TaskNodeSettings data={selectedNode.data} onChange={handleChange} />;
+        return <TaskNodeSettings data={nodeData} onChange={handleChange} />;
       case 'conditional':
-        return <ConditionalNodeSettings data={selectedNode.data} onChange={handleChange} />;
+        return <ConditionalNodeSettings data={nodeData} onChange={handleChange} />;
       case 'delay':
-        return <DelayNodeSettings data={selectedNode.data} onChange={handleChange} />;
+        return <DelayNodeSettings data={nodeData} onChange={handleChange} />;
       case 'trigger':
-        return <TriggerNodeSettings data={selectedNode.data} onChange={handleChange} />;
+        return <TriggerNodeSettings data={nodeData} onChange={handleChange} />;
       case 'notification':
-        return <NotificationNodeSettings data={selectedNode.data} onChange={handleChange} />;
+        return <NotificationNodeSettings data={nodeData} onChange={handleChange} />;
       case 'loop':
-        return <LoopNodeSettings data={selectedNode.data} onChange={handleChange} />;
+        return <LoopNodeSettings data={nodeData} onChange={handleChange} />;
       case 'subworkflow':
-        return <SubworkflowNodeSettings data={selectedNode.data} onChange={handleChange} />;
+        return <SubworkflowNodeSettings data={nodeData} onChange={handleChange} />;
       case 'agent':
-        return <AgentNodeSettings data={selectedNode.data} onChange={handleChange} />;
+        return <AgentNodeSettings data={nodeData} onChange={handleChange} />;
       case 'merge':
         return (
           <div className="p-3 bg-gray-700/50 rounded-lg border border-gray-600">
@@ -140,7 +142,7 @@ export const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ selectedNo
             <h3 className="text-sm font-semibold text-white">
               {getNodeTypeLabel(selectedNode.type || '')} Settings
             </h3>
-            <p className="text-xs text-gray-500">{selectedNode.data.label}</p>
+            <p className="text-xs text-gray-500">{nodeData.label}</p>
           </div>
         </div>
         <button
