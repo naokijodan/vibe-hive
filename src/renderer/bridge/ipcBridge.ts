@@ -280,6 +280,35 @@ export const ipcBridge = {
     apply: (templateId: number, sessionId: number): Promise<Workflow> =>
       window.electronAPI.workflowTemplateApply(templateId, sessionId) as Promise<Workflow>,
   },
+  // Claude Hooks operations
+  claudeHooks: {
+    getHooks: () =>
+      window.electronAPI.claudeHooksGetHooks() as Promise<Array<{
+        id: string; event: string; matcher?: string; command: string; enabled: boolean; description?: string;
+      }>>,
+    addHook: (hook: { event: string; matcher?: string; command: string; enabled: boolean; description?: string }) =>
+      window.electronAPI.claudeHooksAddHook(hook),
+    updateHook: (id: string, updates: Record<string, unknown>) =>
+      window.electronAPI.claudeHooksUpdateHook(id, updates),
+    deleteHook: (id: string) =>
+      window.electronAPI.claudeHooksDeleteHook(id) as Promise<boolean>,
+    getPresets: () =>
+      window.electronAPI.claudeHooksGetPresets() as Promise<Array<{
+        event: string; matcher?: string; command: string; enabled: boolean; description?: string;
+      }>>,
+    addPreset: (index: number) =>
+      window.electronAPI.claudeHooksAddPreset(index),
+    getLogs: () =>
+      window.electronAPI.claudeHooksGetLogs() as Promise<Array<{
+        id: string; hookId: string; event: string; command: string; output?: string; exitCode?: number; timestamp: string;
+      }>>,
+    clearLogs: () =>
+      window.electronAPI.claudeHooksClearLogs(),
+    reload: () =>
+      window.electronAPI.claudeHooksReload(),
+    onLog: (callback: (data: unknown) => void) =>
+      window.electronAPI.onClaudeHooksLog(callback),
+  },
 };
 
 export default ipcBridge;

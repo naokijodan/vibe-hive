@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Command } from '../components/CommandPalette';
 import { useSessionStore } from '../stores/sessionStore';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'settings';
 
 interface UseCommandPaletteProps {
   currentView: ViewType;
@@ -83,6 +83,14 @@ export function useCommandPalette({
         category: 'ビュー',
         keywords: ['export', 'import', 'backup', 'えくすぽーと', 'いんぽーと', 'バックアップ'],
         action: () => setCurrentView('export-import'),
+      },
+      {
+        id: 'view-claude-hooks',
+        label: 'Claude Hooks',
+        description: 'Claude Code Hooks設定を管理',
+        category: 'ビュー',
+        keywords: ['hooks', 'claude', 'フック', 'ふっく'],
+        action: () => setCurrentView('claude-hooks'),
       },
       {
         id: 'view-settings',

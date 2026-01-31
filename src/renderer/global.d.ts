@@ -142,6 +142,17 @@ declare global {
       workflowTemplateUpdate: (...args: any[]) => any;
       workflowTemplateDelete: (...args: any[]) => any;
       workflowTemplateApply: (...args: any[]) => any;
+      // Claude Hooks
+      claudeHooksGetHooks: (...args: any[]) => any;
+      claudeHooksAddHook: (...args: any[]) => any;
+      claudeHooksUpdateHook: (...args: any[]) => any;
+      claudeHooksDeleteHook: (...args: any[]) => any;
+      claudeHooksGetPresets: (...args: any[]) => any;
+      claudeHooksAddPreset: (...args: any[]) => any;
+      claudeHooksGetLogs: (...args: any[]) => any;
+      claudeHooksClearLogs: (...args: any[]) => any;
+      claudeHooksReload: (...args: any[]) => any;
+      onClaudeHooksLog: (...args: any[]) => any;
     };
   }
 }

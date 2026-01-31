@@ -16,6 +16,7 @@ import { AnalyticsDashboard } from './components/Analytics';
 import { ExportImportPanel } from './components/ExportImport';
 import { NotificationSettingsPanel } from './components/NotificationSettings';
 import { CoordinationPanel } from './components/Coordination';
+import { ClaudeHooksPanel } from './components/ClaudeHooks';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -24,7 +25,7 @@ import { useExecutionStore } from './stores/executionStore';
 import { useCommandPalette } from './hooks/useCommandPalette';
 import type { ExecutionRecord } from '../shared/types/execution';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -353,6 +354,8 @@ function App(): React.ReactElement {
         return <NotificationSettingsPanel />;
       case 'coordination':
         return <CoordinationPanel />;
+      case 'claude-hooks':
+        return <ClaudeHooksPanel />;
       case 'settings':
         // Open settings panel instead of inline view
         if (!isSettingsPanelOpen) {
@@ -402,6 +405,7 @@ function App(): React.ReactElement {
             {renderNavButton('export-import', '💾', 'E/I')}
             {renderNavButton('notifications', '🔔', '通知')}
             {renderNavButton('coordination', '🤝', '連携')}
+            {renderNavButton('claude-hooks', '🪝', 'Hooks')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>
         </nav>

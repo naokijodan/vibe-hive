@@ -275,6 +275,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
   webhookStart: (params?: unknown) => ipcRenderer.invoke('webhook:start', params),
   webhookStop: () => ipcRenderer.invoke('webhook:stop'),
   webhookStatus: () => ipcRenderer.invoke('webhook:status'),
+
+  // Claude Hooks
+  claudeHooksGetHooks: () => ipcRenderer.invoke('claudeHooks:getHooks'),
+  claudeHooksAddHook: (hook: unknown) => ipcRenderer.invoke('claudeHooks:addHook', hook),
+  claudeHooksUpdateHook: (id: string, updates: unknown) => ipcRenderer.invoke('claudeHooks:updateHook', id, updates),
+  claudeHooksDeleteHook: (id: string) => ipcRenderer.invoke('claudeHooks:deleteHook', id),
+  claudeHooksGetPresets: () => ipcRenderer.invoke('claudeHooks:getPresets'),
+  claudeHooksAddPreset: (index: number) => ipcRenderer.invoke('claudeHooks:addPreset', index),
+  claudeHooksGetLogs: () => ipcRenderer.invoke('claudeHooks:getLogs'),
+  claudeHooksClearLogs: () => ipcRenderer.invoke('claudeHooks:clearLogs'),
+  claudeHooksReload: () => ipcRenderer.invoke('claudeHooks:reload'),
+  onClaudeHooksLog: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('claudeHooks:log', listener);
+    return () => ipcRenderer.removeListener('claudeHooks:log', listener);
+  },
 });
 
 // Type declarations for the exposed API
@@ -432,6 +448,17 @@ export interface ElectronAPI {
   webhookStart: (params?: unknown) => Promise<unknown>;
   webhookStop: () => Promise<unknown>;
   webhookStatus: () => Promise<unknown>;
+  // Claude Hooks
+  claudeHooksGetHooks: () => Promise<unknown[]>;
+  claudeHooksAddHook: (hook: unknown) => Promise<unknown>;
+  claudeHooksUpdateHook: (id: string, updates: unknown) => Promise<unknown>;
+  claudeHooksDeleteHook: (id: string) => Promise<boolean>;
+  claudeHooksGetPresets: () => Promise<unknown[]>;
+  claudeHooksAddPreset: (index: number) => Promise<unknown>;
+  claudeHooksGetLogs: () => Promise<unknown[]>;
+  claudeHooksClearLogs: () => Promise<unknown>;
+  claudeHooksReload: () => Promise<unknown[]>;
+  onClaudeHooksLog: (callback: (data: unknown) => void) => () => void;
 }
 
 declare global {
