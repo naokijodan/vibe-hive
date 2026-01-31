@@ -53,13 +53,32 @@ export interface SubworkflowConfig {
   outputMapping: Record<string, string>; // child output -> parent field
 }
 
-export type AgentType = 'claude-code' | 'codex' | 'custom';
+export type AgentType = 'claude-code' | 'codex' | 'gemini' | 'ollama' | 'custom';
 
 export interface AgentConfig {
   agentType: AgentType;
   prompt: string;
   templateVariables: boolean;
   timeout: number;  // milliseconds
+  ollamaModel?: string;  // Model name for Ollama (e.g., 'llama3', 'codellama')
+}
+
+// Model provider settings for Settings UI
+export interface ModelProviderConfig {
+  enabled: boolean;
+  cliPath: string;        // Path to CLI binary
+  defaultArgs?: string;   // Additional default arguments
+}
+
+export interface AgentSettings {
+  defaultAgent: AgentType;
+  providers: {
+    'claude-code': ModelProviderConfig;
+    'codex': ModelProviderConfig;
+    'gemini': ModelProviderConfig;
+    'ollama': ModelProviderConfig;
+  };
+  ollamaDefaultModel: string;  // Default Ollama model
 }
 
 export interface RetryConfig {

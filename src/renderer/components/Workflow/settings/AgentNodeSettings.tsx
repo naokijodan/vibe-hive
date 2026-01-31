@@ -45,14 +45,39 @@ export const AgentNodeSettings: React.FC<AgentNodeSettingsProps> = ({ data, onCh
         >
           <option value="claude-code">Claude Code</option>
           <option value="codex">Codex CLI</option>
+          <option value="gemini">Gemini CLI</option>
+          <option value="ollama">Ollama (Local LLM)</option>
           <option value="custom">Custom Agent</option>
         </select>
         <p className="text-xs text-gray-500 mt-1">
           {config.agentType === 'claude-code' && 'Use Claude Code CLI for task execution'}
           {config.agentType === 'codex' && 'Use OpenAI Codex CLI for code generation'}
+          {config.agentType === 'gemini' && 'Use Google Gemini CLI for task execution'}
+          {config.agentType === 'ollama' && 'Use local LLM via Ollama'}
           {config.agentType === 'custom' && 'Custom agent implementation'}
         </p>
       </div>
+
+      {/* Ollama Model */}
+      {config.agentType === 'ollama' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Ollama Model</label>
+          <input
+            type="text"
+            value={config.ollamaModel || ''}
+            onChange={(e) => handleChange({ ollamaModel: e.target.value || undefined })}
+            placeholder="llama3 (uses default from settings if empty)"
+            className="
+              w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg
+              text-white placeholder-gray-500 font-mono
+              focus:outline-none focus:ring-2 focus:ring-pink-500
+            "
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Leave empty to use the default model from Settings
+          </p>
+        </div>
+      )}
 
       {/* Prompt */}
       <div>
@@ -138,6 +163,8 @@ export const AgentNodeSettings: React.FC<AgentNodeSettingsProps> = ({ data, onCh
             <span className="font-semibold">
               {config.agentType === 'claude-code' && 'Claude Code'}
               {config.agentType === 'codex' && 'Codex'}
+              {config.agentType === 'gemini' && 'Gemini'}
+              {config.agentType === 'ollama' && `Ollama (${config.ollamaModel || 'default'})`}
               {config.agentType === 'custom' && 'Custom'}
             </span>
           </div>

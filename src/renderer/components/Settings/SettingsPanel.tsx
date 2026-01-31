@@ -4,13 +4,14 @@ import { GitSettings } from './GitSettings';
 import { AppSettings } from './AppSettings';
 import { WebhookSettings } from './WebhookSettings';
 import { NotificationSettings } from './NotificationSettings';
+import { AgentModelSettings } from './AgentModelSettings';
 
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type Tab = 'git' | 'app' | 'webhook' | 'notification' | 'about';
+type Tab = 'git' | 'app' | 'agent' | 'webhook' | 'notification' | 'about';
 
 export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.ReactElement | null {
   const {
@@ -20,6 +21,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
     loadSettings,
     updateGitSettings,
     updateAppSettings,
+    updateAgentSettings,
     resetSettings,
     clearError,
   } = useSettingsStore();
@@ -114,6 +116,16 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
             App
           </button>
           <button
+            onClick={() => setActiveTab('agent')}
+            className={`px-4 py-3 text-sm font-medium transition-colors relative ${
+              activeTab === 'agent'
+                ? 'text-hive-accent border-b-2 border-hive-accent'
+                : 'text-hive-muted hover:text-white'
+            }`}
+          >
+            AI Models
+          </button>
+          <button
             onClick={() => setActiveTab('webhook')}
             className={`px-4 py-3 text-sm font-medium transition-colors relative ${
               activeTab === 'webhook'
@@ -164,6 +176,13 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
                 <AppSettings
                   settings={settings.app}
                   onUpdate={updateAppSettings}
+                  isLoading={isLoading}
+                />
+              )}
+              {activeTab === 'agent' && settings.agent && (
+                <AgentModelSettings
+                  settings={settings.agent}
+                  onUpdate={updateAgentSettings}
                   isLoading={isLoading}
                 />
               )}

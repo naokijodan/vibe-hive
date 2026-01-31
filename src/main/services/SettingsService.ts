@@ -15,9 +15,27 @@ export interface AppSettings {
   maxLogEntries: number;
 }
 
+export interface ModelProviderConfig {
+  enabled: boolean;
+  cliPath: string;
+  defaultArgs?: string;
+}
+
+export interface AgentSettings {
+  defaultAgent: string;
+  providers: {
+    'claude-code': ModelProviderConfig;
+    'codex': ModelProviderConfig;
+    'gemini': ModelProviderConfig;
+    'ollama': ModelProviderConfig;
+  };
+  ollamaDefaultModel: string;
+}
+
 export interface Settings {
   git: GitSettings;
   app: AppSettings;
+  agent: AgentSettings;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -31,6 +49,16 @@ const DEFAULT_SETTINGS: Settings = {
     autoSaveInterval: 30,
     terminalFontSize: 14,
     maxLogEntries: 5000,
+  },
+  agent: {
+    defaultAgent: 'claude-code',
+    providers: {
+      'claude-code': { enabled: true, cliPath: 'claude' },
+      'codex': { enabled: true, cliPath: 'codex' },
+      'gemini': { enabled: false, cliPath: 'gemini' },
+      'ollama': { enabled: false, cliPath: 'ollama' },
+    },
+    ollamaDefaultModel: 'llama3',
   },
 };
 
@@ -61,6 +89,14 @@ export class SettingsService {
         return {
           git: { ...DEFAULT_SETTINGS.git, ...parsed.git },
           app: { ...DEFAULT_SETTINGS.app, ...parsed.app },
+          agent: {
+            ...DEFAULT_SETTINGS.agent,
+            ...parsed.agent,
+            providers: {
+              ...DEFAULT_SETTINGS.agent.providers,
+              ...(parsed.agent?.providers || {}),
+            },
+          },
         };
       }
     } catch (error) {
@@ -88,10 +124,31 @@ export class SettingsService {
     return this.settings;
   }
 
+  updateAgentSettings(agentSettings: Partial<AgentSettings>): Settings {
+    this.settings.agent = {
+      ...this.settings.agent,
+      ...agentSettings,
+      providers: {
+        ...this.settings.agent.providers,
+        ...(agentSettings.providers || {}),
+      },
+    };
+    this.saveSettings();
+    return this.settings;
+  }
+
   updateSettings(updates: Partial<Settings>): Settings {
     this.settings = {
       git: { ...this.settings.git, ...(updates.git || {}) },
       app: { ...this.settings.app, ...(updates.app || {}) },
+      agent: {
+        ...this.settings.agent,
+        ...(updates.agent || {}),
+        providers: {
+          ...this.settings.agent.providers,
+          ...(updates.agent?.providers || {}),
+        },
+      },
     };
 
     this.saveSettings();

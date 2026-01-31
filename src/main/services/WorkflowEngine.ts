@@ -807,23 +807,10 @@ Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
         finalPrompt = this.replaceTemplateVariables(prompt, input);
       }
 
-      // Build command based on agent type
-      let command: string;
-      const escapedPrompt = finalPrompt.replace(/'/g, "'\\''");
-
-      switch (agentType) {
-        case 'claude-code':
-          command = `claude -p '${escapedPrompt}' --no-input`;
-          break;
-        case 'codex':
-          command = `codex -q '${escapedPrompt}'`;
-          break;
-        case 'custom':
-          // Custom agent: prompt is the full command
-          command = finalPrompt;
-          break;
-        default:
-          return { success: false, error: `Unknown agent type: ${agentType}` };
+      // Build command based on agent type using settings for CLI paths
+      const command = this.buildAgentCommand(agentType, finalPrompt, agentConfig.ollamaModel);
+      if (!command) {
+        return { success: false, error: `Unknown or disabled agent type: ${agentType}` };
       }
 
       // Execute via ExecutionEngine
@@ -867,6 +854,52 @@ Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
         success: false,
         error: error instanceof Error ? error.message : 'Agent execution failed',
       };
+    }
+  }
+
+  /**
+   * Build CLI command for agent type using settings
+   */
+  private buildAgentCommand(agentType: string, prompt: string, ollamaModel?: string): string | null {
+    const { getSettingsService } = require('./SettingsService');
+    const settings = getSettingsService().getSettings();
+    const agentSettings = settings.agent;
+    const escapedPrompt = prompt.replace(/'/g, "'\\''");
+
+    switch (agentType) {
+      case 'claude-code': {
+        const provider = agentSettings.providers['claude-code'];
+        if (!provider.enabled) return null;
+        const cli = provider.cliPath || 'claude';
+        const args = provider.defaultArgs || '';
+        return `${cli} -p '${escapedPrompt}' --no-input ${args}`.trim();
+      }
+      case 'codex': {
+        const provider = agentSettings.providers['codex'];
+        if (!provider.enabled) return null;
+        const cli = provider.cliPath || 'codex';
+        const args = provider.defaultArgs || '';
+        return `${cli} -q '${escapedPrompt}' ${args}`.trim();
+      }
+      case 'gemini': {
+        const provider = agentSettings.providers['gemini'];
+        if (!provider.enabled) return null;
+        const cli = provider.cliPath || 'gemini';
+        const args = provider.defaultArgs || '';
+        return `${cli} -p '${escapedPrompt}' ${args}`.trim();
+      }
+      case 'ollama': {
+        const provider = agentSettings.providers['ollama'];
+        if (!provider.enabled) return null;
+        const cli = provider.cliPath || 'ollama';
+        const model = ollamaModel || agentSettings.ollamaDefaultModel || 'llama3';
+        const args = provider.defaultArgs || '';
+        return `${cli} run ${model} '${escapedPrompt}' ${args}`.trim();
+      }
+      case 'custom':
+        return prompt;
+      default:
+        return null;
     }
   }
 

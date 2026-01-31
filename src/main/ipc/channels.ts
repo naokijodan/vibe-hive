@@ -42,6 +42,7 @@ export const IPC_CHANNELS = {
   SETTINGS_UPDATE: 'settings:update',
   SETTINGS_UPDATE_GIT: 'settings:update-git',
   SETTINGS_UPDATE_APP: 'settings:update-app',
+  SETTINGS_UPDATE_AGENT: 'settings:update-agent',
   SETTINGS_RESET: 'settings:reset',
 
   // Template channels (Task Templates)

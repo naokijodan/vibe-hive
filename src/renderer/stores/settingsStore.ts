@@ -14,9 +14,27 @@ export interface AppSettings {
   maxLogEntries: number;
 }
 
+export interface ModelProviderConfig {
+  enabled: boolean;
+  cliPath: string;
+  defaultArgs?: string;
+}
+
+export interface AgentSettings {
+  defaultAgent: string;
+  providers: {
+    'claude-code': ModelProviderConfig;
+    'codex': ModelProviderConfig;
+    'gemini': ModelProviderConfig;
+    'ollama': ModelProviderConfig;
+  };
+  ollamaDefaultModel: string;
+}
+
 export interface Settings {
   git: GitSettings;
   app: AppSettings;
+  agent: AgentSettings;
 }
 
 interface SettingsStore {
@@ -27,6 +45,7 @@ interface SettingsStore {
   loadSettings: () => Promise<void>;
   updateGitSettings: (gitSettings: Partial<GitSettings>) => Promise<void>;
   updateAppSettings: (appSettings: Partial<AppSettings>) => Promise<void>;
+  updateAgentSettings: (agentSettings: Partial<AgentSettings>) => Promise<void>;
   resetSettings: () => Promise<void>;
   clearError: () => void;
 }
@@ -76,6 +95,21 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       console.error('Failed to update App settings:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to update App settings',
+        isLoading: false,
+      });
+    }
+  },
+
+  updateAgentSettings: async (agentSettings: Partial<AgentSettings>) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const settings = await ipcBridge.settings.updateAgent(agentSettings);
+      set({ settings: settings as Settings, isLoading: false });
+    } catch (error) {
+      console.error('Failed to update Agent settings:', error);
+      set({
+        error: error instanceof Error ? error.message : 'Failed to update Agent settings',
         isLoading: false,
       });
     }

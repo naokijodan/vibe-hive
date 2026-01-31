@@ -125,6 +125,12 @@ export function registerIpcHandlers(): void {
     return settings;
   });
 
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE_AGENT, async (_event, agentSettings) => {
+    const settingsService = getSettingsService();
+    const settings = settingsService.updateAgentSettings(agentSettings);
+    return settings;
+  });
+
   ipcMain.handle(IPC_CHANNELS.SETTINGS_RESET, async () => {
     const settingsService = getSettingsService();
     const settings = settingsService.resetSettings();

@@ -1,7 +1,7 @@
 import * as pty from 'node-pty';
 import { BrowserWindow } from 'electron';
 
-export type AgentType = 'claude' | 'codex';
+export type AgentType = 'claude' | 'codex' | 'gemini' | 'ollama';
 
 interface AgentSession {
   id: string;
@@ -32,13 +32,29 @@ class AgentService {
     // - Outputs ready signal immediately
     // - exec replaces bash with the actual command (no extra process)
     const READY_SIGNAL = 'VIBE_HIVE_READY';
-    const claudePath = '/Users/naokijodan/.local/bin/claude';
-    const codexPath = '/opt/homebrew/bin/codex';
 
+    // Get CLI path from settings
+    const { getSettingsService } = require('./SettingsService');
+    const settings = getSettingsService().getSettings();
+    const agentSettings = settings.agent;
+
+    const getCliPath = (agentType: AgentType): string => {
+      const providerKey = agentType === 'claude' ? 'claude-code' : agentType;
+      const provider = agentSettings.providers[providerKey as keyof typeof agentSettings.providers];
+      if (provider?.cliPath) return provider.cliPath;
+      // Fallback defaults
+      switch (agentType) {
+        case 'claude': return '/Users/naokijodan/.local/bin/claude';
+        case 'codex': return '/opt/homebrew/bin/codex';
+        case 'gemini': return 'gemini';
+        case 'ollama': return 'ollama';
+        default: return agentType;
+      }
+    };
+
+    const cliPath = getCliPath(type);
     const command = 'bash';
-    const args = type === 'claude'
-      ? ['-c', `echo "${READY_SIGNAL}"; exec ${claudePath}`]
-      : ['-c', `echo "${READY_SIGNAL}"; exec ${codexPath}`];
+    const args = ['-c', `echo "${READY_SIGNAL}"; exec ${cliPath}`];
 
     // Build PATH with common locations for CLI tools
     const homedir = process.env.HOME || '/Users/naokijodan';

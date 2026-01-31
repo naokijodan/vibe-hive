@@ -102,6 +102,7 @@ export const ipcBridge = {
     update: (updates: unknown) => window.electronAPI.settingsUpdate(updates),
     updateGit: (gitSettings: unknown) => window.electronAPI.settingsUpdateGit(gitSettings),
     updateApp: (appSettings: unknown) => window.electronAPI.settingsUpdateApp(appSettings),
+    updateAgent: (agentSettings: unknown) => window.electronAPI.settingsUpdateAgent(agentSettings),
     reset: () => window.electronAPI.settingsReset(),
   },
 

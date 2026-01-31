@@ -47,7 +47,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Agent
-  agentStart: (sessionId: string, type: 'claude' | 'codex', cwd: string, initialPrompt?: string) =>
+  agentStart: (sessionId: string, type: 'claude' | 'codex' | 'gemini' | 'ollama', cwd: string, initialPrompt?: string) =>
     ipcRenderer.invoke('agent:start', sessionId, type, cwd, initialPrompt),
   agentStop: (sessionId: string) =>
     ipcRenderer.invoke('agent:stop', sessionId),
@@ -113,6 +113,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   settingsUpdate: (updates: unknown) => ipcRenderer.invoke('settings:update', updates),
   settingsUpdateGit: (gitSettings: unknown) => ipcRenderer.invoke('settings:update-git', gitSettings),
   settingsUpdateApp: (appSettings: unknown) => ipcRenderer.invoke('settings:update-app', appSettings),
+  settingsUpdateAgent: (agentSettings: unknown) => ipcRenderer.invoke('settings:update-agent', agentSettings),
   settingsReset: () => ipcRenderer.invoke('settings:reset'),
 
   // Database - Sessions
@@ -346,6 +347,7 @@ export interface ElectronAPI {
   settingsUpdate: (updates: unknown) => Promise<unknown>;
   settingsUpdateGit: (gitSettings: unknown) => Promise<unknown>;
   settingsUpdateApp: (appSettings: unknown) => Promise<unknown>;
+  settingsUpdateAgent: (agentSettings: unknown) => Promise<unknown>;
   settingsReset: () => Promise<unknown>;
   // Database - Sessions
   dbSessionCreate: (config: unknown) => Promise<unknown>;
