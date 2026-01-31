@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Command } from '../components/CommandPalette';
 import { useSessionStore } from '../stores/sessionStore';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'settings';
 
 interface UseCommandPaletteProps {
   currentView: ViewType;
@@ -59,6 +59,14 @@ export function useCommandPalette({
         category: 'ビュー',
         keywords: ['analytics', 'dashboard', 'stats', 'ぶんせき', 'とうけい'],
         action: () => setCurrentView('analytics'),
+      },
+      {
+        id: 'view-export-import',
+        label: 'エクスポート/インポート',
+        description: 'データのバックアップと復元',
+        category: 'ビュー',
+        keywords: ['export', 'import', 'backup', 'えくすぽーと', 'いんぽーと', 'バックアップ'],
+        action: () => setCurrentView('export-import'),
       },
       {
         id: 'view-settings',

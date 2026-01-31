@@ -110,6 +110,9 @@ declare global {
       onWorkflowExecutionStarted?: (...args: any[]) => any;
       onWorkflowExecutionCompleted?: (...args: any[]) => any;
       onWorkflowExecutionCancelled?: (...args: any[]) => any;
+      // Export/Import
+      exportImportExport: (...args: any[]) => any;
+      exportImportImport: (...args: any[]) => any;
       // Notification
       notificationTest: (...args: any[]) => any;
       notificationSetWebhookUrl: (...args: any[]) => any;

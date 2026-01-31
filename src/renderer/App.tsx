@@ -13,6 +13,7 @@ import { ExecutionPanel } from './components/Execution/ExecutionPanel';
 import { ExecutionLog } from './components/Execution/ExecutionLog';
 import { WorkflowManager } from './components/Workflow/WorkflowManager';
 import { AnalyticsDashboard } from './components/Analytics';
+import { ExportImportPanel } from './components/ExportImport';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -21,7 +22,7 @@ import { useExecutionStore } from './stores/executionStore';
 import { useCommandPalette } from './hooks/useCommandPalette';
 import type { ExecutionRecord } from '../shared/types/execution';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -344,6 +345,8 @@ function App(): React.ReactElement {
         return <WorkflowManager />;
       case 'analytics':
         return <AnalyticsDashboard />;
+      case 'export-import':
+        return <ExportImportPanel />;
       case 'settings':
         // Open settings panel instead of inline view
         if (!isSettingsPanelOpen) {
@@ -390,6 +393,7 @@ function App(): React.ReactElement {
             {renderNavButton('workflow', '🔄', 'ワークフロー')}
             {renderNavButton('history', '📜', '履歴')}
             {renderNavButton('analytics', '📊', '分析')}
+            {renderNavButton('export-import', '💾', 'E/I')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>
         </nav>

@@ -236,6 +236,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   notificationTest: (params: unknown) => ipcRenderer.invoke('notification:test', params),
   notificationSetWebhookUrl: (params: unknown) => ipcRenderer.invoke('notification:setWebhookUrl', params),
 
+  // Export/Import
+  exportImportExport: (targets: string[]) => ipcRenderer.invoke('exportImport:export', targets),
+  exportImportImport: (mode: string) => ipcRenderer.invoke('exportImport:import', mode),
+
   // Webhook
   webhookStart: (params?: unknown) => ipcRenderer.invoke('webhook:start', params),
   webhookStop: () => ipcRenderer.invoke('webhook:stop'),
@@ -373,6 +377,9 @@ export interface ElectronAPI {
   workflowTemplateUpdate: (id: number, input: unknown) => Promise<unknown>;
   workflowTemplateDelete: (id: number) => Promise<void>;
   workflowTemplateApply: (templateId: number, sessionId: number) => Promise<unknown>;
+  // Export/Import
+  exportImportExport: (targets: string[]) => Promise<unknown>;
+  exportImportImport: (mode: string) => Promise<unknown>;
   // Notification
   notificationTest: (params: unknown) => Promise<unknown>;
   notificationSetWebhookUrl: (params: unknown) => Promise<unknown>;

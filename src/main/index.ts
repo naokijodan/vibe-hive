@@ -8,6 +8,7 @@ import { registerExecutionHandlers, executionEngine } from './ipc/executionHandl
 import { registerTemplateHandlers } from './ipc/templateHandlers';
 import { registerWorkflowHandlers, workflowEngine } from './ipc/workflowHandlers';
 import { registerNotificationHandlers } from './ipc/notificationHandlers';
+import { registerExportImportHandlers } from './ipc/exportImportHandlers';
 import { ptyService } from './services/PtyService';
 import { agentService } from './services/AgentService';
 import { getDatabase, closeDatabase } from './services/db';
@@ -66,6 +67,7 @@ app.whenReady().then(() => {
   registerTemplateHandlers();
   registerWorkflowHandlers();
   registerNotificationHandlers();
+  registerExportImportHandlers();
 
   createWindow();
 

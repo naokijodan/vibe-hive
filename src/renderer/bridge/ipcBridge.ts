@@ -200,6 +200,25 @@ export const ipcBridge = {
       }>,
   },
 
+  // Export/Import operations
+  exportImport: {
+    export: (targets: string[]) =>
+      window.electronAPI.exportImportExport(targets) as Promise<{
+        success: boolean;
+        filePath?: string;
+        canceled?: boolean;
+        stats?: { tasks?: number; taskTemplates?: number; workflows?: number; workflowTemplates?: number };
+      }>,
+    import: (mode: 'merge' | 'overwrite') =>
+      window.electronAPI.exportImportImport(mode) as Promise<{
+        success: boolean;
+        canceled?: boolean;
+        errors?: string[];
+        warnings?: string[];
+        stats?: { tasks?: number; taskTemplates?: number; workflows?: number; workflowTemplates?: number };
+      }>,
+  },
+
   // Workflow Template operations
   workflowTemplate: {
     getAll: (): Promise<WorkflowTemplate[]> =>
