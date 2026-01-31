@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Command } from '../components/CommandPalette';
 import { useSessionStore } from '../stores/sessionStore';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'settings';
 
 interface UseCommandPaletteProps {
   currentView: ViewType;
@@ -51,6 +51,14 @@ export function useCommandPalette({
         category: 'ビュー',
         keywords: ['history', 'りれき'],
         action: () => setCurrentView('history'),
+      },
+      {
+        id: 'view-analytics',
+        label: '分析ダッシュボード',
+        description: 'タスク分析・統計を表示',
+        category: 'ビュー',
+        keywords: ['analytics', 'dashboard', 'stats', 'ぶんせき', 'とうけい'],
+        action: () => setCurrentView('analytics'),
       },
       {
         id: 'view-settings',

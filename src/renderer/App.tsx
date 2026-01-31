@@ -12,6 +12,7 @@ import { HistoryView } from './components/HistoryView';
 import { ExecutionPanel } from './components/Execution/ExecutionPanel';
 import { ExecutionLog } from './components/Execution/ExecutionLog';
 import { WorkflowManager } from './components/Workflow/WorkflowManager';
+import { AnalyticsDashboard } from './components/Analytics';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -20,7 +21,7 @@ import { useExecutionStore } from './stores/executionStore';
 import { useCommandPalette } from './hooks/useCommandPalette';
 import type { ExecutionRecord } from '../shared/types/execution';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -341,6 +342,8 @@ function App(): React.ReactElement {
         return <HistoryView />;
       case 'workflow':
         return <WorkflowManager />;
+      case 'analytics':
+        return <AnalyticsDashboard />;
       case 'settings':
         // Open settings panel instead of inline view
         if (!isSettingsPanelOpen) {
@@ -386,6 +389,7 @@ function App(): React.ReactElement {
             {renderNavButton('execution', '⚙', '実行管理')}
             {renderNavButton('workflow', '🔄', 'ワークフロー')}
             {renderNavButton('history', '📜', '履歴')}
+            {renderNavButton('analytics', '📊', '分析')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>
         </nav>
