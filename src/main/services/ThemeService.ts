@@ -101,6 +101,22 @@ const PRESET_THEMES: ThemePreset[] = [
   },
 ];
 
+function hexToRgb(hex: string): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
+function colorsToRgb(colors: ThemeColors): ThemeColors {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(colors)) {
+    result[key] = value.startsWith('#') ? hexToRgb(value) : value;
+  }
+  return result as unknown as ThemeColors;
+}
+
 const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   activeThemeId: 'default-dark',
 };
@@ -152,7 +168,7 @@ class ThemeService {
     if (this.settings.customAccent) {
       colors.accent = this.settings.customAccent;
     }
-    return colors;
+    return colorsToRgb(colors);
   }
 
   setTheme(themeId: string): ThemeColors {
