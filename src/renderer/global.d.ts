@@ -110,6 +110,10 @@ declare global {
       onWorkflowExecutionStarted?: (...args: any[]) => any;
       onWorkflowExecutionCompleted?: (...args: any[]) => any;
       onWorkflowExecutionCancelled?: (...args: any[]) => any;
+      // Desktop Notification
+      desktopNotificationGetSettings: (...args: any[]) => any;
+      desktopNotificationUpdateSettings: (...args: any[]) => any;
+      desktopNotificationTest: (...args: any[]) => any;
       // Export/Import
       exportImportExport: (...args: any[]) => any;
       exportImportImport: (...args: any[]) => any;

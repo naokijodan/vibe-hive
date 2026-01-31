@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
 import { notificationService } from '../services/NotificationService';
 import { getWebhookServer } from '../services/WebhookServer';
+import { getDesktopNotificationService } from '../services/DesktopNotificationService';
 
 export function registerNotificationHandlers(): void {
   // Test notification
@@ -23,6 +24,22 @@ export function registerNotificationHandlers(): void {
       console.error('Set webhook URL failed:', error);
       throw error;
     }
+  });
+
+  // Desktop notification settings
+  const desktopService = getDesktopNotificationService();
+
+  ipcMain.handle('desktopNotification:getSettings', async () => {
+    return desktopService.getSettings();
+  });
+
+  ipcMain.handle('desktopNotification:updateSettings', async (_event, updates: Record<string, unknown>) => {
+    return desktopService.updateSettings(updates);
+  });
+
+  ipcMain.handle('desktopNotification:test', async () => {
+    desktopService.testNotification();
+    return { success: true };
   });
 
   // Start webhook server

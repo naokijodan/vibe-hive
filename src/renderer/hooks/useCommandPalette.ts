@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Command } from '../components/CommandPalette';
 import { useSessionStore } from '../stores/sessionStore';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'settings';
 
 interface UseCommandPaletteProps {
   currentView: ViewType;
@@ -59,6 +59,14 @@ export function useCommandPalette({
         category: 'ビュー',
         keywords: ['analytics', 'dashboard', 'stats', 'ぶんせき', 'とうけい'],
         action: () => setCurrentView('analytics'),
+      },
+      {
+        id: 'view-notifications',
+        label: '通知設定',
+        description: 'デスクトップ通知の設定',
+        category: 'ビュー',
+        keywords: ['notification', 'つうち', 'desktop'],
+        action: () => setCurrentView('notifications'),
       },
       {
         id: 'view-export-import',

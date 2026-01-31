@@ -8,6 +8,7 @@ import type {
   StartExecutionRequest,
   StartExecutionResponse,
 } from '../../shared/types/execution';
+import { getDesktopNotificationService } from './DesktopNotificationService';
 
 class ExecutionEngine {
   private repository: ExecutionRepository;
@@ -107,6 +108,16 @@ class ExecutionEngine {
     const execution = this.repository.getById(executionId);
     if (execution) {
       this.notifyRenderer('execution:completed', execution);
+
+      // Desktop notification
+      try {
+        const dns = getDesktopNotificationService();
+        if (status === 'completed') {
+          dns.notifyExecutionComplete(execution.taskId || executionId);
+        } else {
+          dns.notifyExecutionFailed(execution.taskId || executionId);
+        }
+      } catch { /* notification is non-critical */ }
     }
   }
 

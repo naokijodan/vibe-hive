@@ -236,6 +236,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   notificationTest: (params: unknown) => ipcRenderer.invoke('notification:test', params),
   notificationSetWebhookUrl: (params: unknown) => ipcRenderer.invoke('notification:setWebhookUrl', params),
 
+  // Desktop Notification
+  desktopNotificationGetSettings: () => ipcRenderer.invoke('desktopNotification:getSettings'),
+  desktopNotificationUpdateSettings: (updates: unknown) => ipcRenderer.invoke('desktopNotification:updateSettings', updates),
+  desktopNotificationTest: () => ipcRenderer.invoke('desktopNotification:test'),
+
   // Export/Import
   exportImportExport: (targets: string[]) => ipcRenderer.invoke('exportImport:export', targets),
   exportImportImport: (mode: string) => ipcRenderer.invoke('exportImport:import', mode),
@@ -377,6 +382,10 @@ export interface ElectronAPI {
   workflowTemplateUpdate: (id: number, input: unknown) => Promise<unknown>;
   workflowTemplateDelete: (id: number) => Promise<void>;
   workflowTemplateApply: (templateId: number, sessionId: number) => Promise<unknown>;
+  // Desktop Notification
+  desktopNotificationGetSettings: () => Promise<unknown>;
+  desktopNotificationUpdateSettings: (updates: unknown) => Promise<unknown>;
+  desktopNotificationTest: () => Promise<unknown>;
   // Export/Import
   exportImportExport: (targets: string[]) => Promise<unknown>;
   exportImportImport: (mode: string) => Promise<unknown>;

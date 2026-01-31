@@ -200,6 +200,28 @@ export const ipcBridge = {
       }>,
   },
 
+  // Desktop Notification operations
+  desktopNotification: {
+    getSettings: () =>
+      window.electronAPI.desktopNotificationGetSettings() as Promise<{
+        enabled: boolean;
+        onTaskComplete: boolean;
+        onExecutionComplete: boolean;
+        onExecutionFailed: boolean;
+        onAgentStopped: boolean;
+      }>,
+    updateSettings: (updates: Record<string, boolean>) =>
+      window.electronAPI.desktopNotificationUpdateSettings(updates) as Promise<{
+        enabled: boolean;
+        onTaskComplete: boolean;
+        onExecutionComplete: boolean;
+        onExecutionFailed: boolean;
+        onAgentStopped: boolean;
+      }>,
+    test: () =>
+      window.electronAPI.desktopNotificationTest() as Promise<{ success: boolean }>,
+  },
+
   // Export/Import operations
   exportImport: {
     export: (targets: string[]) =>
