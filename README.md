@@ -201,14 +201,23 @@ terminal_logs      # ターミナル出力
 - [x] Phase 10: 実行履歴機能
 - [x] Phase 11: Task Template機能
 
-### 今後の拡張候補
+### 完了した拡張機能
 
-- [ ] Analytics Dashboard（タスク分析・統計）
-- [ ] Export/Import機能（タスク・テンプレートのバックアップ）
-- [ ] Notification System（デスクトップ通知）
-- [ ] Multi-Agent Coordination（エージェント間通信）
-- [ ] Claude Code Hooks連携強化
-- [ ] カスタムテーマ機能
+- [x] Analytics Dashboard（タスク分析・統計）
+- [x] Export/Import機能（タスク・テンプレートのバックアップ）
+- [x] Notification System（デスクトップ通知）
+- [x] Multi-Agent Coordination（エージェント間通信）
+- [x] Claude Code Hooks連携強化
+- [x] カスタムテーマ機能
+
+### 今後の拡張候補（優先順）
+
+- [ ] Phase 12: Workflow Automation（タスク自動実行パイプライン）
+- [ ] Phase 13: AI Model Switching（Claude / GPT / Gemini / ローカルLLM切り替え）
+- [ ] Phase 14: Plugin System（サードパーティ拡張エコシステム）
+- [ ] Phase 15: Performance Profiler（実行時間分析・ボトルネック検出）
+- [ ] Phase 16: Collaborative Mode（複数人での共同作業）
+- [ ] Phase 17: Voice Command（音声でタスク操作）
 
 ## キーボードショートカット
 
