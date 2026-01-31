@@ -17,15 +17,17 @@ import { ExportImportPanel } from './components/ExportImport';
 import { NotificationSettingsPanel } from './components/NotificationSettings';
 import { CoordinationPanel } from './components/Coordination';
 import { ClaudeHooksPanel } from './components/ClaudeHooks';
+import { ThemePanel } from './components/Theme';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
 import { useSessionStore } from './stores/sessionStore';
 import { useExecutionStore } from './stores/executionStore';
 import { useCommandPalette } from './hooks/useCommandPalette';
+import { ipcBridge } from './bridge/ipcBridge';
 import type { ExecutionRecord } from '../shared/types/execution';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'theme' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -118,6 +120,16 @@ function App(): React.ReactElement {
     loadSessions();
     loadActiveSession();
   }, [loadTasks, loadAgents, loadSessions, loadActiveSession]);
+
+  // Apply saved theme on startup
+  useEffect(() => {
+    ipcBridge.theme.getActiveColors().then(colors => {
+      const root = document.documentElement;
+      for (const [key, value] of Object.entries(colors)) {
+        root.style.setProperty(`--hive-${key}`, value);
+      }
+    }).catch(() => { /* use CSS defaults */ });
+  }, []);
 
   // エージェントからタブを生成
   const agentTabs: AgentTab[] = agents.map(agent => ({
@@ -356,6 +368,8 @@ function App(): React.ReactElement {
         return <CoordinationPanel />;
       case 'claude-hooks':
         return <ClaudeHooksPanel />;
+      case 'theme':
+        return <ThemePanel />;
       case 'settings':
         // Open settings panel instead of inline view
         if (!isSettingsPanelOpen) {
@@ -406,6 +420,7 @@ function App(): React.ReactElement {
             {renderNavButton('notifications', '🔔', '通知')}
             {renderNavButton('coordination', '🤝', '連携')}
             {renderNavButton('claude-hooks', '🪝', 'Hooks')}
+            {renderNavButton('theme', '🎨', 'テーマ')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>
         </nav>

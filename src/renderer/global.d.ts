@@ -153,6 +153,13 @@ declare global {
       claudeHooksClearLogs: (...args: any[]) => any;
       claudeHooksReload: (...args: any[]) => any;
       onClaudeHooksLog: (...args: any[]) => any;
+      // Theme
+      themeGetPresets: (...args: any[]) => any;
+      themeGetSettings: (...args: any[]) => any;
+      themeGetActiveColors: (...args: any[]) => any;
+      themeSetTheme: (...args: any[]) => any;
+      themeSetCustomAccent: (...args: any[]) => any;
+      themeResetCustomAccent: (...args: any[]) => any;
     };
   }
 }

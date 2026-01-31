@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Command } from '../components/CommandPalette';
 import { useSessionStore } from '../stores/sessionStore';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'theme' | 'settings';
 
 interface UseCommandPaletteProps {
   currentView: ViewType;
@@ -83,6 +83,14 @@ export function useCommandPalette({
         category: 'ビュー',
         keywords: ['export', 'import', 'backup', 'えくすぽーと', 'いんぽーと', 'バックアップ'],
         action: () => setCurrentView('export-import'),
+      },
+      {
+        id: 'view-theme',
+        label: 'テーマ設定',
+        description: 'アプリの外観をカスタマイズ',
+        category: 'ビュー',
+        keywords: ['theme', 'color', 'テーマ', 'てーま', 'カラー', 'からー'],
+        action: () => setCurrentView('theme'),
       },
       {
         id: 'view-claude-hooks',

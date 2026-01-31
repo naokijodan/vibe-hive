@@ -291,6 +291,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('claudeHooks:log', listener);
     return () => ipcRenderer.removeListener('claudeHooks:log', listener);
   },
+
+  // Theme
+  themeGetPresets: () => ipcRenderer.invoke('theme:getPresets'),
+  themeGetSettings: () => ipcRenderer.invoke('theme:getSettings'),
+  themeGetActiveColors: () => ipcRenderer.invoke('theme:getActiveColors'),
+  themeSetTheme: (themeId: string) => ipcRenderer.invoke('theme:setTheme', themeId),
+  themeSetCustomAccent: (color: string) => ipcRenderer.invoke('theme:setCustomAccent', color),
+  themeResetCustomAccent: () => ipcRenderer.invoke('theme:resetCustomAccent'),
 });
 
 // Type declarations for the exposed API
@@ -459,6 +467,13 @@ export interface ElectronAPI {
   claudeHooksClearLogs: () => Promise<unknown>;
   claudeHooksReload: () => Promise<unknown[]>;
   onClaudeHooksLog: (callback: (data: unknown) => void) => () => void;
+  // Theme
+  themeGetPresets: () => Promise<unknown[]>;
+  themeGetSettings: () => Promise<unknown>;
+  themeGetActiveColors: () => Promise<unknown>;
+  themeSetTheme: (themeId: string) => Promise<unknown>;
+  themeSetCustomAccent: (color: string) => Promise<unknown>;
+  themeResetCustomAccent: () => Promise<unknown>;
 }
 
 declare global {

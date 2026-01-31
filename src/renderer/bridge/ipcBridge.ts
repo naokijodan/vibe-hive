@@ -280,6 +280,26 @@ export const ipcBridge = {
     apply: (templateId: number, sessionId: number): Promise<Workflow> =>
       window.electronAPI.workflowTemplateApply(templateId, sessionId) as Promise<Workflow>,
   },
+  // Theme operations
+  theme: {
+    getPresets: () =>
+      window.electronAPI.themeGetPresets() as Promise<Array<{
+        id: string; name: string; colors: Record<string, string>;
+      }>>,
+    getSettings: () =>
+      window.electronAPI.themeGetSettings() as Promise<{
+        activeThemeId: string; customAccent?: string;
+      }>,
+    getActiveColors: () =>
+      window.electronAPI.themeGetActiveColors() as Promise<Record<string, string>>,
+    setTheme: (themeId: string) =>
+      window.electronAPI.themeSetTheme(themeId) as Promise<Record<string, string>>,
+    setCustomAccent: (color: string) =>
+      window.electronAPI.themeSetCustomAccent(color) as Promise<Record<string, string>>,
+    resetCustomAccent: () =>
+      window.electronAPI.themeResetCustomAccent() as Promise<Record<string, string>>,
+  },
+
   // Claude Hooks operations
   claudeHooks: {
     getHooks: () =>

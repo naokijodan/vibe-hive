@@ -4,17 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Vibe Hive カスタムカラー
+        // Vibe Hive カスタムカラー (CSS変数参照でテーマ切替対応)
         hive: {
-          bg: '#0d1117',
-          surface: '#161b22',
-          border: '#30363d',
-          text: '#c9d1d9',
-          muted: '#8b949e',
-          accent: '#58a6ff',
-          success: '#3fb950',
-          warning: '#d29922',
-          error: '#f85149',
+          bg: 'var(--hive-bg)',
+          surface: 'var(--hive-surface)',
+          border: 'var(--hive-border)',
+          text: 'var(--hive-text)',
+          muted: 'var(--hive-muted)',
+          accent: 'var(--hive-accent)',
+          success: 'var(--hive-success)',
+          warning: 'var(--hive-warning)',
+          error: 'var(--hive-error)',
         },
       },
       fontFamily: {

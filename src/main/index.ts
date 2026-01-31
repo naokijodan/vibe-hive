@@ -11,6 +11,7 @@ import { registerNotificationHandlers } from './ipc/notificationHandlers';
 import { registerExportImportHandlers } from './ipc/exportImportHandlers';
 import { registerCoordinationHandlers } from './ipc/coordinationHandlers';
 import { registerClaudeHooksHandlers } from './ipc/claudeHooksHandlers';
+import { registerThemeHandlers } from './ipc/themeHandlers';
 import { getAgentCoordinationService } from './services/AgentCoordinationService';
 import { getClaudeHooksService } from './services/ClaudeHooksService';
 import { ptyService } from './services/PtyService';
@@ -74,6 +75,7 @@ app.whenReady().then(() => {
   registerExportImportHandlers();
   registerCoordinationHandlers();
   registerClaudeHooksHandlers();
+  registerThemeHandlers();
 
   createWindow();
 
