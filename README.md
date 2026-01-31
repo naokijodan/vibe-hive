@@ -212,7 +212,7 @@ terminal_logs      # ターミナル出力
 
 ### 今後の拡張候補（優先順）
 
-- [ ] Phase 12: Workflow Automation（タスク自動実行パイプライン）
+- [x] Phase 12: Workflow Automation（タスク自動実行パイプライン）
 - [ ] Phase 13: AI Model Switching（Claude / GPT / Gemini / ローカルLLM切り替え）
 - [ ] Phase 14: Plugin System（サードパーティ拡張エコシステム）
 - [ ] Phase 15: Performance Profiler（実行時間分析・ボトルネック検出）
