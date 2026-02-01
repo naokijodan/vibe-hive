@@ -94,6 +94,14 @@ export const IPC_CHANNELS = {
   AI_ASSISTANT_CHAT: 'aiAssistant:chat',
   AI_ASSISTANT_CLEAR: 'aiAssistant:clear',
   AI_ASSISTANT_HAS_KEY: 'aiAssistant:hasKey',
+
+  // Context channels
+  CONTEXT_SAVE: 'context:save',
+  CONTEXT_GET: 'context:get',
+  CONTEXT_GET_BY_NODE: 'context:getByNode',
+  CONTEXT_GET_CHAIN: 'context:getChain',
+  CONTEXT_GET_BY_SESSION: 'context:getBySession',
+  CONTEXT_DELETE: 'context:delete',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

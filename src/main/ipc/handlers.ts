@@ -6,6 +6,8 @@ import { getGitService } from '../services/GitService';
 import { getSettingsService } from '../services/SettingsService';
 import { registerAIHandlers } from './aiHandlers';
 import * as OrgRepo from '../services/db/OrganizationRepository';
+import * as ContextRepo from '../services/db/ContextRepository';
+import type { AgentContextCreateInput } from '../../shared/types/context';
 
 export function registerIpcHandlers(): void {
   const sessionService = getSessionService();
@@ -136,6 +138,31 @@ export function registerIpcHandlers(): void {
     const settingsService = getSettingsService();
     const settings = settingsService.resetSettings();
     return settings;
+  });
+
+  // Context handlers
+  ipcMain.handle(IPC_CHANNELS.CONTEXT_SAVE, async (_event, input: AgentContextCreateInput) => {
+    return ContextRepo.save(input);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CONTEXT_GET, async (_event, id: string) => {
+    return ContextRepo.getById(id);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CONTEXT_GET_BY_NODE, async (_event, orgNodeId: string, limit?: number) => {
+    return ContextRepo.getByNode(orgNodeId, limit);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CONTEXT_GET_CHAIN, async (_event, contextId: string) => {
+    return ContextRepo.getChain(contextId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CONTEXT_GET_BY_SESSION, async (_event, sessionId: string) => {
+    return ContextRepo.getBySession(sessionId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CONTEXT_DELETE, async (_event, id: string) => {
+    return ContextRepo.deleteById(id);
   });
 
   // AI Assistant handlers

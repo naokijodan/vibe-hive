@@ -26,6 +26,10 @@ import type {
 } from '../../shared/types/template';
 import type { PluginInfo } from '../../shared/types/plugin';
 import type {
+  AgentContext,
+  AgentContextCreateInput,
+} from '../../shared/types/context';
+import type {
   CollabConnectionStatus,
   CollabUser,
   CollabChatMessage,
@@ -408,6 +412,22 @@ export const ipcBridge = {
     onLog: (callback: (data: unknown) => void) =>
       window.electronAPI.onClaudeHooksLog(callback),
   },
+  // Context operations
+  context: {
+    save: (input: AgentContextCreateInput) =>
+      window.electronAPI.contextSave(input) as Promise<AgentContext>,
+    get: (id: string) =>
+      window.electronAPI.contextGet(id) as Promise<AgentContext | null>,
+    getByNode: (orgNodeId: string, limit?: number) =>
+      window.electronAPI.contextGetByNode(orgNodeId, limit) as Promise<AgentContext[]>,
+    getChain: (contextId: string) =>
+      window.electronAPI.contextGetChain(contextId) as Promise<AgentContext[]>,
+    getBySession: (sessionId: string) =>
+      window.electronAPI.contextGetBySession(sessionId) as Promise<AgentContext[]>,
+    delete: (id: string) =>
+      window.electronAPI.contextDelete(id),
+  },
+
   // AI Assistant operations
   aiAssistant: {
     chat: (message: string) => window.electronAPI.aiAssistantChat(message),

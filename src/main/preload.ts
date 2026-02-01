@@ -361,6 +361,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   aiAssistantChat: (message: string) => ipcRenderer.invoke('aiAssistant:chat', message),
   aiAssistantClear: () => ipcRenderer.invoke('aiAssistant:clear'),
   aiAssistantHasKey: () => ipcRenderer.invoke('aiAssistant:hasKey'),
+
+  // Context
+  contextSave: (input: unknown) => ipcRenderer.invoke('context:save', input),
+  contextGet: (id: string) => ipcRenderer.invoke('context:get', id),
+  contextGetByNode: (orgNodeId: string, limit?: number) => ipcRenderer.invoke('context:getByNode', orgNodeId, limit),
+  contextGetChain: (contextId: string) => ipcRenderer.invoke('context:getChain', contextId),
+  contextGetBySession: (sessionId: string) => ipcRenderer.invoke('context:getBySession', sessionId),
+  contextDelete: (id: string) => ipcRenderer.invoke('context:delete', id),
 });
 
 // Type declarations for the exposed API
@@ -570,6 +578,13 @@ export interface ElectronAPI {
   aiAssistantChat: (message: string) => Promise<{ reply: string; toolResults: Array<{ toolName: string; result: unknown }> }>;
   aiAssistantClear: () => Promise<{ success: boolean }>;
   aiAssistantHasKey: () => Promise<boolean>;
+  // Context
+  contextSave: (input: unknown) => Promise<unknown>;
+  contextGet: (id: string) => Promise<unknown>;
+  contextGetByNode: (orgNodeId: string, limit?: number) => Promise<unknown[]>;
+  contextGetChain: (contextId: string) => Promise<unknown[]>;
+  contextGetBySession: (sessionId: string) => Promise<unknown[]>;
+  contextDelete: (id: string) => Promise<boolean>;
 }
 
 declare global {

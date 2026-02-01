@@ -340,6 +340,26 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_organizations_session_id ON organizations(session_id);
       `,
     },
+    {
+      name: '013_create_agent_contexts',
+      sql: `
+        CREATE TABLE IF NOT EXISTS agent_contexts (
+          id TEXT PRIMARY KEY,
+          org_node_id TEXT NOT NULL,
+          session_id TEXT NOT NULL,
+          context_type TEXT NOT NULL,
+          data_format TEXT NOT NULL DEFAULT 'json',
+          content TEXT NOT NULL,
+          parent_context_id TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_agent_contexts_org_node_id ON agent_contexts(org_node_id);
+        CREATE INDEX IF NOT EXISTS idx_agent_contexts_session_id ON agent_contexts(session_id);
+        CREATE INDEX IF NOT EXISTS idx_agent_contexts_parent_id ON agent_contexts(parent_context_id);
+        CREATE INDEX IF NOT EXISTS idx_agent_contexts_created_at ON agent_contexts(created_at);
+      `,
+    },
   ];
 
   const appliedMigrations = database
