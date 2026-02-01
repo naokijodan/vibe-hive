@@ -64,7 +64,7 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-hive-surface border border-hive-border rounded-lg p-6 w-[500px] max-w-[90vw]"
+        className="bg-hive-surface border border-hive-border rounded-lg p-6 w-[500px] max-w-[90vw] max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-xl font-semibold mb-4">新しいノードを追加</h3>
