@@ -5,6 +5,7 @@ import { ptyService } from '../services/PtyService';
 import { getGitService } from '../services/GitService';
 import { getSettingsService } from '../services/SettingsService';
 import { registerAIHandlers } from './aiHandlers';
+import * as OrgRepo from '../services/db/OrganizationRepository';
 
 export function registerIpcHandlers(): void {
   const sessionService = getSessionService();
@@ -50,12 +51,11 @@ export function registerIpcHandlers(): void {
 
   // Organization handlers
   ipcMain.handle(IPC_CHANNELS.ORG_GET, async () => {
-    // TODO: Implement OrgManager
-    return null;
+    return OrgRepo.getOrCreate('default-session');
   });
 
   ipcMain.handle(IPC_CHANNELS.ORG_UPDATE, async (_event, org) => {
-    // TODO: Implement OrgManager
+    OrgRepo.save('default-session', org);
   });
 
   // Git handlers

@@ -327,6 +327,19 @@ function runMigrations(database: Database.Database): void {
         );
       `,
     },
+    {
+      name: '012_create_organizations',
+      sql: `
+        CREATE TABLE IF NOT EXISTS organizations (
+          id TEXT PRIMARY KEY,
+          session_id TEXT NOT NULL UNIQUE,
+          data TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_organizations_session_id ON organizations(session_id);
+      `,
+    },
   ];
 
   const appliedMigrations = database
