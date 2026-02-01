@@ -13,6 +13,8 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import type { Agent } from '../../../shared/types';
+import type { AgentType } from '../../../shared/types/workflow';
+import type { ExecutionStrategy } from '../../../shared/types/organization';
 import { useOrganizationStore } from '../../stores/organizationStore';
 import { useAgentStore } from '../../stores/agentStore';
 import { OrgNodeCard } from './OrgNodeCard';
@@ -256,11 +258,47 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
             </button>
           </div>
 
-          <div className="mb-4 p-3 bg-hive-bg rounded">
-            <div className="text-sm font-medium text-white mb-1">{selectedNode.name}</div>
+          <div className="mb-4 p-3 bg-hive-bg rounded space-y-2">
+            <div className="text-sm font-medium text-white">{selectedNode.name}</div>
             <div className="text-xs text-hive-muted">
               {selectedNode.type === 'team' ? '👥 チーム' : '🎭 役割'}
             </div>
+
+            {/* Preferred Agent Type */}
+            <div>
+              <label className="text-[10px] text-hive-muted block mb-1">推奨モデル</label>
+              <select
+                value={selectedNode.preferredAgentType || ''}
+                onChange={(e) => updateNode(selectedNode.id, {
+                  preferredAgentType: (e.target.value as AgentType) || undefined,
+                })}
+                className="w-full text-xs px-2 py-1 bg-hive-surface border border-hive-border rounded text-white"
+              >
+                <option value="">指定なし</option>
+                <option value="claude-code">🤖 Claude Code</option>
+                <option value="codex">⚡ Codex CLI</option>
+                <option value="gemini">💎 Gemini CLI</option>
+                <option value="ollama">🦙 Ollama</option>
+                <option value="custom">🔧 カスタム</option>
+              </select>
+            </div>
+
+            {/* Execution Strategy (team only) */}
+            {selectedNode.type === 'team' && (
+              <div>
+                <label className="text-[10px] text-hive-muted block mb-1">動作モード</label>
+                <select
+                  value={selectedNode.executionStrategy || 'parallel'}
+                  onChange={(e) => updateNode(selectedNode.id, {
+                    executionStrategy: e.target.value as ExecutionStrategy,
+                  })}
+                  className="w-full text-xs px-2 py-1 bg-hive-surface border border-hive-border rounded text-white"
+                >
+                  <option value="parallel">⚡ 並列 (Parallel)</option>
+                  <option value="sequential">⏩ 直列 (Sequential)</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Assigned Agents */}

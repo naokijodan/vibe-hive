@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import type { OrgNode } from '../../../shared/types/organization';
+import type { OrgNode, ExecutionStrategy } from '../../../shared/types/organization';
+import type { AgentType } from '../../../shared/types/workflow';
 
 interface AddNodeModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
   const [type, setType] = useState<'team' | 'role'>('team');
   const [description, setDescription] = useState('');
   const [selectedParentId, setSelectedParentId] = useState(parentNode?.id || '');
+  const [executionStrategy, setExecutionStrategy] = useState<ExecutionStrategy>('parallel');
+  const [preferredAgentType, setPreferredAgentType] = useState<AgentType | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,11 +36,15 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
         type,
         description: description.trim() || undefined,
         parentId: selectedParentId || undefined,
+        executionStrategy: type === 'team' ? executionStrategy : undefined,
+        preferredAgentType: preferredAgentType || undefined,
       });
       setName('');
       setDescription('');
       setType('team');
       setSelectedParentId('');
+      setExecutionStrategy('parallel');
+      setPreferredAgentType('');
       onClose();
     } catch (error) {
       console.error('Failed to add node:', error);
@@ -122,6 +129,59 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
             </select>
             <p className="text-xs text-hive-muted mt-1">
               親ノードを選択すると、そのノードの配下に配置されます
+            </p>
+          </div>
+
+          {/* Execution Strategy (team only) */}
+          {type === 'team' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">動作モード</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="parallel"
+                    checked={executionStrategy === 'parallel'}
+                    onChange={() => setExecutionStrategy('parallel')}
+                    className="text-hive-accent"
+                  />
+                  <span>⚡ 並列 (Parallel)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="sequential"
+                    checked={executionStrategy === 'sequential'}
+                    onChange={() => setExecutionStrategy('sequential')}
+                    className="text-hive-accent"
+                  />
+                  <span>⏩ 直列 (Sequential)</span>
+                </label>
+              </div>
+              <p className="text-xs text-hive-muted mt-1">
+                並列: 子ノードを同時実行（tmux的）<br />
+                直列: 子ノードを順番に実行（n8n的ワークフロー）
+              </p>
+            </div>
+          )}
+
+          {/* Preferred Agent Type */}
+          <div>
+            <label className="block text-sm font-medium mb-1">推奨モデル (オプション)</label>
+            <select
+              value={preferredAgentType}
+              onChange={(e) => setPreferredAgentType(e.target.value as AgentType | '')}
+              className="w-full px-3 py-2 bg-hive-bg border border-hive-border rounded text-hive-text focus:outline-none focus:ring-2 focus:ring-hive-accent"
+            >
+              <option value="">指定なし</option>
+              <option value="claude-code">🤖 Claude Code</option>
+              <option value="codex">⚡ Codex CLI</option>
+              <option value="gemini">💎 Gemini CLI</option>
+              <option value="ollama">🦙 Ollama</option>
+              <option value="custom">🔧 カスタム</option>
+            </select>
+            <p className="text-xs text-hive-muted mt-1">
+              このノードで使用するAIモデルを指定
             </p>
           </div>
 

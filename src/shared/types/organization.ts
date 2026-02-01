@@ -1,4 +1,7 @@
 import type { Agent } from './agent';
+import type { AgentType } from './workflow';
+
+export type ExecutionStrategy = 'parallel' | 'sequential';
 
 export interface Organization {
   id: string;
@@ -46,6 +49,8 @@ export interface OrgNode {
   assignedAgentIds?: string[];
   description?: string;
   position?: { x: number; y: number }; // For React Flow positioning
+  executionStrategy?: ExecutionStrategy; // Team execution mode (default: parallel)
+  preferredAgentType?: AgentType;        // Preferred AI model for this node
 }
 
 export interface OrgHierarchy {

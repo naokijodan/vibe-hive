@@ -1,7 +1,16 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
 import type { OrgNode } from '../../../shared/types/organization';
+import type { AgentType } from '../../../shared/types/workflow';
 import { useAgentStore } from '../../stores/agentStore';
+
+const AGENT_TYPE_LABELS: Record<AgentType, { icon: string; label: string }> = {
+  'claude-code': { icon: '🤖', label: 'Claude' },
+  'codex': { icon: '⚡', label: 'Codex' },
+  'gemini': { icon: '💎', label: 'Gemini' },
+  'ollama': { icon: '🦙', label: 'Ollama' },
+  'custom': { icon: '🔧', label: 'Custom' },
+};
 
 interface OrgNodeCardProps {
   data: {
@@ -68,7 +77,25 @@ export const OrgNodeCard: React.FC<OrgNodeCardProps> = ({ data }) => {
       </div>
 
       {/* Node name */}
-      <h3 className="text-white font-medium mb-2 break-words">{node.name}</h3>
+      <h3 className="text-white font-medium mb-1 break-words">{node.name}</h3>
+
+      {/* Badges: agent type + execution strategy */}
+      <div className="flex flex-wrap gap-1 mb-2">
+        {node.preferredAgentType && (
+          <span className="text-[10px] px-1.5 py-0.5 bg-indigo-900/50 text-indigo-300 rounded">
+            {AGENT_TYPE_LABELS[node.preferredAgentType]?.icon} {AGENT_TYPE_LABELS[node.preferredAgentType]?.label}
+          </span>
+        )}
+        {isTeam && node.executionStrategy && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+            node.executionStrategy === 'sequential'
+              ? 'bg-amber-900/50 text-amber-300'
+              : 'bg-emerald-900/50 text-emerald-300'
+          }`}>
+            {node.executionStrategy === 'sequential' ? '⏩ 直列' : '⚡ 並列'}
+          </span>
+        )}
+      </div>
 
       {/* Description */}
       {node.description && (
