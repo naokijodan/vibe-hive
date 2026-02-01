@@ -280,7 +280,8 @@ export const TaskCard: React.FC<TaskCardProps> = memo(({ task, onClick, isDragOv
         border rounded-lg p-3
         border-l-4 ${cardStyles.borderLeft}
         cursor-grab active:cursor-grabbing
-        ${cardStyles.hover} transition-all
+        ${cardStyles.hover} transition-all duration-200
+        hover:translate-y-[-1px] hover:shadow-lg hover:shadow-black/30
         ${isDragging ? 'opacity-30' : ''}
         ${cardStyles.ring}
       `}

@@ -59,7 +59,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
             <span className={`w-2 h-2 rounded-full ${styles.dot}`} />
             {title}
           </h3>
-          <span className="bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-full">
+          <span className="bg-hive-bg text-hive-muted text-xs px-2 py-1 rounded-full">
             {tasks.length}
           </span>
         </div>

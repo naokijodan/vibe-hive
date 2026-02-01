@@ -284,10 +284,10 @@ function App(): React.ReactElement {
   const renderNavButton = (view: ViewType, icon: string, label: string) => (
     <button
       onClick={() => setCurrentView(view)}
-      className={`w-full text-left px-3 py-2 rounded text-sm ${
+      className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
         currentView === view
-          ? 'bg-hive-accent/20 text-hive-accent'
-          : 'hover:bg-hive-surface text-hive-muted'
+          ? 'bg-hive-accent/20 text-hive-accent font-medium'
+          : 'hover:bg-hive-accent/5 text-hive-muted hover:text-hive-text'
       }`}
     >
       {icon} {label}
@@ -446,9 +446,9 @@ function App(): React.ReactElement {
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#1f2937',
+            background: '#1a1a1a',
             color: '#fff',
-            border: '1px solid #374151',
+            border: '1px solid #333333',
           },
         }}
       />
@@ -456,8 +456,8 @@ function App(): React.ReactElement {
         {/* Sidebar */}
         <aside className="border-r border-hive-border bg-hive-surface flex flex-col flex-shrink-0" style={{ width: sidebarWidth }}>
         <div className="p-4 border-b border-hive-border drag-region" style={{ paddingTop: '28px' }}>
-          <h1 className="text-xl font-bold text-hive-accent flex items-center gap-2 no-drag">
-            <span>🐝</span> Vibe Hive
+          <h1 className="text-xl font-bold flex items-center gap-2 no-drag">
+            <span>🐝</span> <span className="text-gold-gradient">Vibe Hive</span>
           </h1>
           <p className="text-sm text-hive-muted mt-1">AI Swarm Manager</p>
         </div>

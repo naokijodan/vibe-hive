@@ -2,17 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme CSS Variables (RGB values for Tailwind opacity support) */
+/* ===================================
+   Vibe Hive Theme: Stylish Black + Gold
+   Inspired by user-manual.html design
+   =================================== */
+
 :root {
-  --hive-bg: 13, 17, 23;
-  --hive-surface: 22, 27, 34;
-  --hive-border: 48, 54, 61;
-  --hive-text: 201, 209, 217;
-  --hive-muted: 139, 148, 158;
-  --hive-accent: 88, 166, 255;
-  --hive-success: 63, 185, 80;
-  --hive-warning: 210, 153, 34;
-  --hive-error: 248, 81, 73;
+  /* Core palette — deep black + gold accent */
+  --hive-bg: 10, 10, 10;           /* #0a0a0a — near black */
+  --hive-surface: 26, 26, 26;      /* #1a1a1a — deep gray */
+  --hive-border: 51, 51, 51;       /* #333333 — subtle border */
+  --hive-text: 255, 255, 255;      /* #ffffff — crisp white */
+  --hive-muted: 160, 160, 160;     /* #a0a0a0 — muted gray */
+  --hive-accent: 251, 191, 36;     /* #fbbf24 — golden */
+  --hive-success: 16, 185, 129;    /* #10b981 — emerald */
+  --hive-warning: 245, 158, 11;    /* #f59e0b — amber */
+  --hive-error: 239, 68, 68;       /* #ef4444 — red */
 
   font-family:
     'Inter',
@@ -48,41 +53,181 @@ body {
   color: rgb(var(--hive-text));
 }
 
-/* Scrollbar styling */
+/* ===================================
+   Scrollbar — refined dark
+   =================================== */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgb(var(--hive-surface));
+  background: rgb(var(--hive-bg));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(var(--hive-border));
-  border-radius: 4px;
+  background: rgba(var(--hive-border), 0.6);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #484f58;
+  background: rgba(var(--hive-accent), 0.4);
 }
 
-/* Selection styling */
+/* ===================================
+   Selection & Focus — gold tint
+   =================================== */
 ::selection {
-  background-color: rgba(var(--hive-accent), 0.3);
+  background-color: rgba(var(--hive-accent), 0.25);
 }
 
-/* Focus styling */
 :focus-visible {
-  outline: 2px solid rgb(var(--hive-accent));
+  outline: 2px solid rgba(var(--hive-accent), 0.6);
   outline-offset: 2px;
 }
 
-/* Draggable regions for Electron */
+/* ===================================
+   Draggable regions for Electron
+   =================================== */
 .drag-region {
   -webkit-app-region: drag;
 }
 
 .no-drag {
   -webkit-app-region: no-drag;
+}
+
+/* ===================================
+   Utility classes — card & panel base
+   =================================== */
+@layer components {
+  /* Standard card with hover lift */
+  .card-hive {
+    background-color: rgb(var(--hive-surface));
+    border: 1px solid rgb(var(--hive-border));
+    border-radius: 8px;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-hive:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--hive-accent), 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Panel base (no hover lift) */
+  .panel-hive {
+    background-color: rgb(var(--hive-surface));
+    border: 1px solid rgb(var(--hive-border));
+    border-radius: 8px;
+  }
+
+  /* Gold gradient text for headings */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Info/Warning/Error box with left border */
+  .box-info {
+    background: rgba(59, 130, 246, 0.08);
+    border-left: 4px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+    padding: 0.75rem 1rem;
+  }
+
+  .box-warning {
+    background: rgba(245, 158, 11, 0.08);
+    border-left: 4px solid #f59e0b;
+    border-radius: 0 8px 8px 0;
+    padding: 0.75rem 1rem;
+  }
+
+  .box-error {
+    background: rgba(239, 68, 68, 0.08);
+    border-left: 4px solid #ef4444;
+    border-radius: 0 8px 8px 0;
+    padding: 0.75rem 1rem;
+  }
+
+  .box-success {
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 4px solid #10b981;
+    border-radius: 0 8px 8px 0;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Badge style matching manual */
+  .badge-hive {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(var(--hive-accent), 0.15);
+    color: rgb(var(--hive-accent));
+  }
+
+  /* Button primary — gold */
+  .btn-hive-primary {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #0a0a0a;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+  }
+
+  .btn-hive-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-hive-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-hive-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Button secondary — ghost */
+  .btn-hive-secondary {
+    background: transparent;
+    color: rgb(var(--hive-text));
+    font-weight: 500;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    border: 1px solid rgb(var(--hive-border));
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .btn-hive-secondary:hover {
+    border-color: rgba(var(--hive-accent), 0.5);
+    background: rgba(var(--hive-accent), 0.05);
+  }
+
+  /* Input styling */
+  .input-hive {
+    background-color: rgb(var(--hive-bg));
+    border: 1px solid rgb(var(--hive-border));
+    border-radius: 6px;
+    color: rgb(var(--hive-text));
+    padding: 0.5rem 0.75rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .input-hive:focus {
+    border-color: rgba(var(--hive-accent), 0.5);
+    box-shadow: 0 0 0 3px rgba(var(--hive-accent), 0.1);
+    outline: none;
+  }
 }

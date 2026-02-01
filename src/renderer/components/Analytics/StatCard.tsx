@@ -20,12 +20,12 @@ const colorMap: Record<StatCardProps['color'], { bg: string; border: string; tex
 export const StatCard: React.FC<StatCardProps> = ({ label, value, subValue, icon, color }) => {
   const c = colorMap[color];
   return (
-    <div className={`${c.bg} border ${c.border} rounded-lg p-4 flex items-center space-x-4`}>
+    <div className={`${c.bg} border ${c.border} rounded-lg p-4 flex items-center space-x-4 transition-all duration-200 hover:translate-y-[-2px] hover:shadow-lg hover:shadow-black/40`}>
       <div className={`${c.text} text-2xl flex-shrink-0`}>{icon}</div>
       <div className="min-w-0">
-        <p className="text-xs text-gray-400 uppercase tracking-wider">{label}</p>
+        <p className="text-xs text-hive-muted uppercase tracking-wider">{label}</p>
         <p className={`text-2xl font-bold ${c.text}`}>{value}</p>
-        {subValue && <p className="text-xs text-gray-500 truncate">{subValue}</p>}
+        {subValue && <p className="text-xs text-hive-muted truncate">{subValue}</p>}
       </div>
     </div>
   );
