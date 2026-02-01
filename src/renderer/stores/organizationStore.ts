@@ -43,12 +43,32 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   loadOrganization: async () => {
     set({ isLoading: true, error: null });
     try {
-      const org = await ipcBridge.organization.get() as Organization;
-      set({
-        organization: org,
-        nodes: org.hierarchy?.nodes || [],
-        isLoading: false,
-      });
+      const org = await ipcBridge.organization.get() as Organization | null;
+      if (org) {
+        set({
+          organization: org,
+          nodes: org.hierarchy?.nodes || [],
+          isLoading: false,
+        });
+      } else {
+        // No org returned - initialize with empty default
+        const defaultOrg: Organization = {
+          id: `org-${Date.now()}`,
+          name: 'Default Organization',
+          agents: [],
+          connections: [],
+          whiteboard: { id: `wb-${Date.now()}`, organizationId: `org-${Date.now()}`, entries: [] },
+          hierarchy: { nodes: [], rootNodeId: undefined },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        await ipcBridge.organization.update(defaultOrg);
+        set({
+          organization: defaultOrg,
+          nodes: [],
+          isLoading: false,
+        });
+      }
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to load organization',
