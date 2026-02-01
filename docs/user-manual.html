@@ -355,6 +355,7 @@
         <nav>
             <ul>
                 <li><a href="#overview">概要</a></li>
+                <li><a href="#dev-status">開発状況</a></li>
                 <li><a href="#installation">インストール</a></li>
                 <li><a href="#getting-started">はじめに</a></li>
                 <li><a href="#features">機能一覧</a></li>
@@ -362,6 +363,13 @@
                 <li><a href="#organization">組織構造</a></li>
                 <li><a href="#templates">テンプレート</a></li>
                 <li><a href="#execution">実行管理</a></li>
+                <li><a href="#workflow">ワークフロー</a></li>
+                <li><a href="#analytics">分析</a></li>
+                <li><a href="#coordination">連携</a></li>
+                <li><a href="#plugins">プラグイン</a></li>
+                <li><a href="#profiler">プロファイラー</a></li>
+                <li><a href="#collaboration">コラボ</a></li>
+                <li><a href="#voice">音声</a></li>
                 <li><a href="#git">Git統合</a></li>
                 <li><a href="#settings">設定</a></li>
                 <li><a href="#shortcuts">ショートカット</a></li>
@@ -412,7 +420,125 @@
                     <div class="feature-title">Git統合</div>
                     <div class="feature-desc">アプリ内でGit操作（status、add、commit、push）</div>
                 </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-title">ワークフロー自動化</div>
+                    <div class="feature-desc">タスクを自動実行パイプラインとして定義・スケジュール実行</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">分析ダッシュボード</div>
+                    <div class="feature-desc">タスク統計、エージェント稼働率、完了トレンドを可視化</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <div class="feature-title">エクスポート/インポート</div>
+                    <div class="feature-desc">タスク・セッションデータのJSON/CSV入出力</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤝</div>
+                    <div class="feature-title">エージェント連携</div>
+                    <div class="feature-desc">エージェント間のメッセージングと協調タスク実行</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🪝</div>
+                    <div class="feature-title">Claude Hooks</div>
+                    <div class="feature-desc">Claude Code のフック機能を管理・設定</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <div class="feature-title">テーマカスタマイズ</div>
+                    <div class="feature-desc">UIカラーを自由にカスタマイズ、プリセット切替</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧩</div>
+                    <div class="feature-title">プラグインシステム</div>
+                    <div class="feature-desc">サードパーティ拡張を読み込み・有効化・設定</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⏱</div>
+                    <div class="feature-title">パフォーマンスプロファイラー</div>
+                    <div class="feature-desc">実行時間分析、ボトルネック検出、タイムライン表示</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-title">コラボレーション</div>
+                    <div class="feature-desc">WebSocketでリアルタイム共同作業・チャット</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎙</div>
+                    <div class="feature-title">音声コマンド</div>
+                    <div class="feature-desc">日本語音声でタスク作成・完了・検索・ビュー切替</div>
+                </div>
             </div>
+        </section>
+
+        <!-- 開発状況 -->
+        <section id="dev-status">
+            <h2>📈 開発状況</h2>
+            <p>Vibe Hiveは全17フェーズの開発ロードマップに沿って構築されました。現在、全フェーズが完了しています。</p>
+
+            <table class="shortcut-table">
+                <thead>
+                    <tr>
+                        <th>Phase</th>
+                        <th>機能</th>
+                        <th>状態</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Phase 0</td><td>プロジェクト初期化（Electron + React + TypeScript）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 1</td><td>セッション管理 + SQLite永続化</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 2</td><td>ターミナル統合（node-pty + xterm.js）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 3</td><td>タスクエンジン + Kanbanボード</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 4</td><td>AIエージェント管理（Claude Code / Codex CLI）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 5</td><td>組織構造可視化（React Flow）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 6</td><td>タスク依存関係 + Ready状態自動検知</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 7</td><td>実行エンジン + 履歴管理</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 8</td><td>タスクテンプレート（カテゴリ分類・サブタスク）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 9</td><td>分析ダッシュボード（統計・トレンド・チャート）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 10</td><td>エクスポート/インポート + 通知設定</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 11</td><td>エージェント連携（メッセージング・協調実行）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 12</td><td>ワークフロー自動化（パイプライン・スケジュール）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 13</td><td>Claude Hooks + テーマカスタマイズ</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 14</td><td>プラグインシステム（サードパーティ拡張）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 15</td><td>パフォーマンスプロファイラー（ボトルネック検出）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 16</td><td>コラボレーション（WebSocket共同作業）</td><td><span class="badge badge-success">完了</span></td></tr>
+                    <tr><td>Phase 17</td><td>音声コマンド（Web Speech API）</td><td><span class="badge badge-success">完了</span></td></tr>
+                </tbody>
+            </table>
+
+            <h3>技術スタック</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-title">フロントエンド</div>
+                    <div class="feature-desc">React + TypeScript + TailwindCSS + Zustand</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">バックエンド</div>
+                    <div class="feature-desc">Electron (Main Process) + node-pty + better-sqlite3</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">リアルタイム通信</div>
+                    <div class="feature-desc">WebSocket (ws) + Electron IPC Bridge</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">UI</div>
+                    <div class="feature-desc">React Flow + xterm.js + react-hot-toast</div>
+                </div>
+            </div>
+
+            <h3>アーキテクチャ</h3>
+            <pre><code>src/
+├── main/           # Electron Main Process
+│   ├── services/   # バックエンドサービス (DB, PTY, Agent, Collab等)
+│   └── ipc/        # IPC ハンドラー (17モジュール)
+├── renderer/       # React フロントエンド
+│   ├── components/ # UIコンポーネント (17ビュー)
+│   ├── stores/     # Zustand 状態管理
+│   ├── hooks/      # カスタムフック
+│   └── bridge/     # IPC抽象化層 (Tauri移行対応)
+└── shared/         # 共有型定義</code></pre>
         </section>
 
         <!-- インストール -->
@@ -520,6 +646,23 @@ cd vibe-hive</code></pre>
                     <li><strong>🔧 Git統合</strong> - アプリ内でGit操作（status、add、commit、push）</li>
                     <li><strong>💻 ターミナルパネル</strong> - エージェント出力 / Bash Terminal切り替え</li>
                     <li><strong>🔄 セッション管理</strong> - 複数プロジェクトをセッションで分離管理</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-title">拡張機能（Phase 9〜17）</div>
+                <ul>
+                    <li><strong>📊 分析ダッシュボード</strong> - ステータス分布、優先度分布、完了トレンド、エージェント稼働率</li>
+                    <li><strong>💾 エクスポート/インポート</strong> - タスク・セッションデータのJSON/CSV入出力</li>
+                    <li><strong>🔔 通知設定</strong> - タスク完了・エラー・依存解決時の通知カスタマイズ</li>
+                    <li><strong>🤝 エージェント連携</strong> - エージェント間メッセージング、協調タスク実行</li>
+                    <li><strong>🪝 Claude Hooks</strong> - Claude Codeのフック管理（pre/post/notification）</li>
+                    <li><strong>🔄 ワークフロー自動化</strong> - タスクパイプライン定義、条件分岐、スケジュール実行</li>
+                    <li><strong>🎨 テーマカスタマイズ</strong> - UIカラーの自由変更、プリセットテーマ切替</li>
+                    <li><strong>🧩 プラグインシステム</strong> - サードパーティ拡張の読み込み・有効化・設定</li>
+                    <li><strong>⏱ パフォーマンスプロファイラー</strong> - 実行時間分析、ボトルネック検出、タイムライン</li>
+                    <li><strong>👥 コラボレーション</strong> - WebSocketによるリアルタイム共同作業・チャット</li>
+                    <li><strong>🎙 音声コマンド</strong> - 日本語音声でタスク操作（作成・完了・検索・ビュー切替）</li>
                 </ul>
             </div>
         </section>
@@ -770,6 +913,160 @@ cd vibe-hive</code></pre>
             <div class="info-box">
                 <strong>ℹ️ ヒント：</strong> 実行ログはSQLiteデータベースに永続化されるため、
                 アプリを再起動しても履歴は保持されます。
+            </div>
+        </section>
+
+        <!-- ワークフロー自動化 -->
+        <section id="workflow">
+            <h2>🔄 ワークフロー自動化</h2>
+            <p>
+                タスクの実行を自動パイプラインとして定義し、条件分岐や並列実行を含む複雑なワークフローを構築できます。
+            </p>
+            <h3>アクセス方法</h3>
+            <p>左サイドバーの「<strong>🔄 ワークフロー</strong>」をクリックします。</p>
+            <h3>主な機能</h3>
+            <ul>
+                <li><strong>パイプライン定義：</strong> タスクを順番に実行するパイプラインを作成</li>
+                <li><strong>条件分岐：</strong> タスクの結果に応じて次のステップを切り替え</li>
+                <li><strong>並列実行：</strong> 独立したタスクを同時に実行</li>
+                <li><strong>スケジュール実行：</strong> 定期的にワークフローを自動実行</li>
+                <li><strong>テンプレート化：</strong> ワークフローをテンプレートとして保存・再利用</li>
+            </ul>
+            <div class="info-box">
+                <strong>ℹ️ ヒント：</strong> ワークフローのステップはドラッグ&ドロップで並び替えられます。
+            </div>
+        </section>
+
+        <!-- 分析ダッシュボード -->
+        <section id="analytics">
+            <h2>📊 分析ダッシュボード</h2>
+            <p>
+                タスクの実行統計や進捗状況をグラフやチャートで可視化します。
+                チームの生産性を数値で把握できます。
+            </p>
+            <h3>アクセス方法</h3>
+            <p>左サイドバーの「<strong>📊 分析</strong>」をクリックします。</p>
+            <h3>表示される情報</h3>
+            <ul>
+                <li><strong>タスク統計：</strong> ステータス別のタスク数、完了率</li>
+                <li><strong>エージェント別実行時間：</strong> 各エージェントの作業量を比較</li>
+                <li><strong>優先度分布：</strong> タスクの優先度ごとの分布</li>
+                <li><strong>時系列推移：</strong> 日別・週別のタスク完了推移</li>
+                <li><strong>エクスポート/インポート：</strong> タスクやテンプレートのバックアップ・復元</li>
+            </ul>
+        </section>
+
+        <!-- エージェント連携 -->
+        <section id="coordination">
+            <h2>🤝 エージェント間連携</h2>
+            <p>
+                複数のAIエージェント間でメッセージを送受信し、協調作業を実現します。
+                エージェントが互いにコンテキストを共有しながらタスクを進められます。
+            </p>
+            <h3>アクセス方法</h3>
+            <p>左サイドバーの「<strong>🤝 連携</strong>」をクリックします。</p>
+            <h3>主な機能</h3>
+            <ul>
+                <li><strong>メッセージ送信：</strong> エージェント間でテキストメッセージを送受信</li>
+                <li><strong>共有コンテキスト：</strong> エージェント間でコンテキスト情報を共有</li>
+                <li><strong>タスク委譲：</strong> あるエージェントから別のエージェントにタスクを委譲</li>
+                <li><strong>通知連携：</strong> デスクトップ通知でタスク完了や重要イベントを通知</li>
+            </ul>
+        </section>
+
+        <!-- プラグインシステム -->
+        <section id="plugins">
+            <h2>🔌 プラグインシステム</h2>
+            <p>
+                サードパーティ拡張によりVibe Hiveの機能を拡張できます。
+                プラグインのインストール・管理・設定をアプリ内で行えます。
+            </p>
+            <h3>アクセス方法</h3>
+            <p>左サイドバーの「<strong>🔌 プラグイン</strong>」をクリックします。</p>
+            <h3>主な機能</h3>
+            <ul>
+                <li><strong>プラグイン一覧：</strong> インストール済みプラグインの管理</li>
+                <li><strong>有効/無効切替：</strong> プラグインの有効化・無効化</li>
+                <li><strong>設定：</strong> プラグインごとの個別設定</li>
+                <li><strong>API：</strong> カスタムプラグイン開発用のAPI提供</li>
+            </ul>
+            <div class="info-box">
+                <strong>ℹ️ ヒント：</strong> プラグインはJavaScript/TypeScriptで開発できます。
+                プラグインAPIドキュメントは設定画面から確認できます。
+            </div>
+        </section>
+
+        <!-- パフォーマンスプロファイラー -->
+        <section id="profiler">
+            <h2>⚡ パフォーマンスプロファイラー</h2>
+            <p>
+                タスクの実行時間を分析し、ボトルネックを検出します。
+                エージェントの効率を最適化するための情報を提供します。
+            </p>
+            <h3>アクセス方法</h3>
+            <p>左サイドバーの「<strong>⚡ プロファイラー</strong>」をクリックします。</p>
+            <h3>表示される情報</h3>
+            <ul>
+                <li><strong>実行時間分析：</strong> タスクごとの実行時間をチャート表示</li>
+                <li><strong>ボトルネック検出：</strong> 実行が遅いタスクを自動検出</li>
+                <li><strong>エージェント効率：</strong> エージェントごとの処理速度を比較</li>
+                <li><strong>リソース使用量：</strong> CPU・メモリの使用状況をモニタリング</li>
+            </ul>
+        </section>
+
+        <!-- コラボレーション -->
+        <section id="collaboration">
+            <h2>👥 コラボレーション</h2>
+            <p>
+                WebSocketベースのリアルタイム共同作業機能です。
+                複数人で同じセッションに接続し、タスクの状態やチャットを共有できます。
+            </p>
+            <h3>アクセス方法</h3>
+            <p>左サイドバーの「<strong>👥 コラボ</strong>」をクリックします。</p>
+            <h3>使い方</h3>
+            <ol>
+                <li><strong>ホスト：</strong> 「ホスト開始」をクリックしてルームを作成</li>
+                <li><strong>ゲスト：</strong> ホストのアドレスを入力して「参加」をクリック</li>
+                <li>接続後、チャットやタスク状態がリアルタイムで同期されます</li>
+            </ol>
+            <h3>機能</h3>
+            <ul>
+                <li><strong>リアルタイムチャット：</strong> 参加者間でメッセージを送受信</li>
+                <li><strong>ユーザー一覧：</strong> 接続中のユーザーを表示</li>
+                <li><strong>ニックネーム・カラー設定：</strong> 個人の表示名と色をカスタマイズ</li>
+            </ul>
+            <div class="warning-box">
+                <strong>⚠️ 注意：</strong> コラボレーション機能はローカルネットワーク内での使用を想定しています。
+                外部ネットワークからの接続にはポートフォワーディングが必要です。
+            </div>
+        </section>
+
+        <!-- 音声コマンド -->
+        <section id="voice">
+            <h2>🎙 音声コマンド</h2>
+            <p>
+                Web Speech APIを利用した音声によるタスク操作機能です。
+                ハンズフリーでタスクの作成・完了・検索などが行えます。
+            </p>
+            <h3>アクセス方法</h3>
+            <p>左サイドバーの「<strong>🎙 音声</strong>」をクリックします。</p>
+            <h3>使えるコマンド</h3>
+            <ul>
+                <li><code>タスク作成 〇〇</code> — 新しいタスクを作成</li>
+                <li><code>〇〇を完了</code> — タスクを完了に移動</li>
+                <li><code>〇〇を削除</code> — タスクを削除</li>
+                <li><code>〇〇を検索</code> — タスクを検索</li>
+                <li><code>〇〇に切り替え</code> — ビューを切替（タスクボード、分析 等）</li>
+            </ul>
+            <h3>使い方</h3>
+            <ol>
+                <li>マイクボタンをクリックして音声認識を開始</li>
+                <li>コマンドを話す（日本語・英語対応）</li>
+                <li>認識結果がリアルタイムで表示され、コマンドが実行されます</li>
+            </ol>
+            <div class="info-box">
+                <strong>ℹ️ ヒント：</strong> 音声認識はブラウザの Web Speech API を使用しています。
+                ChromiumベースのElectronで動作します。
             </div>
         </section>
 
@@ -1087,7 +1384,7 @@ rm -rf ~/Library/Application\ Support/vibe-hive/
             <p style="margin-top: 0.5rem;">
                 <a href="https://github.com/naokijodan/vibe-hive" target="_blank" style="color: var(--accent); text-decoration: none;">GitHub</a> |
                 <a href="https://github.com/naokijodan/vibe-hive/issues" target="_blank" style="color: var(--accent); text-decoration: none;">Issues</a> |
-                <span style="color: var(--text-muted);">Version 0.2.0</span>
+                <span style="color: var(--text-muted);">Version 1.0.0</span>
             </p>
         </footer>
     </div>
