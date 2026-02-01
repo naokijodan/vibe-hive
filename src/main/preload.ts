@@ -356,6 +356,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   themeSetTheme: (themeId: string) => ipcRenderer.invoke('theme:setTheme', themeId),
   themeSetCustomAccent: (color: string) => ipcRenderer.invoke('theme:setCustomAccent', color),
   themeResetCustomAccent: () => ipcRenderer.invoke('theme:resetCustomAccent'),
+
+  // AI Assistant
+  aiAssistantChat: (message: string) => ipcRenderer.invoke('aiAssistant:chat', message),
+  aiAssistantClear: () => ipcRenderer.invoke('aiAssistant:clear'),
+  aiAssistantHasKey: () => ipcRenderer.invoke('aiAssistant:hasKey'),
 });
 
 // Type declarations for the exposed API
@@ -561,6 +566,10 @@ export interface ElectronAPI {
   themeSetTheme: (themeId: string) => Promise<unknown>;
   themeSetCustomAccent: (color: string) => Promise<unknown>;
   themeResetCustomAccent: () => Promise<unknown>;
+  // AI Assistant
+  aiAssistantChat: (message: string) => Promise<{ reply: string; toolResults: Array<{ toolName: string; result: unknown }> }>;
+  aiAssistantClear: () => Promise<{ success: boolean }>;
+  aiAssistantHasKey: () => Promise<boolean>;
 }
 
 declare global {

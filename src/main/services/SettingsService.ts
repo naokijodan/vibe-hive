@@ -30,6 +30,7 @@ export interface AgentSettings {
     'ollama': ModelProviderConfig;
   };
   ollamaDefaultModel: string;
+  claudeApiKey?: string;
 }
 
 export interface Settings {

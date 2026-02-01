@@ -4,6 +4,7 @@ import { getSessionService } from '../services/SessionService';
 import { ptyService } from '../services/PtyService';
 import { getGitService } from '../services/GitService';
 import { getSettingsService } from '../services/SettingsService';
+import { registerAIHandlers } from './aiHandlers';
 
 export function registerIpcHandlers(): void {
   const sessionService = getSessionService();
@@ -136,4 +137,7 @@ export function registerIpcHandlers(): void {
     const settings = settingsService.resetSettings();
     return settings;
   });
+
+  // AI Assistant handlers
+  registerAIHandlers();
 }

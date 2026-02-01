@@ -26,6 +26,8 @@ const PluginManager = lazy(() => import('./components/Plugin/PluginManager').the
 const ProfilerPanel = lazy(() => import('./components/Profiler/ProfilerPanel').then(m => ({ default: m.ProfilerPanel })));
 const CollaborationPanel = lazy(() => import('./components/Collaboration/CollaborationPanel').then(m => ({ default: m.CollaborationPanel })));
 const VoiceCommandPanel = lazy(() => import('./components/Voice/VoiceCommandPanel').then(m => ({ default: m.VoiceCommandPanel })));
+import { AIChatPanel } from './components/AI/AIChatPanel';
+import { useAIAssistantStore } from './stores/aiAssistantStore';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -479,6 +481,14 @@ function App(): React.ReactElement {
             {renderNavButton('theme', '🎨', 'テーマ')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>
+          {/* AI Assistant toggle */}
+          <button
+            onClick={() => useAIAssistantStore.getState().togglePanel()}
+            className="w-full flex items-center gap-3 px-3 py-2 mt-2 rounded text-sm font-medium transition-colors bg-hive-accent/10 text-hive-accent hover:bg-hive-accent/20 border border-hive-accent/30"
+          >
+            <span>🤖</span>
+            <span>AI アシスタント</span>
+          </button>
         </nav>
         <div className="p-4 border-t border-hive-border">
           <button
@@ -737,6 +747,9 @@ function App(): React.ReactElement {
         isOpen={isSettingsPanelOpen}
         onClose={handleCloseSettings}
       />
+
+      {/* AI Chat Panel */}
+      <AIChatPanel />
       </div>
     </>
   );

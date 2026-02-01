@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Command } from '../components/CommandPalette';
 import { useSessionStore } from '../stores/sessionStore';
+import { useAIAssistantStore } from '../stores/aiAssistantStore';
 
 type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'theme' | 'settings';
 
@@ -195,6 +196,16 @@ export function useCommandPalette({
         }
       );
     }
+
+    // AI Assistant command
+    cmds.push({
+      id: 'ai-assistant',
+      label: 'AIアシスタント',
+      description: 'AIアシスタントを開く',
+      category: 'AI',
+      keywords: ['ai', 'assistant', 'chat', 'claude', 'えーあい', 'あしすたんと'],
+      action: () => useAIAssistantStore.getState().openPanel(),
+    });
 
     return cmds;
   }, [sessions, setCurrentView, setIsSessionModalOpen, setShowBashTerminal, setIsGitPanelOpen, setIsSettingsPanelOpen, switchSession]);

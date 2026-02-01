@@ -90,6 +90,10 @@ export const IPC_CHANNELS = {
   COLLAB_GET_STATUS: 'collab:getStatus',
   COLLAB_GET_USERS: 'collab:getUsers',
   COLLAB_GET_CHAT_HISTORY: 'collab:getChatHistory',
+  // AI Assistant channels
+  AI_ASSISTANT_CHAT: 'aiAssistant:chat',
+  AI_ASSISTANT_CLEAR: 'aiAssistant:clear',
+  AI_ASSISTANT_HAS_KEY: 'aiAssistant:hasKey',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

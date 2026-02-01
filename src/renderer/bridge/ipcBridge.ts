@@ -408,6 +408,12 @@ export const ipcBridge = {
     onLog: (callback: (data: unknown) => void) =>
       window.electronAPI.onClaudeHooksLog(callback),
   },
+  // AI Assistant operations
+  aiAssistant: {
+    chat: (message: string) => window.electronAPI.aiAssistantChat(message),
+    clear: () => window.electronAPI.aiAssistantClear(),
+    hasKey: () => window.electronAPI.aiAssistantHasKey(),
+  },
 };
 
 export default ipcBridge;
