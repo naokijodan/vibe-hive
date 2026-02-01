@@ -144,10 +144,12 @@ class AIAssistantService {
 
       case 'update_task': {
         const { id, ...updates } = input;
+        // Security: Allowlist valid column names to prevent SQL injection
+        const ALLOWED_COLUMNS = new Set(['title', 'description', 'status', 'priority', 'assignedAgentId', 'role', 'sessionId']);
         const setClauses: string[] = [];
         const values: unknown[] = [];
         for (const [key, value] of Object.entries(updates)) {
-          if (value !== undefined) {
+          if (value !== undefined && ALLOWED_COLUMNS.has(key)) {
             setClauses.push(`${key} = ?`);
             values.push(value);
           }

@@ -15,14 +15,21 @@ export class WebhookServer {
   }
 
   private setupMiddleware() {
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(express.json({ limit: '10kb' }));
+    this.app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-    // CORS
+    // Security headers
     this.app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', '*');
-      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'DENY');
+      next();
+    });
+
+    // CORS - restrict to localhost only
+    this.app.use((req, res, next) => {
+      res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type');
       if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
       }
@@ -107,7 +114,8 @@ export class WebhookServer {
         return resolve();
       }
 
-      this.server = this.app.listen(this.port, () => {
+      // Security: Bind to localhost only
+      this.server = this.app.listen(this.port, '127.0.0.1', () => {
         resolve();
       });
 

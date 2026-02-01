@@ -1,4 +1,6 @@
 import * as pty from 'node-pty';
+import * as path from 'path';
+import * as fs from 'fs';
 import { BrowserWindow } from 'electron';
 
 export type AgentType = 'claude' | 'codex' | 'gemini' | 'ollama';
@@ -44,7 +46,7 @@ class AgentService {
       if (provider?.cliPath) return provider.cliPath;
       // Fallback defaults
       switch (agentType) {
-        case 'claude': return '/Users/naokijodan/.local/bin/claude';
+        case 'claude': return path.join(process.env.HOME || '', '.local', 'bin', 'claude');
         case 'codex': return '/opt/homebrew/bin/codex';
         case 'gemini': return 'gemini';
         case 'ollama': return 'ollama';
@@ -53,11 +55,20 @@ class AgentService {
     };
 
     const cliPath = getCliPath(type);
+
+    // Security: Validate CLI path to prevent shell injection
+    const resolvedPath = path.resolve(cliPath);
+    if (resolvedPath.includes(';') || resolvedPath.includes('&') || resolvedPath.includes('|') || resolvedPath.includes('`')) {
+      throw new Error(`Invalid CLI path: contains shell metacharacters`);
+    }
+
+    // Use bash -c with single-quoted path to prevent injection
     const command = 'bash';
-    const args = ['-c', `echo "${READY_SIGNAL}"; exec ${cliPath}`];
+    const escapedPath = resolvedPath.replace(/'/g, "'\\''");
+    const args = ['-c', `echo "${READY_SIGNAL}"; exec '${escapedPath}'`];
 
     // Build PATH with common locations for CLI tools
-    const homedir = process.env.HOME || '/Users/naokijodan';
+    const homedir = process.env.HOME || '';
     const additionalPaths = [
       `${homedir}/.local/bin`,
       '/usr/local/bin',

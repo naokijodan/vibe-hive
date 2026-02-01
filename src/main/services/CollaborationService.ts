@@ -18,6 +18,7 @@ interface ConnectedClient {
 class CollaborationService {
   private wss: WebSocketServer | null = null;
   private clients: Map<string, ConnectedClient> = new Map();
+  private roomToken: string | null = null;
   private mainWindow: BrowserWindow | null = null;
   private port = 3101;
   private localUser: CollabUser | null = null;
@@ -48,10 +49,12 @@ class CollaborationService {
     };
     this.role = 'host';
     this.chatHistory = [];
+    this.roomToken = randomUUID();
 
     return new Promise((resolve) => {
       try {
-        this.wss = new WebSocketServer({ port: this.port });
+        // Security: Bind to localhost only to prevent external access
+        this.wss = new WebSocketServer({ port: this.port, host: '127.0.0.1' });
 
         this.wss.on('listening', () => {
           this.emitStatus();
