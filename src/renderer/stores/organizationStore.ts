@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Organization, OrgNode } from '../../shared/types/organization';
+import type { NodeExecution, ExecuteNodeResult } from '../../shared/types/orchestration';
 import ipcBridge from '../bridge/ipcBridge';
 
 // Browser-compatible UUID generator
@@ -17,6 +18,7 @@ interface OrganizationState {
   selectedNodeId: string | null;
   isLoading: boolean;
   error: string | null;
+  nodeExecutions: Map<string, NodeExecution>;
 
   // Actions
   loadOrganization: () => Promise<void>;
@@ -31,6 +33,12 @@ interface OrganizationState {
   // Agent assignment
   assignAgentToNode: (nodeId: string, agentId: string) => Promise<void>;
   unassignAgentFromNode: (nodeId: string, agentId: string) => Promise<void>;
+
+  // Orchestration
+  executeNode: (nodeId: string, prompt: string) => Promise<ExecuteNodeResult>;
+  stopNode: (nodeId: string) => void;
+  updateNodeExecution: (execution: NodeExecution) => void;
+  initOrchestrationListener: () => () => void;
 }
 
 export const useOrganizationStore = create<OrganizationState>((set, get) => ({
@@ -39,6 +47,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   selectedNodeId: null,
   isLoading: false,
   error: null,
+  nodeExecutions: new Map(),
 
   loadOrganization: async () => {
     set({ isLoading: true, error: null });
@@ -191,5 +200,33 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     await get().updateNode(nodeId, {
       assignedAgentIds: currentAgents.filter(id => id !== agentId),
     });
+  },
+
+  executeNode: async (nodeId, prompt) => {
+    const result = await ipcBridge.orchestration.execute({
+      nodeId,
+      sessionId: 'default-session',
+      prompt,
+    });
+    return result;
+  },
+
+  stopNode: (nodeId) => {
+    ipcBridge.orchestration.stop(nodeId);
+  },
+
+  updateNodeExecution: (execution) => {
+    set(state => {
+      const newMap = new Map(state.nodeExecutions);
+      newMap.set(execution.nodeId, execution);
+      return { nodeExecutions: newMap };
+    });
+  },
+
+  initOrchestrationListener: () => {
+    const cleanup = ipcBridge.orchestration.onStatusChange((execution) => {
+      get().updateNodeExecution(execution);
+    });
+    return cleanup;
   },
 }));

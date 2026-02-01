@@ -30,6 +30,11 @@ import type {
   AgentContextCreateInput,
 } from '../../shared/types/context';
 import type {
+  NodeExecution,
+  ExecuteNodeRequest,
+  ExecuteNodeResult,
+} from '../../shared/types/orchestration';
+import type {
   CollabConnectionStatus,
   CollabUser,
   CollabChatMessage,
@@ -412,6 +417,20 @@ export const ipcBridge = {
     onLog: (callback: (data: unknown) => void) =>
       window.electronAPI.onClaudeHooksLog(callback),
   },
+  // Orchestration operations
+  orchestration: {
+    execute: (request: ExecuteNodeRequest) =>
+      window.electronAPI.orchestrationExecute(request) as Promise<ExecuteNodeResult>,
+    stop: (nodeId: string) =>
+      window.electronAPI.orchestrationStop(nodeId),
+    status: (nodeId: string) =>
+      window.electronAPI.orchestrationStatus(nodeId) as Promise<NodeExecution | null>,
+    statusAll: (sessionId: string) =>
+      window.electronAPI.orchestrationStatusAll(sessionId) as Promise<NodeExecution[]>,
+    onStatusChange: (callback: (data: NodeExecution) => void) =>
+      window.electronAPI.onOrchestrationStatusChange(callback as (data: unknown) => void),
+  },
+
   // Context operations
   context: {
     save: (input: AgentContextCreateInput) =>

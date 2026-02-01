@@ -95,6 +95,12 @@ export const IPC_CHANNELS = {
   AI_ASSISTANT_CLEAR: 'aiAssistant:clear',
   AI_ASSISTANT_HAS_KEY: 'aiAssistant:hasKey',
 
+  // Orchestration channels
+  ORCHESTRATION_EXECUTE: 'orchestration:execute',
+  ORCHESTRATION_STOP: 'orchestration:stop',
+  ORCHESTRATION_STATUS: 'orchestration:status',
+  ORCHESTRATION_STATUS_ALL: 'orchestration:statusAll',
+
   // Context channels
   CONTEXT_SAVE: 'context:save',
   CONTEXT_GET: 'context:get',

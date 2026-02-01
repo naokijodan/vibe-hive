@@ -2,7 +2,9 @@ import React from 'react';
 import { Handle, Position } from 'reactflow';
 import type { OrgNode } from '../../../shared/types/organization';
 import type { AgentType } from '../../../shared/types/workflow';
+import type { NodeExecutionStatus } from '../../../shared/types/orchestration';
 import { useAgentStore } from '../../stores/agentStore';
+import { useOrganizationStore } from '../../stores/organizationStore';
 
 const AGENT_TYPE_LABELS: Record<AgentType, { icon: string; label: string }> = {
   'claude-code': { icon: '🤖', label: 'Claude' },
@@ -10,6 +12,13 @@ const AGENT_TYPE_LABELS: Record<AgentType, { icon: string; label: string }> = {
   'gemini': { icon: '💎', label: 'Gemini' },
   'ollama': { icon: '🦙', label: 'Ollama' },
   'custom': { icon: '🔧', label: 'Custom' },
+};
+
+const STATUS_INDICATOR: Record<NodeExecutionStatus, { color: string; label: string; animate: boolean }> = {
+  idle: { color: 'bg-gray-500', label: '', animate: false },
+  running: { color: 'bg-blue-400', label: '実行中', animate: true },
+  completed: { color: 'bg-green-400', label: '完了', animate: false },
+  failed: { color: 'bg-red-400', label: '失敗', animate: false },
 };
 
 interface OrgNodeCardProps {
@@ -24,6 +33,8 @@ interface OrgNodeCardProps {
 export const OrgNodeCard: React.FC<OrgNodeCardProps> = ({ data }) => {
   const { node, onSelect, onDelete, isSelected } = data;
   const { agents } = useAgentStore();
+  const execution = useOrganizationStore(s => s.nodeExecutions.get(node.id));
+  const execStatus = execution?.status ?? 'idle';
 
   const assignedAgents = agents.filter(agent =>
     node.assignedAgentIds?.includes(agent.id)
@@ -63,6 +74,11 @@ export const OrgNodeCard: React.FC<OrgNodeCardProps> = ({ data }) => {
           <span className="text-xs px-2 py-0.5 bg-hive-bg rounded text-hive-muted">
             {node.type}
           </span>
+          {execStatus !== 'idle' && (
+            <span className={`inline-block w-2 h-2 rounded-full ${STATUS_INDICATOR[execStatus].color} ${STATUS_INDICATOR[execStatus].animate ? 'animate-pulse' : ''}`}
+              title={STATUS_INDICATOR[execStatus].label}
+            />
+          )}
         </div>
         <button
           onClick={(e) => {

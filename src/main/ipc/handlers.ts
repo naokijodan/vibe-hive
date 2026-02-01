@@ -7,7 +7,9 @@ import { getSettingsService } from '../services/SettingsService';
 import { registerAIHandlers } from './aiHandlers';
 import * as OrgRepo from '../services/db/OrganizationRepository';
 import * as ContextRepo from '../services/db/ContextRepository';
+import { orchestratorService } from '../services/OrchestratorService';
 import type { AgentContextCreateInput } from '../../shared/types/context';
+import type { ExecuteNodeRequest } from '../../shared/types/orchestration';
 
 export function registerIpcHandlers(): void {
   const sessionService = getSessionService();
@@ -138,6 +140,23 @@ export function registerIpcHandlers(): void {
     const settingsService = getSettingsService();
     const settings = settingsService.resetSettings();
     return settings;
+  });
+
+  // Orchestration handlers
+  ipcMain.handle(IPC_CHANNELS.ORCHESTRATION_EXECUTE, async (_event, request: ExecuteNodeRequest) => {
+    return orchestratorService.executeNode(request);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ORCHESTRATION_STOP, async (_event, nodeId: string) => {
+    orchestratorService.stopNode(nodeId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ORCHESTRATION_STATUS, async (_event, nodeId: string) => {
+    return orchestratorService.getStatus(nodeId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ORCHESTRATION_STATUS_ALL, async (_event, sessionId: string) => {
+    return orchestratorService.getAllStatus(sessionId);
   });
 
   // Context handlers

@@ -21,6 +21,7 @@ import { getAgentCoordinationService } from './services/AgentCoordinationService
 import { getClaudeHooksService } from './services/ClaudeHooksService';
 import { ptyService } from './services/PtyService';
 import { agentService } from './services/AgentService';
+import { orchestratorService } from './services/OrchestratorService';
 import { getDatabase, closeDatabase } from './services/db';
 import { getWebhookServer } from './services/WebhookServer';
 import { getWorkflowScheduler } from './services/WorkflowScheduler';
@@ -96,6 +97,8 @@ app.whenReady().then(() => {
     getAgentCoordinationService().setMainWindow(mainWindow);
     getClaudeHooksService().setMainWindow(mainWindow);
     getCollaborationService().setMainWindow(mainWindow);
+    orchestratorService.setMainWindow(mainWindow);
+    orchestratorService.setupEventListeners();
   }
 
   // Initialize plugin system

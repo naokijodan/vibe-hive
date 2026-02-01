@@ -105,6 +105,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
   const {
     nodes: orgNodes,
     selectedNodeId,
+    nodeExecutions,
     loadOrganization,
     addNode,
     updateNode,
@@ -112,21 +113,27 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
     setSelectedNode,
     assignAgentToNode,
     unassignAgentFromNode,
+    executeNode,
+    stopNode,
+    initOrchestrationListener,
   } = useOrganizationStore();
 
   const { agents } = useAgentStore();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showAgentPanel, setShowAgentPanel] = useState(false);
+  const [executePrompt, setExecutePrompt] = useState('');
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  // Load organization on mount
+  // Load organization on mount + orchestration listener
   useEffect(() => {
     loadOrganization();
-  }, [loadOrganization]);
+    const cleanup = initOrchestrationListener();
+    return cleanup;
+  }, [loadOrganization, initOrchestrationListener]);
 
   // Update React Flow nodes when org nodes change
   useEffect(() => {
@@ -299,6 +306,66 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
                 </select>
               </div>
             )}
+          </div>
+
+          {/* Execution Controls */}
+          <div className="mb-4 p-3 bg-hive-bg rounded space-y-2">
+            <label className="text-[10px] text-hive-muted block">実行プロンプト</label>
+            <textarea
+              value={executePrompt}
+              onChange={(e) => setExecutePrompt(e.target.value)}
+              placeholder="このノードに実行させるタスクを入力..."
+              className="w-full text-xs px-2 py-1.5 bg-hive-surface border border-hive-border rounded text-white resize-none h-20"
+            />
+            {(() => {
+              const exec = nodeExecutions.get(selectedNode.id);
+              const status = exec?.status ?? 'idle';
+              const isRunning = status === 'running';
+              return (
+                <div className="flex items-center gap-2">
+                  {isRunning ? (
+                    <button
+                      onClick={() => stopNode(selectedNode.id)}
+                      className="flex-1 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-500"
+                    >
+                      停止
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (executePrompt.trim()) {
+                          executeNode(selectedNode.id, executePrompt.trim());
+                        }
+                      }}
+                      disabled={!executePrompt.trim()}
+                      className="flex-1 px-3 py-1.5 bg-hive-accent text-black text-xs font-medium rounded hover:bg-hive-accent/80 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      実行
+                    </button>
+                  )}
+                  {status !== 'idle' && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded ${
+                      status === 'running' ? 'bg-blue-900/50 text-blue-300' :
+                      status === 'completed' ? 'bg-green-900/50 text-green-300' :
+                      'bg-red-900/50 text-red-300'
+                    }`}>
+                      {status === 'running' ? '実行中...' : status === 'completed' ? '完了' : '失敗'}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+            {(() => {
+              const exec = nodeExecutions.get(selectedNode.id);
+              if (exec?.error) {
+                return (
+                  <div className="text-[10px] text-red-400 mt-1 break-words">
+                    {exec.error}
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* Assigned Agents */}

@@ -579,6 +579,13 @@ export interface ElectronAPI {
   aiAssistantClear: () => Promise<{ success: boolean }>;
   aiAssistantHasKey: () => Promise<boolean>;
   // Context
+  // Orchestration
+  orchestrationExecute: (request: unknown) => Promise<unknown>;
+  orchestrationStop: (nodeId: string) => Promise<void>;
+  orchestrationStatus: (nodeId: string) => Promise<unknown>;
+  orchestrationStatusAll: (sessionId: string) => Promise<unknown[]>;
+  onOrchestrationStatusChange: (callback: (data: unknown) => void) => () => void;
+  // Context
   contextSave: (input: unknown) => Promise<unknown>;
   contextGet: (id: string) => Promise<unknown>;
   contextGetByNode: (orgNodeId: string, limit?: number) => Promise<unknown[]>;
