@@ -302,6 +302,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   pluginGetDir: () => ipcRenderer.invoke('plugin:getDir'),
   pluginRefresh: () => ipcRenderer.invoke('plugin:refresh'),
 
+  // Profiler
+  profilerGetSummary: (filter?: unknown) => ipcRenderer.invoke('profiler:getSummary', filter),
+  profilerGetExecutions: (filter?: unknown) => ipcRenderer.invoke('profiler:getExecutions', filter),
+  profilerGetTaskStats: (filter?: unknown) => ipcRenderer.invoke('profiler:getTaskStats', filter),
+  profilerGetSessionStats: () => ipcRenderer.invoke('profiler:getSessionStats'),
+  profilerGetTimeline: (filter?: unknown) => ipcRenderer.invoke('profiler:getTimeline', filter),
+
   // Theme
   themeGetPresets: () => ipcRenderer.invoke('theme:getPresets'),
   themeGetSettings: () => ipcRenderer.invoke('theme:getSettings'),
@@ -486,6 +493,12 @@ export interface ElectronAPI {
   pluginUpdateSetting: (pluginId: string, key: string, value: unknown) => Promise<unknown>;
   pluginGetDir: () => Promise<string>;
   pluginRefresh: () => Promise<unknown[]>;
+  // Profiler
+  profilerGetSummary: (filter?: unknown) => Promise<unknown>;
+  profilerGetExecutions: (filter?: unknown) => Promise<unknown[]>;
+  profilerGetTaskStats: (filter?: unknown) => Promise<unknown[]>;
+  profilerGetSessionStats: () => Promise<unknown[]>;
+  profilerGetTimeline: (filter?: unknown) => Promise<unknown[]>;
   // Theme
   themeGetPresets: () => Promise<unknown[]>;
   themeGetSettings: () => Promise<unknown>;

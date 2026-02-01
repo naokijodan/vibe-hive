@@ -13,6 +13,7 @@ import { registerCoordinationHandlers } from './ipc/coordinationHandlers';
 import { registerClaudeHooksHandlers } from './ipc/claudeHooksHandlers';
 import { registerThemeHandlers } from './ipc/themeHandlers';
 import { registerPluginHandlers } from './ipc/pluginHandlers';
+import { registerProfilerHandlers } from './ipc/profilerHandlers';
 import { getPluginService } from './services/PluginService';
 import { getAgentCoordinationService } from './services/AgentCoordinationService';
 import { getClaudeHooksService } from './services/ClaudeHooksService';
@@ -79,6 +80,7 @@ app.whenReady().then(() => {
   registerClaudeHooksHandlers();
   registerThemeHandlers();
   registerPluginHandlers();
+  registerProfilerHandlers();
 
   createWindow();
 

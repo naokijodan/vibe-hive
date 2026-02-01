@@ -215,7 +215,7 @@ terminal_logs      # ターミナル出力
 - [x] Phase 12: Workflow Automation（タスク自動実行パイプライン）
 - [x] Phase 13: AI Model Switching（Claude / GPT / Gemini / ローカルLLM切り替え）
 - [x] Phase 14: Plugin System（サードパーティ拡張エコシステム）
-- [ ] Phase 15: Performance Profiler（実行時間分析・ボトルネック検出）
+- [x] Phase 15: Performance Profiler（実行時間分析・ボトルネック検出）
 - [ ] Phase 16: Collaborative Mode（複数人での共同作業）
 - [ ] Phase 17: Voice Command（音声でタスク操作）
 

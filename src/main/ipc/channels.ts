@@ -73,6 +73,13 @@ export const IPC_CHANNELS = {
   PLUGIN_UPDATE_SETTING: 'plugin:updateSetting',
   PLUGIN_GET_DIR: 'plugin:getDir',
   PLUGIN_REFRESH: 'plugin:refresh',
+
+  // Profiler channels
+  PROFILER_GET_SUMMARY: 'profiler:getSummary',
+  PROFILER_GET_EXECUTIONS: 'profiler:getExecutions',
+  PROFILER_GET_TASK_STATS: 'profiler:getTaskStats',
+  PROFILER_GET_SESSION_STATS: 'profiler:getSessionStats',
+  PROFILER_GET_TIMELINE: 'profiler:getTimeline',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

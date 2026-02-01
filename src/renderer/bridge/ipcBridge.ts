@@ -25,6 +25,14 @@ import type {
   TemplateUpdateInput,
 } from '../../shared/types/template';
 import type { PluginInfo } from '../../shared/types/plugin';
+import type {
+  ProfilerSummary,
+  ProfilerFilter,
+  ExecutionProfile,
+  TaskStats,
+  SessionStats,
+  TimelineEntry,
+} from '../../shared/types/profiler';
 
 export const ipcBridge = {
   // Session operations
@@ -318,6 +326,20 @@ export const ipcBridge = {
       window.electronAPI.pluginGetDir(),
     refresh: () =>
       window.electronAPI.pluginRefresh() as Promise<PluginInfo[]>,
+  },
+
+  // Profiler operations
+  profiler: {
+    getSummary: (filter?: ProfilerFilter) =>
+      window.electronAPI.profilerGetSummary(filter) as Promise<ProfilerSummary>,
+    getExecutions: (filter?: ProfilerFilter) =>
+      window.electronAPI.profilerGetExecutions(filter) as Promise<ExecutionProfile[]>,
+    getTaskStats: (filter?: ProfilerFilter) =>
+      window.electronAPI.profilerGetTaskStats(filter) as Promise<TaskStats[]>,
+    getSessionStats: () =>
+      window.electronAPI.profilerGetSessionStats() as Promise<SessionStats[]>,
+    getTimeline: (filter?: ProfilerFilter) =>
+      window.electronAPI.profilerGetTimeline(filter) as Promise<TimelineEntry[]>,
   },
 
   // Claude Hooks operations
