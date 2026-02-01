@@ -24,16 +24,17 @@ import { ipcBridge } from '../../bridge/ipcBridge';
 import { useToast } from '../../hooks/useToast';
 import type { NodeType, WorkflowNodeData, WorkflowImportResult } from '../../../shared/types/workflow';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ReactFlow NodeTypes requires broad component compatibility
 const nodeTypes: NodeTypes = {
-  task: TaskNode as any,
-  trigger: TriggerNode as any,
-  conditional: ConditionalNode as any,
-  notification: NotificationNode as any,
-  merge: MergeNode as any,
-  delay: DelayNode as any,
-  loop: LoopNode as any,
-  subworkflow: SubworkflowNode as any,
-  agent: AgentNode as any,
+  task: TaskNode as unknown as NodeTypes[string],
+  trigger: TriggerNode as unknown as NodeTypes[string],
+  conditional: ConditionalNode as unknown as NodeTypes[string],
+  notification: NotificationNode as unknown as NodeTypes[string],
+  merge: MergeNode as unknown as NodeTypes[string],
+  delay: DelayNode as unknown as NodeTypes[string],
+  loop: LoopNode as unknown as NodeTypes[string],
+  subworkflow: SubworkflowNode as unknown as NodeTypes[string],
+  agent: AgentNode as unknown as NodeTypes[string],
 };
 
 interface WorkflowCanvasProps {
@@ -42,7 +43,7 @@ interface WorkflowCanvasProps {
 
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ showNodePalette = false }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<{ toObject: () => { nodes: Node[]; edges: unknown[] } } | null>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);

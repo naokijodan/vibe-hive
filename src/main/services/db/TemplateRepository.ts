@@ -122,7 +122,7 @@ export class TemplateRepository {
 
     const now = new Date().toISOString();
     const updateFields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | boolean | null)[] = [];
 
     if (updates.name !== undefined) {
       updateFields.push('name = ?');

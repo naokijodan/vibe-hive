@@ -28,7 +28,7 @@ export type LogicalOperator = 'AND' | 'OR';
 export interface SimpleCondition {
   field: string;
   operator: ConditionalOperator;
-  value: any;
+  value: unknown;
 }
 
 export interface ConditionGroup {
@@ -96,13 +96,14 @@ export interface TimeoutConfig {
 
 export interface ErrorHandlingConfig {
   continueOnError: boolean;  // Continue workflow on error (default: false)
-  errorOutput?: any;         // Fallback output value on error
+  errorOutput?: unknown;         // Fallback output value on error
 }
 
 export interface WorkflowNodeData {
   [key: string]: unknown;
   label: string;
-  config: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config: Record<string, any>; // Dynamic node config - intentionally any
   // Node-specific config
   taskId?: number;                    // For task nodes
   triggerType?: TriggerType;          // For trigger nodes
@@ -154,6 +155,7 @@ export interface WorkflowExecution {
   startedAt: number;
   completedAt?: number;
   error?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   executionData?: Record<string, any>;  // Store runtime data for each node
 }
 
@@ -178,6 +180,7 @@ export interface UpdateWorkflowParams {
 
 export interface ExecuteWorkflowParams {
   workflowId: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   triggerData?: Record<string, any>;
 }
 
@@ -185,6 +188,7 @@ export interface WorkflowExecutionResult {
   executionId: number;
   status: 'success' | 'failed';
   error?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   nodeResults: Record<string, any>;
 }
 

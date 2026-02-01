@@ -8,6 +8,7 @@ import type {
   ExecuteWorkflowParams,
   WorkflowExecution,
   WorkflowExecutionResult,
+  WorkflowNodeData,
 } from '../../shared/types/workflow';
 import { ipcBridge } from '../bridge/ipcBridge';
 import type { Node, Edge } from '@xyflow/react';
@@ -215,9 +216,9 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       // Convert React Flow nodes/edges to Workflow nodes/edges
       const workflowNodes: WorkflowNode[] = nodes.map(node => ({
         id: node.id,
-        type: node.type as any,
+        type: node.type as WorkflowNode['type'],
         position: node.position,
-        data: node.data as any,
+        data: node.data as unknown as WorkflowNodeData,
       }));
 
       const workflowEdges: WorkflowEdge[] = edges.map(edge => ({

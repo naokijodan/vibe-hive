@@ -136,7 +136,7 @@ export const ConditionalNodeSettings: React.FC<ConditionalNodeSettingsProps> = (
     onChange({ conditionGroup: updated });
   };
 
-  const handleConditionChange = (index: number, field: keyof SimpleCondition, value: any) => {
+  const handleConditionChange = (index: number, field: keyof SimpleCondition, value: string | number | boolean) => {
     const updated = { ...conditionGroup };
     updated.conditions[index] = { ...updated.conditions[index], [field]: value };
     setConditionGroup(updated);
@@ -193,7 +193,7 @@ export const ConditionalNodeSettings: React.FC<ConditionalNodeSettingsProps> = (
     onChange({ conditionGroup: updated });
   };
 
-  const handleGroupConditionChange = (groupIndex: number, condIndex: number, field: keyof SimpleCondition, value: any) => {
+  const handleGroupConditionChange = (groupIndex: number, condIndex: number, field: keyof SimpleCondition, value: string | number | boolean) => {
     const updated = { ...expertGroup };
     if (updated.groups) {
       const group = updated.groups[groupIndex];

@@ -17,17 +17,17 @@ import type {
 
 interface NodeExecutionContext {
   nodeId: string;
-  input: any;
-  workflowData: Record<string, any>;
+  input: unknown;
+  workflowData: Record<string, unknown>;
   executionStack?: number[];  // Stack of workflow IDs currently being executed (for recursion detection)
   signal?: AbortSignal;  // Abort signal for cancellation
 }
 
 interface NodeExecutionResult {
   success: boolean;
-  output?: any;
+  output?: unknown;
   error?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class WorkflowEngine {
@@ -381,7 +381,7 @@ export class WorkflowEngine {
   /**
    * Execute a task node using ExecutionEngine
    */
-  private async executeTaskNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
+  private async executeTaskNode(node: WorkflowNode, input: unknown): Promise<NodeExecutionResult> {
     const taskId = node.data.taskId;
     if (!taskId) {
       return { success: false, error: 'Task node error: Task ID not specified. Please select a task in node settings.' };
@@ -420,7 +420,7 @@ export class WorkflowEngine {
   /**
    * Execute a conditional node
    */
-  private executeConditionalNode(node: WorkflowNode, input: any): NodeExecutionResult {
+  private executeConditionalNode(node: WorkflowNode, input: unknown): NodeExecutionResult {
     let result: boolean;
 
     // Check if using advanced mode (conditionGroup) or simple mode (condition)
@@ -441,7 +441,7 @@ export class WorkflowEngine {
   /**
    * Evaluate a single condition
    */
-  private evaluateSimpleCondition(condition: SimpleCondition, input: any): boolean {
+  private evaluateSimpleCondition(condition: SimpleCondition, input: unknown): boolean {
     const { field, operator, value } = condition;
     const fieldValue = this.getFieldValue(input, field);
 
@@ -451,7 +451,7 @@ export class WorkflowEngine {
   /**
    * Evaluate a condition group (multiple conditions with AND/OR)
    */
-  private evaluateConditionGroup(group: ConditionGroup, input: any): boolean {
+  private evaluateConditionGroup(group: ConditionGroup, input: unknown): boolean {
     const { operator, conditions, groups } = group;
 
     // Evaluate all simple conditions
@@ -475,16 +475,16 @@ export class WorkflowEngine {
   /**
    * Compare two values using an operator
    */
-  private compareValues(fieldValue: any, operator: ConditionalOperator, value: any): boolean {
+  private compareValues(fieldValue: unknown, operator: ConditionalOperator, value: unknown): boolean {
     switch (operator) {
       case 'equals':
         return fieldValue === value;
       case 'not_equals':
         return fieldValue !== value;
       case 'greater_than':
-        return fieldValue > value;
+        return Number(fieldValue) > Number(value);
       case 'less_than':
-        return fieldValue < value;
+        return Number(fieldValue) < Number(value);
       case 'contains':
         return String(fieldValue).includes(String(value));
       case 'not_contains':
@@ -506,7 +506,7 @@ export class WorkflowEngine {
   /**
    * Execute a notification node
    */
-  private async executeNotificationNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
+  private async executeNotificationNode(node: WorkflowNode, input: unknown): Promise<NodeExecutionResult> {
     const notificationType = node.data.notificationType;
     const title = node.data.config?.title;
     const message = node.data.config?.message || JSON.stringify(input);
@@ -549,12 +549,12 @@ export class WorkflowEngine {
     }
 
     const { type, maxIterations } = loopConfig;
-    const results: any[] = [];
+    const results: unknown[] = [];
     let iterations = 0;
 
     try {
       // Get child nodes (nodes connected after this loop node)
-      const childNodeIds = this.getLoopChildNodes(node.id, context.workflowData['__edges__'] || []);
+      const childNodeIds = this.getLoopChildNodes(node.id, (context.workflowData['__edges__'] as WorkflowEdge[]) || []);
 
       if (childNodeIds.length === 0) {
         // No child nodes - loop does nothing but still succeeds
@@ -591,8 +591,8 @@ export class WorkflowEngine {
 
           const iterationResult = await this.executeSubgraph(
             childNodeIds,
-            context.workflowData['__edges__'] || [],
-            context.workflowData['__nodes__'] || [],
+            (context.workflowData['__edges__'] as WorkflowEdge[]) || [],
+            (context.workflowData['__nodes__'] as WorkflowNode[]) || [],
             item,
             iterationContext
           );
@@ -614,8 +614,8 @@ export class WorkflowEngine {
 
           const iterationResult = await this.executeSubgraph(
             childNodeIds,
-            context.workflowData['__edges__'] || [],
-            context.workflowData['__nodes__'] || [],
+            (context.workflowData['__edges__'] as WorkflowEdge[]) || [],
+            (context.workflowData['__nodes__'] as WorkflowNode[]) || [],
             context.input,
             iterationContext
           );
@@ -650,8 +650,8 @@ export class WorkflowEngine {
 
           const iterationResult = await this.executeSubgraph(
             childNodeIds,
-            context.workflowData['__edges__'] || [],
-            context.workflowData['__nodes__'] || [],
+            (context.workflowData['__edges__'] as WorkflowEdge[]) || [],
+            (context.workflowData['__nodes__'] as WorkflowNode[]) || [],
             currentInput,
             iterationContext
           );
@@ -685,7 +685,7 @@ export class WorkflowEngine {
    */
   private async executeSubworkflowNode(
     node: WorkflowNode,
-    input: any,
+    input: unknown,
     executionStack: number[] = [],
     signal?: AbortSignal
   ): Promise<NodeExecutionResult> {
@@ -713,7 +713,7 @@ export class WorkflowEngine {
 
     try {
       // Map input data
-      const childInput: Record<string, any> = {};
+      const childInput: Record<string, unknown> = {};
       const missingFields: string[] = [];
 
       // Validate and map input
@@ -732,7 +732,7 @@ export class WorkflowEngine {
         // Warn about missing fields
         if (missingFields.length > 0) {
           console.warn(`Subworkflow input mapping: Fields not found in parent data: ${missingFields.join(', ')}`);
-          console.warn(`Available parent fields: ${Object.keys(input).join(', ')}`);
+          console.warn(`Available parent fields: ${Object.keys(input as Record<string, unknown>).join(', ')}`);
         }
       }
 
@@ -750,7 +750,7 @@ export class WorkflowEngine {
       );
 
       // Map output data
-      const output: Record<string, any> = {};
+      const output: Record<string, unknown> = {};
       const unmappedFields: string[] = [];
 
       if (!outputMapping || Object.keys(outputMapping).length === 0) {
@@ -792,7 +792,7 @@ Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
   /**
    * Execute an AI agent node via PTY
    */
-  private async executeAgentNode(node: WorkflowNode, input: any): Promise<NodeExecutionResult> {
+  private async executeAgentNode(node: WorkflowNode, input: unknown): Promise<NodeExecutionResult> {
     const agentConfig = node.data.agentConfig;
     if (!agentConfig) {
       return { success: false, error: 'Agent configuration not specified' };
@@ -906,7 +906,7 @@ Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
   /**
    * Replace template variables in text
    */
-  private replaceTemplateVariables(text: string, input: any): string {
+  private replaceTemplateVariables(text: string, input: unknown): string {
     let result = text;
 
     // Replace {{input}} - full input as JSON
@@ -938,7 +938,7 @@ Workflow: ${targetWorkflow.name} (ID: ${workflowId})`,
   private async createTaskFromExecution(
     workflow: Workflow,
     execution: WorkflowExecution,
-    nodeResults: Record<string, any>
+    nodeResults: Record<string, unknown>
   ): Promise<void> {
     try {
       const taskTitle = `${workflow.name} - Execution #${execution.id}`;
@@ -969,7 +969,7 @@ ${JSON.stringify(nodeResults, null, 2)}
   /**
    * Wait for execution to complete
    */
-  private async waitForExecution(executionId: string, engine: any): Promise<void> {
+  private async waitForExecution(executionId: string, engine: { getExecution: (id: string) => { status: string } | null }): Promise<void> {
     return new Promise((resolve) => {
       const checkInterval = setInterval(() => {
         const execution = engine.getExecution(executionId);
@@ -986,7 +986,7 @@ ${JSON.stringify(nodeResults, null, 2)}
    */
   private async waitForExecutionWithTimeout(
     executionId: string,
-    engine: any,
+    engine: { getExecution: (id: string) => { status: string } | null },
     timeoutMs: number
   ): Promise<boolean> {
     return new Promise((resolve) => {
@@ -1007,7 +1007,7 @@ ${JSON.stringify(nodeResults, null, 2)}
   /**
    * Get input for a node from previous nodes
    */
-  private getNodeInput(nodeId: string, edges: WorkflowEdge[], nodeResults: Record<string, any>): any {
+  private getNodeInput(nodeId: string, edges: WorkflowEdge[], nodeResults: Record<string, unknown>): unknown {
     const incomingEdges = edges.filter(e => e.target === nodeId);
     if (incomingEdges.length === 0) {
       return nodeResults['__trigger__'];
@@ -1021,18 +1021,18 @@ ${JSON.stringify(nodeResults, null, 2)}
     return incomingEdges.reduce((acc, edge) => {
       acc[edge.source] = nodeResults[edge.source];
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, unknown>);
   }
 
   /**
    * Get field value from input using dot notation
    */
-  private getFieldValue(input: any, field: string): any {
+  private getFieldValue(input: unknown, field: string): unknown {
     const parts = field.split('.');
-    let value = input;
+    let value: unknown = input;
     for (const part of parts) {
       if (value && typeof value === 'object') {
-        value = value[part];
+        value = (value as Record<string, unknown>)[part];
       } else {
         return undefined;
       }
@@ -1189,10 +1189,10 @@ ${JSON.stringify(nodeResults, null, 2)}
     nodeIds: string[],
     edges: WorkflowEdge[],
     allNodes: WorkflowNode[],
-    initialInput: any,
-    workflowData: Record<string, any>
-  ): Promise<any> {
-    const subgraphResults: Record<string, any> = { ...workflowData };
+    initialInput: unknown,
+    workflowData: Record<string, unknown>
+  ): Promise<unknown> {
+    const subgraphResults: Record<string, unknown> = { ...workflowData };
     subgraphResults['__subgraph_input__'] = initialInput;
 
     // Filter edges to only include those within the subgraph
@@ -1224,7 +1224,7 @@ ${JSON.stringify(nodeResults, null, 2)}
           nodeId,
           input,
           workflowData: subgraphResults,
-          executionStack: workflowData['__execution_stack__'] || [],
+          executionStack: (workflowData['__execution_stack__'] as number[]) || [],
         }, node);
 
         if (!result.success) {
@@ -1259,7 +1259,7 @@ ${JSON.stringify(nodeResults, null, 2)}
   /**
    * Calculate backoff delay with exponential multiplier
    */
-  private calculateBackoff(config: any, attempt: number): number {
+  private calculateBackoff(config: { delayMs?: number; backoffMultiplier?: number }, attempt: number): number {
     const baseDelay = config.delayMs || 1000;
     const multiplier = config.backoffMultiplier || 2;
     return baseDelay * Math.pow(multiplier, attempt - 1);
@@ -1270,10 +1270,10 @@ ${JSON.stringify(nodeResults, null, 2)}
    */
   private shouldRetry(
     result: NodeExecutionResult,
-    config: any,
+    config: { enabled?: boolean; maxAttempts?: number; retryOnErrorTypes?: string[] },
     attempt: number
   ): boolean {
-    if (!config.enabled || attempt >= config.maxAttempts) {
+    if (!config.enabled || attempt >= (config.maxAttempts ?? 0)) {
       return false;
     }
 
@@ -1308,7 +1308,7 @@ ${JSON.stringify(nodeResults, null, 2)}
   /**
    * Notify renderer of workflow events
    */
-  private notifyRenderer(channel: string, data: any): void {
+  private notifyRenderer(channel: string, data: unknown): void {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send(channel, data);
     }

@@ -32,7 +32,7 @@ export class WorkflowTemplateRepository {
       SELECT * FROM workflow_templates WHERE id = ?
     `);
 
-    const row = stmt.get(id) as any;
+    const row = stmt.get(id) as Record<string, unknown> | undefined;
     if (!row) return null;
 
     return this.mapRowToTemplate(row);
@@ -43,7 +43,7 @@ export class WorkflowTemplateRepository {
       SELECT * FROM workflow_templates ORDER BY is_built_in DESC, created_at DESC
     `);
 
-    const rows = stmt.all() as any[];
+    const rows = stmt.all() as Record<string, unknown>[];
     return rows.map((row) => this.mapRowToTemplate(row));
   }
 
@@ -52,13 +52,13 @@ export class WorkflowTemplateRepository {
       SELECT * FROM workflow_templates WHERE category = ? ORDER BY is_built_in DESC, created_at DESC
     `);
 
-    const rows = stmt.all(category) as any[];
+    const rows = stmt.all(category) as Record<string, unknown>[];
     return rows.map((row) => this.mapRowToTemplate(row));
   }
 
   update(id: number, input: TemplateUpdateInput): WorkflowTemplate | null {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | boolean)[] = [];
 
     if (input.name !== undefined) {
       updates.push('name = ?');
@@ -104,18 +104,19 @@ export class WorkflowTemplateRepository {
     stmt.run(id);
   }
 
-  private mapRowToTemplate(row: any): WorkflowTemplate {
+  private mapRowToTemplate(row: Record<string, unknown>): WorkflowTemplate {
+    const r = row as Record<string, string | number | null>;
     return {
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      category: row.category,
-      nodes: JSON.parse(row.nodes) as WorkflowNode[],
-      edges: JSON.parse(row.edges) as WorkflowEdge[],
-      thumbnail: row.thumbnail,
-      isBuiltIn: Boolean(row.is_built_in),
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
+      id: r.id as number,
+      name: r.name as string,
+      description: r.description as string,
+      category: r.category as WorkflowTemplate['category'],
+      nodes: JSON.parse(r.nodes as string) as WorkflowNode[],
+      edges: JSON.parse(r.edges as string) as WorkflowEdge[],
+      thumbnail: r.thumbnail as string | undefined,
+      isBuiltIn: Boolean(r.is_built_in),
+      createdAt: new Date(r.created_at as string),
+      updatedAt: new Date(r.updated_at as string),
     };
   }
 }

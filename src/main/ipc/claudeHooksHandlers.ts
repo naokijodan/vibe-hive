@@ -9,11 +9,11 @@ export function registerClaudeHooksHandlers(): void {
   });
 
   ipcMain.handle('claudeHooks:addHook', async (_event, hook: Record<string, unknown>) => {
-    return service.addHook(hook as any);
+    return service.addHook(hook as Omit<import('../services/ClaudeHooksService').HookDefinition, 'id'>);
   });
 
   ipcMain.handle('claudeHooks:updateHook', async (_event, id: string, updates: Record<string, unknown>) => {
-    return service.updateHook(id, updates as any);
+    return service.updateHook(id, updates as Partial<import('../services/ClaudeHooksService').HookDefinition>);
   });
 
   ipcMain.handle('claudeHooks:deleteHook', async (_event, id: string) => {

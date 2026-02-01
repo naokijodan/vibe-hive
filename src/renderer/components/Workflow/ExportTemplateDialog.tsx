@@ -54,8 +54,8 @@ export const ExportTemplateDialog: React.FC<ExportTemplateDialogProps> = ({
       } else {
         setError('Failed to save template');
       }
-    } catch (err: any) {
-      setError(err.message || 'Unknown error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
     } finally {
       setLoading(false);
     }

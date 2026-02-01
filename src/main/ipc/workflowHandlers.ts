@@ -11,6 +11,8 @@ import type {
   UpdateWorkflowParams,
   ExecuteWorkflowParams,
   Workflow,
+  WorkflowNode,
+  WorkflowEdge,
 } from '../../shared/types/workflow';
 import type {
   TemplateCreateInput,
@@ -189,9 +191,9 @@ export function registerWorkflowHandlers(): void {
         sessionId,
         name: migratedData.name || 'Imported Workflow',
         description: migratedData.description,
-        nodes: migratedData.nodes || [],
-        edges: migratedData.edges || [],
-        autoCreateTask: migratedData.autoCreateTask || false,
+        nodes: (migratedData.nodes || []) as unknown as WorkflowNode[],
+        edges: (migratedData.edges || []) as unknown as WorkflowEdge[],
+        autoCreateTask: (migratedData.autoCreateTask as boolean) || false,
       });
 
       return {

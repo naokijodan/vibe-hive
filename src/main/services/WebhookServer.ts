@@ -111,7 +111,7 @@ export class WebhookServer {
         resolve();
       });
 
-      this.server.on('error', (error: any) => {
+      this.server.on('error', (error: NodeJS.ErrnoException) => {
         if (error.code === 'EADDRINUSE') {
           console.error(`Port ${this.port} is already in use`);
           reject(new Error(`Port ${this.port} is already in use`));

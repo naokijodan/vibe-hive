@@ -12,7 +12,7 @@ export function registerCoordinationHandlers(): void {
     content: string,
     metadata?: Record<string, unknown>
   ) => {
-    return service.sendMessage(fromAgentId, toAgentId, type as any, content, metadata);
+    return service.sendMessage(fromAgentId, toAgentId, type as 'message' | 'request' | 'task_delegate' | 'status_update' | 'response', content, metadata);
   });
 
   ipcMain.handle('coordination:delegateTask', async (

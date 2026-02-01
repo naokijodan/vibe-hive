@@ -14,6 +14,7 @@ class ExecutionEngine {
   private repository: ExecutionRepository;
   private mainWindow: BrowserWindow | null = null;
   private activeExecutions: Map<string, string> = new Map(); // executionId -> sessionId
+  private activeIntervals: Map<string, ReturnType<typeof setInterval>> = new Map();
 
   constructor() {
     this.repository = new ExecutionRepository();
@@ -84,7 +85,7 @@ class ExecutionEngine {
     }, 1000);
 
     // Store interval for cleanup
-    (this.activeExecutions as any)[`${executionId}_interval`] = checkInterval;
+    this.activeIntervals.set(executionId, checkInterval);
   }
 
   /**
@@ -98,10 +99,10 @@ class ExecutionEngine {
 
     // Cleanup
     this.activeExecutions.delete(executionId);
-    const interval = (this.activeExecutions as any)[`${executionId}_interval`];
+    const interval = this.activeIntervals.get(executionId);
     if (interval) {
       clearInterval(interval);
-      delete (this.activeExecutions as any)[`${executionId}_interval`];
+      this.activeIntervals.delete(executionId);
     }
 
     // Notify renderer
@@ -152,10 +153,10 @@ class ExecutionEngine {
 
     // Cleanup
     this.activeExecutions.delete(executionId);
-    const interval = (this.activeExecutions as any)[`${executionId}_interval`];
+    const interval = this.activeIntervals.get(executionId);
     if (interval) {
       clearInterval(interval);
-      delete (this.activeExecutions as any)[`${executionId}_interval`];
+      this.activeIntervals.delete(executionId);
     }
 
     // Notify renderer
@@ -196,7 +197,7 @@ class ExecutionEngine {
   /**
    * Notify renderer of execution events
    */
-  private notifyRenderer(channel: string, data: any): void {
+  private notifyRenderer(channel: string, data: unknown): void {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send(channel, data);
     }

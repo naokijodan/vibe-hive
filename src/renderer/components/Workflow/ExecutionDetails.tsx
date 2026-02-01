@@ -37,7 +37,7 @@ export const ExecutionDetails: React.FC<ExecutionDetailsProps> = ({ execution })
   const executionData = execution.executionData || {};
   const nodeResults = Object.entries(executionData);
 
-  const getNodeStatusIcon = (result: any) => {
+  const getNodeStatusIcon = (result: Record<string, unknown>) => {
     if (result.status === 'success') {
       return (
         <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -167,7 +167,7 @@ export const ExecutionDetails: React.FC<ExecutionDetailsProps> = ({ execution })
               </div>
             ) : (
               <div className="space-y-3">
-                {nodeResults.map(([nodeId, result]: [string, any]) => (
+                {nodeResults.map(([nodeId, result]: [string, unknown]) => (
                   <div
                     key={nodeId}
                     onClick={() => setSelectedNodeId(nodeId)}

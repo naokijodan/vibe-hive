@@ -121,7 +121,7 @@ export class WorkflowRepository {
     const now = new Date().toISOString();
 
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | boolean)[] = [];
 
     if (params.name !== undefined) {
       updates.push('name = ?');
@@ -205,7 +205,7 @@ export class WorkflowRepository {
     const now = new Date().toISOString();
 
     const updateFields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | boolean)[] = [];
 
     if (updates.status !== undefined) {
       updateFields.push('status = ?');

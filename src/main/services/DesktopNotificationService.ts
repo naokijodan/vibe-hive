@@ -47,7 +47,7 @@ class DesktopNotificationService {
     this.settings = { ...this.settings, ...updates };
     // Persist via SettingsService
     const settingsService = getSettingsService();
-    settingsService.updateSettings({ notifications: this.settings } as any);
+    settingsService.updateSettings({ notifications: this.settings } as Partial<import('./SettingsService').Settings>);
     return this.settings;
   }
 

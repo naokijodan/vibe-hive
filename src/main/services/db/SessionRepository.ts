@@ -72,7 +72,7 @@ export class SessionRepository {
     const db = getDatabase();
     const now = new Date().toISOString();
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | boolean)[] = [];
 
     if (updates.name !== undefined) {
       fields.push('name = ?');

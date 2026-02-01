@@ -4,6 +4,37 @@ import type {
   WorkflowNodeType,
 } from '../../shared/types/workflow';
 
+/** Represents an unvalidated node from import data */
+interface ImportNode {
+  id?: string;
+  type?: string;
+  position?: { x?: number; y?: number };
+  data?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** Represents an unvalidated edge from import data */
+interface ImportEdge {
+  id?: string;
+  source?: string;
+  target?: string;
+  [key: string]: unknown;
+}
+
+/** Represents unvalidated workflow import data */
+interface WorkflowImportData {
+  formatVersion?: string;
+  version?: string;
+  exportedAt?: string;
+  name?: string;
+  description?: string;
+  nodes?: ImportNode[];
+  edges?: ImportEdge[];
+  settings?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
@@ -35,7 +66,7 @@ export class WorkflowValidator {
   /**
    * Validate imported workflow data
    */
-  validate(data: any): ValidationResult {
+  validate(data: WorkflowImportData): ValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
     const advancedFeatures: string[] = [];
@@ -118,7 +149,7 @@ export class WorkflowValidator {
           advancedFeatures.push('subworkflow');
         }
       }
-      if (node.type === 'conditional' && node.data?.conditionGroup?.groups) {
+      if (node.type === 'conditional' && node.data?.conditionGroup && (node.data.conditionGroup as Record<string, unknown>).groups) {
         if (!advancedFeatures.includes('expert-condition')) {
           advancedFeatures.push('expert-condition');
         }
@@ -133,7 +164,7 @@ export class WorkflowValidator {
     }
 
     // Check for at least one start node (trigger or legacy 'start' type)
-    const startNodes = data.nodes.filter((n: any) => n.type === 'start' || n.type === 'trigger');
+    const startNodes = data.nodes.filter((n: ImportNode) => n.type === 'start' || n.type === 'trigger');
     if (startNodes.length === 0) {
       warnings.push('No start/trigger node found. Workflow may not execute properly.');
     } else if (startNodes.length > 1) {
@@ -142,14 +173,14 @@ export class WorkflowValidator {
 
     // Check for disconnected nodes
     const connectedNodes = new Set<string>();
-    data.edges.forEach((edge: WorkflowEdge) => {
-      connectedNodes.add(edge.source);
-      connectedNodes.add(edge.target);
+    data.edges.forEach((edge: ImportEdge) => {
+      if (edge.source) connectedNodes.add(edge.source);
+      if (edge.target) connectedNodes.add(edge.target);
     });
 
     const disconnectedNodes = data.nodes
-      .filter((n: any) => !connectedNodes.has(n.id) && n.type !== 'start' && n.type !== 'trigger')
-      .map((n: any) => n.id);
+      .filter((n: ImportNode) => !connectedNodes.has(n.id as string) && n.type !== 'start' && n.type !== 'trigger')
+      .map((n: ImportNode) => n.id as string);
 
     if (disconnectedNodes.length > 0) {
       warnings.push(`Found ${disconnectedNodes.length} disconnected node(s): ${disconnectedNodes.join(', ')}`);
@@ -178,7 +209,7 @@ export class WorkflowValidator {
   /**
    * Validate a single node
    */
-  private validateNode(node: any, index: number): string[] {
+  private validateNode(node: ImportNode, index: number): string[] {
     const errors: string[] = [];
     const prefix = `Node ${index}`;
 
@@ -227,7 +258,7 @@ export class WorkflowValidator {
   /**
    * Validate a single edge
    */
-  private validateEdge(edge: any, index: number, validNodeIds: Set<string>): string[] {
+  private validateEdge(edge: ImportEdge, index: number, validNodeIds: Set<string>): string[] {
     const errors: string[] = [];
     const prefix = `Edge ${index}`;
 
@@ -253,7 +284,7 @@ export class WorkflowValidator {
   /**
    * Migrate old format to new format
    */
-  migrateFormat(data: any): any {
+  migrateFormat(data: WorkflowImportData): WorkflowImportData {
     const version = data.formatVersion || data.version || '1.0';
 
     if (version === '1.0') {

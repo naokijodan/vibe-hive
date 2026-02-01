@@ -38,7 +38,7 @@ export const RetrySettings: React.FC<RetrySettingsProps> = ({
     });
   };
 
-  const handleRetryConfigChange = (field: keyof RetryConfig, value: any) => {
+  const handleRetryConfigChange = (field: keyof RetryConfig, value: string | number | boolean) => {
     onChange({
       retryConfig: {
         ...retryConfig,
