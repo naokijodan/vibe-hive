@@ -58,7 +58,7 @@ export const TaskCard: React.FC<TaskCardProps> = memo(({ task, onClick, isDragOv
   } = useSortable({ id: task.id });
 
   const { agents, assignTaskToAgent } = useAgentStore();
-  const { updateTask, updateTaskStatus, tasks, checkDependencies, setReviewFeedback, createSubtasks, setDependencies } = useTaskStore();
+  const { updateTask, updateTaskStatus, tasks, checkDependencies, setReviewFeedback, createSubtasks, setDependencies, deleteTask } = useTaskStore();
   const { startExecution, runningExecutions } = useExecutionStore();
   const { createTemplate } = useTemplateStore();
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
@@ -76,6 +76,7 @@ export const TaskCard: React.FC<TaskCardProps> = memo(({ task, onClick, isDragOv
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
   const [templateCategory, setTemplateCategory] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // Check dependencies on mount and when task changes
   useEffect(() => {
@@ -480,6 +481,48 @@ export const TaskCard: React.FC<TaskCardProps> = memo(({ task, onClick, isDragOv
         >
           💾 保存
         </button>
+
+        {/* Delete button */}
+        {!confirmingDelete ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmingDelete(true);
+            }}
+            className="text-[10px] px-1.5 py-0.5 bg-red-900/30 text-red-400 rounded hover:bg-red-800/50 transition-colors ml-auto"
+            title="タスクを削除"
+          >
+            🗑
+          </button>
+        ) : (
+          <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+            <span className="text-[10px] text-red-400">削除？</span>
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const success = await deleteTask(task.id);
+                if (success) {
+                  toast.success('タスクを削除しました');
+                } else {
+                  toast.error('削除に失敗しました');
+                }
+                setConfirmingDelete(false);
+              }}
+              className="text-[10px] px-1.5 py-0.5 bg-red-600 text-white rounded hover:bg-red-500 transition-colors"
+            >
+              はい
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmingDelete(false);
+              }}
+              className="text-[10px] px-1.5 py-0.5 bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors"
+            >
+              いいえ
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
