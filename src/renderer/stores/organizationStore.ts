@@ -112,7 +112,10 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
   addNode: async (nodeData) => {
     const { organization, nodes } = get();
-    if (!organization) throw new Error('No organization loaded');
+    if (!organization) {
+      set({ error: 'No organization loaded' });
+      throw new Error('No organization loaded');
+    }
 
     const newNode: OrgNode = {
       ...nodeData,
@@ -136,7 +139,10 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
   updateNode: async (id, updates) => {
     const { organization, nodes } = get();
-    if (!organization) throw new Error('No organization loaded');
+    if (!organization) {
+      set({ error: 'No organization loaded' });
+      throw new Error('No organization loaded');
+    }
 
     const updatedNodes = nodes.map(node =>
       node.id === id ? { ...node, ...updates } : node
@@ -156,7 +162,10 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
   deleteNode: async (id) => {
     const { organization, nodes } = get();
-    if (!organization) throw new Error('No organization loaded');
+    if (!organization) {
+      set({ error: 'No organization loaded' });
+      throw new Error('No organization loaded');
+    }
 
     // Remove node and its children
     const nodesToDelete = new Set<string>([id]);
@@ -237,16 +246,25 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   },
 
   executeNode: async (nodeId, prompt) => {
-    const result = await ipcBridge.orchestration.execute({
-      nodeId,
-      sessionId: 'default-session',
-      prompt,
-    });
-    return result;
+    try {
+      const result = await ipcBridge.orchestration.execute({
+        nodeId,
+        sessionId: 'default-session',
+        prompt,
+      });
+      return result;
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to execute node' });
+      throw error;
+    }
   },
 
   stopNode: (nodeId) => {
-    ipcBridge.orchestration.stop(nodeId);
+    try {
+      ipcBridge.orchestration.stop(nodeId);
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to stop node' });
+    }
   },
 
   updateNodeExecution: (execution) => {
@@ -271,20 +289,33 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   },
 
   orchestrateNode: async (nodeId, goal) => {
-    const result = await ipcBridge.orchestration.orchestrate({
-      nodeId,
-      sessionId: 'default-session',
-      goal,
-    });
-    return result;
+    try {
+      const result = await ipcBridge.orchestration.orchestrate({
+        nodeId,
+        sessionId: 'default-session',
+        goal,
+      });
+      return result;
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to orchestrate node' });
+      throw error;
+    }
   },
 
   approveOrchestration: (nodeId) => {
-    ipcBridge.orchestration.approve({ nodeId, approved: true });
+    try {
+      ipcBridge.orchestration.approve({ nodeId, approved: true });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to approve orchestration' });
+    }
   },
 
   rejectOrchestration: (nodeId, feedback) => {
-    ipcBridge.orchestration.approve({ nodeId, approved: false, feedback });
+    try {
+      ipcBridge.orchestration.approve({ nodeId, approved: false, feedback });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to reject orchestration' });
+    }
   },
 
   updateOrchestrationState: (state) => {

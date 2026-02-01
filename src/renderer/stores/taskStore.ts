@@ -133,8 +133,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       if (status === 'in_progress') {
         try {
           const agentSessionId = `agent-${parsedTask.id}`;
-          // Use task's working directory or default
-          const cwd = '/Users/naokijodan/Desktop/vibe-hive';
+          // Use active session's working directory, or fallback
+          const sessions = await window.electronAPI.listSessions() as Array<{ id: string; workingDirectory?: string }>;
+          const activeSessionId = (await window.electronAPI.getActiveSession() as { id: string } | null)?.id;
+          const activeSession = sessions.find(s => s.id === activeSessionId);
+          const cwd = activeSession?.workingDirectory || '.';
 
           // Build task prompt with optional role/system prompt and review feedback
           let taskPrompt = '';

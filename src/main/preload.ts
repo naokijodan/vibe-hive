@@ -208,6 +208,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   workflowCancel: (executionId: number) => ipcRenderer.invoke('workflow:cancel', executionId),
   workflowGetExecution: (executionId: number) => ipcRenderer.invoke('workflow:getExecution', executionId),
   workflowGetExecutions: (workflowId: number) => ipcRenderer.invoke('workflow:getExecutions', workflowId),
+  workflowExport: (workflowId: number) => ipcRenderer.invoke('workflow:export', workflowId),
+  workflowImport: (sessionId: number) => ipcRenderer.invoke('workflow:import', sessionId),
+  workflowExportAsTemplate: (workflowId: number, templateData: unknown) => ipcRenderer.invoke('workflow:exportAsTemplate', workflowId, templateData),
   onWorkflowExecutionStarted: (callback: (data: unknown) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
     ipcRenderer.on('workflow:execution:started', listener);
@@ -514,6 +517,9 @@ export interface ElectronAPI {
   workflowCancel: (executionId: number) => Promise<void>;
   workflowGetExecution: (executionId: number) => Promise<unknown>;
   workflowGetExecutions: (workflowId: number) => Promise<unknown[]>;
+  workflowExport: (workflowId: number) => Promise<unknown>;
+  workflowImport: (sessionId: number) => Promise<unknown>;
+  workflowExportAsTemplate: (workflowId: number, templateData: unknown) => Promise<unknown>;
   onWorkflowExecutionStarted?: (callback: (data: unknown) => void) => () => void;
   onWorkflowExecutionCompleted?: (callback: (data: unknown) => void) => () => void;
   onWorkflowExecutionCancelled?: (callback: (data: unknown) => void) => () => void;
