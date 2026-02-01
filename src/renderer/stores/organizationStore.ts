@@ -20,6 +20,7 @@ interface OrganizationState {
   error: string | null;
   nodeExecutions: Map<string, NodeExecution>;
   orchestrationStates: Map<string, OrchestrationState>;
+  highlightedNodeIds: Set<string>;
 
   // Actions
   loadOrganization: () => Promise<void>;
@@ -30,6 +31,7 @@ interface OrganizationState {
   updateNode: (id: string, updates: Partial<OrgNode>) => Promise<void>;
   deleteNode: (id: string) => Promise<void>;
   setSelectedNode: (id: string | null) => void;
+  setHighlightedNodes: (selectedId: string | null) => void;
 
   // Agent assignment
   assignAgentToNode: (nodeId: string, agentId: string) => Promise<void>;
@@ -56,6 +58,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   error: null,
   nodeExecutions: new Map(),
   orchestrationStates: new Map(),
+  highlightedNodeIds: new Set(),
 
   loadOrganization: async () => {
     set({ isLoading: true, error: null });
@@ -184,6 +187,29 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
   setSelectedNode: (id) => {
     set({ selectedNodeId: id });
+    get().setHighlightedNodes(id);
+  },
+
+  setHighlightedNodes: (selectedId) => {
+    if (!selectedId) {
+      set({ highlightedNodeIds: new Set() });
+      return;
+    }
+    const { nodes } = get();
+    const highlighted = new Set<string>([selectedId]);
+
+    // Traverse parent chain upward
+    let current = nodes.find(n => n.id === selectedId);
+    while (current?.parentId) {
+      highlighted.add(current.parentId);
+      current = nodes.find(n => n.id === current!.parentId);
+    }
+
+    // Add direct children
+    nodes.filter(n => n.parentId === selectedId)
+      .forEach(n => highlighted.add(n.id));
+
+    set({ highlightedNodeIds: highlighted });
   },
 
   assignAgentToNode: async (nodeId, agentId) => {

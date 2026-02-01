@@ -2,6 +2,59 @@ import React, { useState } from 'react';
 import type { OrgNode, ExecutionStrategy } from '../../../shared/types/organization';
 import type { AgentType } from '../../../shared/types/workflow';
 
+const NODE_TEMPLATES = [
+  {
+    label: 'Manager',
+    icon: '👔',
+    defaults: {
+      type: 'team' as const,
+      executionStrategy: 'parallel' as const,
+      preferredAgentType: '' as AgentType | '',
+      systemPrompt: 'チーム全体の進捗を管理し、各メンバーに適切なタスクを割り当ててください。',
+    },
+  },
+  {
+    label: 'Researcher',
+    icon: '🔍',
+    defaults: {
+      type: 'role' as const,
+      executionStrategy: 'parallel' as const,
+      preferredAgentType: 'claude-code' as AgentType | '',
+      systemPrompt: '与えられたトピックについて徹底的に調査し、要点をまとめてください。',
+    },
+  },
+  {
+    label: 'Coder',
+    icon: '💻',
+    defaults: {
+      type: 'role' as const,
+      executionStrategy: 'parallel' as const,
+      preferredAgentType: 'claude-code' as AgentType | '',
+      systemPrompt: '指定された仕様に基づいてコードを実装してください。',
+    },
+  },
+  {
+    label: 'Reviewer',
+    icon: '✅',
+    defaults: {
+      type: 'role' as const,
+      executionStrategy: 'parallel' as const,
+      preferredAgentType: 'claude-code' as AgentType | '',
+      systemPrompt: 'コードや成果物をレビューし、改善点を指摘してください。',
+    },
+  },
+  {
+    label: 'Designer',
+    icon: '🎨',
+    defaults: {
+      type: 'role' as const,
+      executionStrategy: 'parallel' as const,
+      preferredAgentType: 'gemini' as AgentType | '',
+      systemPrompt: 'UI/UXデザインの提案と改善を行ってください。',
+    },
+  },
+];
+
 interface AddNodeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,6 +78,13 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
   const [preferredAgentType, setPreferredAgentType] = useState<AgentType | ''>('');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const applyTemplate = (defaults: typeof NODE_TEMPLATES[number]['defaults']) => {
+    setType(defaults.type);
+    setExecutionStrategy(defaults.executionStrategy);
+    setPreferredAgentType(defaults.preferredAgentType);
+    setSystemPrompt(defaults.systemPrompt);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +128,23 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-xl font-semibold mb-4">新しいノードを追加</h3>
+
+        {/* Template presets */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {NODE_TEMPLATES.map(tpl => (
+            <button
+              key={tpl.label}
+              type="button"
+              onClick={() => applyTemplate(tpl.defaults)}
+              className="px-3 py-1.5 bg-hive-bg border border-hive-border rounded-full
+                         text-xs text-hive-text hover:bg-hive-surface hover:border-hive-accent
+                         transition-colors flex items-center gap-1"
+            >
+              <span>{tpl.icon}</span>
+              <span>{tpl.label}</span>
+            </button>
+          ))}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}

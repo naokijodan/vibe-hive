@@ -81,7 +81,11 @@ const buildHierarchyLayout = (nodes: OrgNode[]) => {
         target: child.id,
         type: 'smoothstep',
         animated: false,
-        style: { stroke: '#6366f1', strokeWidth: 2 },
+        style: {
+          stroke: node.type === 'team' ? '#60a5fa' : '#a78bfa',
+          strokeWidth: node.type === 'team' ? 2 : 1.5,
+          strokeDasharray: node.type === 'role' ? '5 3' : undefined,
+        },
       });
 
       childX = positionNode(child, childX, childY, usedX);

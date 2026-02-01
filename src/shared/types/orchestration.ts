@@ -9,6 +9,8 @@ export interface NodeExecution {
   error?: string;
   startedAt?: string;
   completedAt?: string;
+  duration?: number;     // milliseconds
+  tokenCount?: number;
 }
 
 export interface ExecuteNodeRequest {
