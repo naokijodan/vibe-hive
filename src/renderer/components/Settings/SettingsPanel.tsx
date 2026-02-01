@@ -239,6 +239,19 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
                   </div>
 
                   <div className="pt-4 border-t border-hive-border">
+                    <h4 className="text-sm font-semibold text-white mb-3">Developer</h4>
+                    <button
+                      onClick={() => window.electronAPI.toggleDevTools()}
+                      className="px-4 py-2 bg-hive-surface text-hive-text border border-hive-border rounded-md hover:border-hive-accent/50 transition-colors text-sm"
+                    >
+                      Open Developer Tools
+                    </button>
+                    <p className="text-xs text-hive-muted mt-2">
+                      Opens Chrome DevTools for debugging. If something is not working correctly, you can check the Console tab for errors.
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-hive-border">
                     <h4 className="text-sm font-semibold text-white mb-3">Danger Zone</h4>
                     <button
                       onClick={handleResetAll}

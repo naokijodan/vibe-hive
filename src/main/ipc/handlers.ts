@@ -14,6 +14,11 @@ import type { ExecuteNodeRequest, OrchestrateNodeRequest, ApproveRejectRequest }
 export function registerIpcHandlers(): void {
   const sessionService = getSessionService();
 
+  // DevTools toggle
+  ipcMain.handle('app:toggleDevTools', (event) => {
+    event.sender.toggleDevTools();
+  });
+
   // Session handlers
   ipcMain.handle(IPC_CHANNELS.SESSION_CREATE, async (_event, config) => {
     const session = sessionService.createSession(config);

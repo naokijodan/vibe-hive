@@ -381,6 +381,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('orchestration:stateChange', listener);
   },
 
+  // DevTools
+  toggleDevTools: () => ipcRenderer.invoke('app:toggleDevTools'),
+
   // Context
   contextSave: (input: unknown) => ipcRenderer.invoke('context:save', input),
   contextGet: (id: string) => ipcRenderer.invoke('context:get', id),
@@ -608,6 +611,8 @@ export interface ElectronAPI {
   orchestrationGetState: (nodeId: string) => Promise<unknown>;
   onOrchestrationStatusChange: (callback: (data: unknown) => void) => () => void;
   onOrchestrationStateChange: (callback: (data: unknown) => void) => () => void;
+  // DevTools
+  toggleDevTools: () => Promise<void>;
   // Context
   contextSave: (input: unknown) => Promise<unknown>;
   contextGet: (id: string) => Promise<unknown>;
