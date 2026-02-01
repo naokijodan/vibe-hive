@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ViewLoadingFallback } from './components/ViewLoadingFallback';
@@ -83,6 +83,43 @@ function App(): React.ReactElement {
     setIsSettingsPanelOpen(false);
   }, []);
   const [selectedExecution, setSelectedExecution] = useState<ExecutionRecord | null>(null);
+
+  // Panel resize state
+  const [sidebarWidth, setSidebarWidth] = useState(256);
+  const [terminalWidth, setTerminalWidth] = useState(384);
+  const resizingRef = useRef<'sidebar' | 'terminal' | null>(null);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+
+  const handleResizeStart = useCallback((panel: 'sidebar' | 'terminal', e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = panel;
+    startXRef.current = e.clientX;
+    startWidthRef.current = panel === 'sidebar' ? sidebarWidth : terminalWidth;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!resizingRef.current) return;
+      const delta = ev.clientX - startXRef.current;
+      if (resizingRef.current === 'sidebar') {
+        setSidebarWidth(Math.max(180, Math.min(400, startWidthRef.current + delta)));
+      } else {
+        setTerminalWidth(Math.max(280, Math.min(800, startWidthRef.current - delta)));
+      }
+    };
+
+    const handleMouseUp = () => {
+      resizingRef.current = null;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [sidebarWidth, terminalWidth]);
 
   // Get tasks that are currently running (in_progress)
   const runningTasks = tasks.filter(t => t.status === 'in_progress');
@@ -415,7 +452,7 @@ function App(): React.ReactElement {
       />
       <div className="flex h-screen w-screen bg-hive-bg text-hive-text">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-hive-border bg-hive-surface flex flex-col">
+        <aside className="border-r border-hive-border bg-hive-surface flex flex-col flex-shrink-0" style={{ width: sidebarWidth }}>
         <div className="p-4 border-b border-hive-border drag-region" style={{ paddingTop: '28px' }}>
           <h1 className="text-xl font-bold text-hive-accent flex items-center gap-2 no-drag">
             <span>🐝</span> Vibe Hive
@@ -453,6 +490,12 @@ function App(): React.ReactElement {
         </div>
       </aside>
 
+      {/* Sidebar resize handle */}
+      <div
+        className="w-1 hover:w-1.5 bg-transparent hover:bg-hive-accent/40 cursor-col-resize flex-shrink-0 transition-all"
+        onMouseDown={(e) => handleResizeStart('sidebar', e)}
+      />
+
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header - Session tabs and command palette hint */}
@@ -480,8 +523,14 @@ function App(): React.ReactElement {
             </ErrorBoundary>
           </div>
 
+          {/* Terminal resize handle */}
+          <div
+            className="w-1 hover:w-1.5 bg-transparent hover:bg-hive-accent/40 cursor-col-resize flex-shrink-0 transition-all"
+            onMouseDown={(e) => handleResizeStart('terminal', e)}
+          />
+
           {/* Terminal Panel Area */}
-          <div className="w-96 border-l border-hive-border bg-hive-surface flex flex-col">
+          <div className="border-l border-hive-border bg-hive-surface flex flex-col flex-shrink-0" style={{ width: terminalWidth }}>
             {/* Panel type selector */}
             <div className="flex border-b border-hive-border">
               <button
