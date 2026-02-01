@@ -88,6 +88,7 @@ function App(): React.ReactElement {
 
   // Panel resize state
   const [sidebarWidth, setSidebarWidth] = useState(256);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [terminalWidth, setTerminalWidth] = useState(384);
   const resizingRef = useRef<'sidebar' | 'terminal' | null>(null);
   const startXRef = useRef(0);
@@ -284,13 +285,16 @@ function App(): React.ReactElement {
   const renderNavButton = (view: ViewType, icon: string, label: string) => (
     <button
       onClick={() => setCurrentView(view)}
+      title={sidebarCollapsed ? label : undefined}
       className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+        sidebarCollapsed ? 'flex items-center justify-center' : ''
+      } ${
         currentView === view
           ? 'bg-hive-accent/20 text-hive-accent font-medium'
           : 'hover:bg-hive-accent/5 text-hive-muted hover:text-hive-text'
       }`}
     >
-      {icon} {label}
+      {sidebarCollapsed ? icon : `${icon} ${label}`}
     </button>
   );
 
@@ -454,14 +458,28 @@ function App(): React.ReactElement {
       />
       <div className="flex h-screen w-screen bg-hive-bg text-hive-text">
         {/* Sidebar */}
-        <aside className="border-r border-hive-border bg-hive-surface flex flex-col flex-shrink-0" style={{ width: sidebarWidth }}>
-        <div className="p-4 border-b border-hive-border drag-region" style={{ paddingTop: '28px' }}>
-          <h1 className="text-xl font-bold flex items-center gap-2 no-drag">
-            <span>🐝</span> <span className="text-gold-gradient">Vibe Hive</span>
-          </h1>
-          <p className="text-sm text-hive-muted mt-1">AI Swarm Manager</p>
+        <aside
+          className="border-r border-hive-border bg-hive-surface flex flex-col flex-shrink-0 transition-[width] duration-200"
+          style={{ width: sidebarCollapsed ? 52 : sidebarWidth }}
+        >
+        <div className="p-4 border-b border-hive-border drag-region flex items-center justify-between" style={{ paddingTop: '28px' }}>
+          {!sidebarCollapsed && (
+            <div>
+              <h1 className="text-xl font-bold flex items-center gap-2 no-drag">
+                <span>🐝</span> <span className="text-gold-gradient">Vibe Hive</span>
+              </h1>
+              <p className="text-sm text-hive-muted mt-1">AI Swarm Manager</p>
+            </div>
+          )}
+          <button
+            onClick={() => setSidebarCollapsed(prev => !prev)}
+            className="no-drag text-hive-muted hover:text-hive-accent transition-colors text-sm p-1"
+            title={sidebarCollapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}
+          >
+            {sidebarCollapsed ? '▶' : '◀'}
+          </button>
         </div>
-        <nav className="flex-1 p-2">
+        <nav className="flex-1 p-2 overflow-y-auto">
           <div className="space-y-1">
             {renderNavButton('kanban', '📋', 'タスクボード')}
             {renderNavButton('organization', '🏢', '組織構造')}
@@ -484,27 +502,31 @@ function App(): React.ReactElement {
           {/* AI Assistant toggle */}
           <button
             onClick={() => useAIAssistantStore.getState().togglePanel()}
-            className="w-full flex items-center gap-3 px-3 py-2 mt-2 rounded text-sm font-medium transition-colors bg-hive-accent/10 text-hive-accent hover:bg-hive-accent/20 border border-hive-accent/30"
+            title={sidebarCollapsed ? 'AI アシスタント' : undefined}
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 mt-2 rounded text-sm font-medium transition-colors bg-hive-accent/10 text-hive-accent hover:bg-hive-accent/20 border border-hive-accent/30`}
           >
             <span>🤖</span>
-            <span>AI アシスタント</span>
+            {!sidebarCollapsed && <span>AI アシスタント</span>}
           </button>
         </nav>
-        <div className="p-4 border-t border-hive-border">
+        <div className={`border-t border-hive-border ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
           <button
             onClick={() => setIsSessionModalOpen(true)}
+            title={sidebarCollapsed ? '新規セッション' : undefined}
             className="w-full bg-hive-accent text-black font-medium py-2 px-4 rounded hover:bg-hive-accent/80 text-sm"
           >
-            + 新規セッション
+            {sidebarCollapsed ? '+' : '+ 新規セッション'}
           </button>
         </div>
       </aside>
 
       {/* Sidebar resize handle */}
-      <div
-        className="w-1 hover:w-1.5 bg-transparent hover:bg-hive-accent/40 cursor-col-resize flex-shrink-0 transition-all"
-        onMouseDown={(e) => handleResizeStart('sidebar', e)}
-      />
+      {!sidebarCollapsed && (
+        <div
+          className="w-1 hover:w-1.5 bg-transparent hover:bg-hive-accent/40 cursor-col-resize flex-shrink-0 transition-all"
+          onMouseDown={(e) => handleResizeStart('sidebar', e)}
+        />
+      )}
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
