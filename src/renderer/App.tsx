@@ -429,10 +429,6 @@ function App(): React.ReactElement {
       case 'theme':
         return <Suspense fallback={<ViewLoadingFallback />}><ThemePanel /></Suspense>;
       case 'settings':
-        // Open settings panel instead of inline view
-        if (!isSettingsPanelOpen) {
-          setIsSettingsPanelOpen(true);
-        }
         return (
           <div className="flex items-center justify-center h-full text-hive-muted">
             <p>Settings opened in modal</p>
@@ -497,7 +493,19 @@ function App(): React.ReactElement {
             {renderNavButton('collaboration', '👥', 'コラボ')}
             {renderNavButton('voice', '🎙', '音声')}
             {renderNavButton('theme', '🎨', 'テーマ')}
-            {renderNavButton('settings', '⚙️', '設定')}
+            <button
+              onClick={() => setIsSettingsPanelOpen(true)}
+              title={sidebarCollapsed ? '設定' : undefined}
+              className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                sidebarCollapsed ? 'flex items-center justify-center' : ''
+              } ${
+                isSettingsPanelOpen
+                  ? 'bg-hive-accent/20 text-hive-accent font-medium'
+                  : 'hover:bg-hive-accent/5 text-hive-muted hover:text-hive-text'
+              }`}
+            >
+              {sidebarCollapsed ? '⚙️' : '⚙️ 設定'}
+            </button>
           </div>
           {/* AI Assistant toggle */}
           <button

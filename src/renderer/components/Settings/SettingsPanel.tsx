@@ -241,7 +241,18 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps): React.Re
                   <div className="pt-4 border-t border-hive-border">
                     <h4 className="text-sm font-semibold text-white mb-3">Developer</h4>
                     <button
-                      onClick={() => window.electronAPI.toggleDevTools()}
+                      onClick={() => {
+                        try {
+                          if (window.electronAPI?.toggleDevTools) {
+                            window.electronAPI.toggleDevTools();
+                          } else {
+                            // Fallback: keyboard shortcut hint
+                            alert('DevTools API is not available. Use Cmd+Option+I (Mac) or Ctrl+Shift+I (Windows) instead.');
+                          }
+                        } catch (err) {
+                          console.error('Failed to toggle DevTools:', err);
+                        }
+                      }}
                       className="px-4 py-2 bg-hive-surface text-hive-text border border-hive-border rounded-md hover:border-hive-accent/50 transition-colors text-sm"
                     >
                       Open Developer Tools
