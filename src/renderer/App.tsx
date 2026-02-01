@@ -21,6 +21,7 @@ import { ThemePanel } from './components/Theme';
 import { PluginManager } from './components/Plugin/PluginManager';
 import { ProfilerPanel } from './components/Profiler/ProfilerPanel';
 import { CollaborationPanel } from './components/Collaboration/CollaborationPanel';
+import { VoiceCommandPanel } from './components/Voice/VoiceCommandPanel';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -30,7 +31,7 @@ import { useCommandPalette } from './hooks/useCommandPalette';
 import { ipcBridge } from './bridge/ipcBridge';
 import type { ExecutionRecord } from '../shared/types/execution';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'theme' | 'plugins' | 'profiler' | 'collaboration' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'theme' | 'plugins' | 'profiler' | 'collaboration' | 'voice' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -377,6 +378,8 @@ function App(): React.ReactElement {
         return <ProfilerPanel />;
       case 'collaboration':
         return <CollaborationPanel />;
+      case 'voice':
+        return <VoiceCommandPanel onViewSwitch={(v) => setCurrentView(v as ViewType)} />;
       case 'theme':
         return <ThemePanel />;
       case 'settings':
@@ -432,6 +435,7 @@ function App(): React.ReactElement {
             {renderNavButton('plugins', '🧩', 'プラグイン')}
             {renderNavButton('profiler', '⏱', 'プロファイラー')}
             {renderNavButton('collaboration', '👥', 'コラボ')}
+            {renderNavButton('voice', '🎙', '音声')}
             {renderNavButton('theme', '🎨', 'テーマ')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>
