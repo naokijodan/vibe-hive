@@ -293,6 +293,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('claudeHooks:log', listener);
   },
 
+  // Plugin
+  pluginList: () => ipcRenderer.invoke('plugin:list'),
+  pluginGet: (pluginId: string) => ipcRenderer.invoke('plugin:get', pluginId),
+  pluginActivate: (pluginId: string) => ipcRenderer.invoke('plugin:activate', pluginId),
+  pluginDeactivate: (pluginId: string) => ipcRenderer.invoke('plugin:deactivate', pluginId),
+  pluginUpdateSetting: (pluginId: string, key: string, value: unknown) => ipcRenderer.invoke('plugin:updateSetting', pluginId, key, value),
+  pluginGetDir: () => ipcRenderer.invoke('plugin:getDir'),
+  pluginRefresh: () => ipcRenderer.invoke('plugin:refresh'),
+
   // Theme
   themeGetPresets: () => ipcRenderer.invoke('theme:getPresets'),
   themeGetSettings: () => ipcRenderer.invoke('theme:getSettings'),
@@ -469,6 +478,14 @@ export interface ElectronAPI {
   claudeHooksClearLogs: () => Promise<unknown>;
   claudeHooksReload: () => Promise<unknown[]>;
   onClaudeHooksLog: (callback: (data: unknown) => void) => () => void;
+  // Plugin
+  pluginList: () => Promise<unknown[]>;
+  pluginGet: (pluginId: string) => Promise<unknown>;
+  pluginActivate: (pluginId: string) => Promise<unknown>;
+  pluginDeactivate: (pluginId: string) => Promise<unknown>;
+  pluginUpdateSetting: (pluginId: string, key: string, value: unknown) => Promise<unknown>;
+  pluginGetDir: () => Promise<string>;
+  pluginRefresh: () => Promise<unknown[]>;
   // Theme
   themeGetPresets: () => Promise<unknown[]>;
   themeGetSettings: () => Promise<unknown>;

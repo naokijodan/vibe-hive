@@ -65,6 +65,14 @@ export const IPC_CHANNELS = {
   WORKFLOW_TEMPLATE_UPDATE: 'workflow:template:update',
   WORKFLOW_TEMPLATE_DELETE: 'workflow:template:delete',
   WORKFLOW_TEMPLATE_APPLY: 'workflow:template:apply',
+  // Plugin channels
+  PLUGIN_LIST: 'plugin:list',
+  PLUGIN_GET: 'plugin:get',
+  PLUGIN_ACTIVATE: 'plugin:activate',
+  PLUGIN_DEACTIVATE: 'plugin:deactivate',
+  PLUGIN_UPDATE_SETTING: 'plugin:updateSetting',
+  PLUGIN_GET_DIR: 'plugin:getDir',
+  PLUGIN_REFRESH: 'plugin:refresh',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

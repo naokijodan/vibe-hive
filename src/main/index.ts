@@ -12,6 +12,8 @@ import { registerExportImportHandlers } from './ipc/exportImportHandlers';
 import { registerCoordinationHandlers } from './ipc/coordinationHandlers';
 import { registerClaudeHooksHandlers } from './ipc/claudeHooksHandlers';
 import { registerThemeHandlers } from './ipc/themeHandlers';
+import { registerPluginHandlers } from './ipc/pluginHandlers';
+import { getPluginService } from './services/PluginService';
 import { getAgentCoordinationService } from './services/AgentCoordinationService';
 import { getClaudeHooksService } from './services/ClaudeHooksService';
 import { ptyService } from './services/PtyService';
@@ -76,6 +78,7 @@ app.whenReady().then(() => {
   registerCoordinationHandlers();
   registerClaudeHooksHandlers();
   registerThemeHandlers();
+  registerPluginHandlers();
 
   createWindow();
 
@@ -88,6 +91,17 @@ app.whenReady().then(() => {
     getAgentCoordinationService().setMainWindow(mainWindow);
     getClaudeHooksService().setMainWindow(mainWindow);
   }
+
+  // Initialize plugin system
+  const pluginService = getPluginService();
+  if (mainWindow) {
+    pluginService.setMainWindow(mainWindow);
+  }
+  pluginService.discoverPlugins().then(() => {
+    pluginService.activateAll();
+  }).catch((error) => {
+    console.error('Failed to initialize plugins:', error);
+  });
 
   // Start webhook server
   const webhookServer = getWebhookServer(3100);
@@ -128,6 +142,9 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', async () => {
+  // Deactivate plugins
+  await getPluginService().deactivateAll();
+
   ptyService.closeAll();
   agentService.stopAll();
   executionEngine.cleanup();

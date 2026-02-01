@@ -24,6 +24,7 @@ import type {
   TemplateCreateInput,
   TemplateUpdateInput,
 } from '../../shared/types/template';
+import type { PluginInfo } from '../../shared/types/plugin';
 
 export const ipcBridge = {
   // Session operations
@@ -299,6 +300,24 @@ export const ipcBridge = {
       window.electronAPI.themeSetCustomAccent(color) as Promise<Record<string, string>>,
     resetCustomAccent: () =>
       window.electronAPI.themeResetCustomAccent() as Promise<Record<string, string>>,
+  },
+
+  // Plugin operations
+  plugin: {
+    list: () =>
+      window.electronAPI.pluginList() as Promise<PluginInfo[]>,
+    get: (pluginId: string) =>
+      window.electronAPI.pluginGet(pluginId) as Promise<PluginInfo | null>,
+    activate: (pluginId: string) =>
+      window.electronAPI.pluginActivate(pluginId) as Promise<{ success: boolean; error?: string }>,
+    deactivate: (pluginId: string) =>
+      window.electronAPI.pluginDeactivate(pluginId) as Promise<{ success: boolean; error?: string }>,
+    updateSetting: (pluginId: string, key: string, value: unknown) =>
+      window.electronAPI.pluginUpdateSetting(pluginId, key, value) as Promise<PluginInfo>,
+    getDir: () =>
+      window.electronAPI.pluginGetDir(),
+    refresh: () =>
+      window.electronAPI.pluginRefresh() as Promise<PluginInfo[]>,
   },
 
   // Claude Hooks operations
