@@ -55,7 +55,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     try {
       const session = await ipcBridge.session.switch(id) as Session;
       set({ activeSessionId: session.id });
-      console.log('Switched to session:', session.name);
     } catch (error) {
       console.error('Failed to switch session:', error);
       set({ error: 'Failed to switch session' });
@@ -88,7 +87,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         sessions: state.sessions.filter(s => s.id !== id),
         activeSessionId: state.activeSessionId === id ? null : state.activeSessionId,
       }));
-      console.log('Deleted session:', id);
     } catch (error) {
       console.error('Failed to delete session:', error);
       set({ error: 'Failed to delete session' });

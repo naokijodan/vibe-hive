@@ -43,7 +43,6 @@ export const useTerminalOutputStore = create<TerminalOutputStore>((set, get) => 
         },
       };
 
-      console.log(`[TerminalOutputStore] Appended data for ${sessionId}, total entries: ${trimmedData.length}`);
       return { outputs: newOutputs };
     });
   },
@@ -52,7 +51,6 @@ export const useTerminalOutputStore = create<TerminalOutputStore>((set, get) => 
     const state = get();
     const output = state.outputs[sessionId];
     const data = output ? output.data : [];
-    console.log(`[TerminalOutputStore] getOutput for ${sessionId}, entries: ${data.length}, keys in store: ${Object.keys(state.outputs).join(', ')}`);
     return data;
   },
 
@@ -68,10 +66,6 @@ export const useTerminalOutputStore = create<TerminalOutputStore>((set, get) => 
   },
 
   debugState: () => {
-    const state = get();
-    console.log('[TerminalOutputStore] Current state:', {
-      sessionIds: Object.keys(state.outputs),
-      entryCounts: Object.entries(state.outputs).map(([id, o]) => `${id}: ${o.data.length}`),
-    });
+    // No-op in production
   },
 }));

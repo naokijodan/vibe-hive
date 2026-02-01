@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import type {
   TaskTemplate,
   TaskTemplateCreateInput,
@@ -66,7 +67,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
 
   const handleSubmit = async () => {
     if (!name.trim() || !taskTitle.trim()) {
-      alert('テンプレート名とタスクタイトルは必須です');
+      toast.error('テンプレート名とタスクタイトルは必須です');
       return;
     }
 
@@ -107,7 +108,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Failed to submit template:', error);
-      alert('テンプレートの保存に失敗しました');
+      toast.error('テンプレートの保存に失敗しました');
     } finally {
       setIsSubmitting(false);
     }

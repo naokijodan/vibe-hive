@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { KanbanBoard } from './components/Kanban';
 import { TerminalPanel, TerminalTabs, AgentOutputPanel } from './components/Terminal';
 import { OrgChart } from './components/Organization';
@@ -94,7 +95,6 @@ function App(): React.ReactElement {
 
   // Handle agent exit - move task to review
   const handleAgentExit = useCallback(async (taskId: string, exitCode: number) => {
-    console.log(`Agent for task ${taskId} exited with code ${exitCode}`);
     // Move task to review status regardless of exit code
     await updateTaskStatus(taskId, 'review');
   }, [updateTaskStatus]);
@@ -104,7 +104,6 @@ function App(): React.ReactElement {
 
   // Handle task completion (Claude CLI returned to prompt) - show alert instead of moving
   const handleTaskComplete = useCallback((taskId: string) => {
-    console.log(`Task ${taskId} completed - showing alert`);
     // Add to completed set for visual indicator
     setCompletedTaskIds(prev => new Set(prev).add(taskId));
     // Play notification sound
@@ -159,7 +158,6 @@ function App(): React.ReactElement {
   }, [agents]);
 
   const handleTaskClick = (task: Task) => {
-    console.log('Task clicked:', task);
   };
 
   const handleTaskMove = async (taskId: string, newStatus: TaskStatus) => {
@@ -173,7 +171,6 @@ function App(): React.ReactElement {
   const activeAgent = agentTabs.find(t => t.id === activeTabId);
 
   const handleAgentClick = (agent: Agent) => {
-    console.log('Agent clicked:', agent);
     setSelectedAgentId(agent.id);
     setCurrentView('kanban'); // Switch to kanban view to show tasks
   };
@@ -237,7 +234,6 @@ function App(): React.ReactElement {
       setNewSessionCwd('');
       setIsSessionModalOpen(false);
 
-      console.log('Session created:', newSessionName);
     } catch (error) {
       console.error('Failed to create session:', error);
     }
@@ -472,7 +468,9 @@ function App(): React.ReactElement {
         <div className="flex-1 flex overflow-hidden">
           {/* Main Content Area */}
           <div className="flex-1 overflow-hidden">
-            {renderMainContent()}
+            <ErrorBoundary>
+              {renderMainContent()}
+            </ErrorBoundary>
           </div>
 
           {/* Terminal Panel Area */}

@@ -24,14 +24,12 @@ export const useExecutionStore = create<ExecutionState>((set, get) => {
     // Check if methods exist before calling them
     if (typeof ipcBridge.execution?.onStarted === 'function') {
       ipcBridge.execution.onStarted((data: { executionId: string; taskId: string }) => {
-        console.log('Execution started:', data);
         get().loadRunningExecutions();
       });
     }
 
     if (typeof ipcBridge.execution?.onCompleted === 'function') {
       ipcBridge.execution.onCompleted((execution: ExecutionRecord) => {
-        console.log('Execution completed:', execution);
         set((state) => ({
           executions: state.executions.map((e) =>
             e.id === execution.id ? execution : e
@@ -43,7 +41,6 @@ export const useExecutionStore = create<ExecutionState>((set, get) => {
 
     if (typeof ipcBridge.execution?.onCancelled === 'function') {
       ipcBridge.execution.onCancelled((execution: ExecutionRecord) => {
-        console.log('Execution cancelled:', execution);
         set((state) => ({
           executions: state.executions.map((e) =>
             e.id === execution.id ? execution : e
@@ -78,8 +75,6 @@ export const useExecutionStore = create<ExecutionState>((set, get) => {
         };
 
         const response = await ipcBridge.execution.start(request);
-        console.log('Execution started:', response);
-
         // Reload running executions
         await get().loadRunningExecutions();
 
@@ -97,8 +92,6 @@ export const useExecutionStore = create<ExecutionState>((set, get) => {
       set({ isLoading: true, error: null });
       try {
         await ipcBridge.execution.cancel(executionId);
-        console.log('Execution cancelled:', executionId);
-
         // Reload running executions
         await get().loadRunningExecutions();
 

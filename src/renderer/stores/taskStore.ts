@@ -103,7 +103,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       // Allow other status changes (e.g., in_progress -> todo) to proceed
       const currentTask = get().tasks.find(t => t.id === id);
       if (currentTask && currentTask.status === status) {
-        console.log(`Task ${id} is already in status ${status}, skipping`);
         return currentTask;
       }
 
@@ -160,7 +159,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
           // The prompt will be sent after Claude CLI is ready
           await window.electronAPI.agentStart(agentSessionId, 'claude', cwd, taskPrompt);
 
-          console.log(`Auto-started agent for task: ${parsedTask.id}`);
         } catch (error) {
           console.error('Failed to auto-start agent:', error);
           // Don't fail the task update if agent start fails

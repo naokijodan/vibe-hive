@@ -123,7 +123,6 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
 
     // Restore previous output from store
     const previousOutput = getOutputFromStore();
-    console.log(`[AgentOutputPanel] Restoring output for ${sessionId}, entries: ${previousOutput.length}`);
     if (previousOutput.length > 0) {
       setIsConnected(true);
       setIsLoading(false);
@@ -132,7 +131,6 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       });
       // Scroll to bottom after restoring
       terminal.scrollToBottom();
-      console.log(`[AgentOutputPanel] Restored ${previousOutput.length} entries for ${sessionId}`);
     }
 
     // Handle user input - send to agent (only if not read-only)
@@ -153,7 +151,6 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
           terminalRef.current.write(data);
           // Save to store for persistence
           appendOutput(sessionId, data);
-          console.log(`[AgentOutputPanel] Saved output chunk to store for ${sessionId}`);
           // Auto-scroll to bottom
           terminalRef.current.scrollToBottom();
         }

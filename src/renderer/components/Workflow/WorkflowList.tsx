@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useWorkflowStore } from '../../stores/workflowStore';
 import type { Workflow } from '../../../shared/types/workflow';
 
@@ -35,16 +36,16 @@ export const WorkflowList: React.FC<WorkflowListProps> = ({
 
   const handleExecute = async (workflow: Workflow) => {
     if (isExecuting) {
-      alert('A workflow is already executing');
+      toast.error('A workflow is already executing');
       return;
     }
 
     const result = await executeWorkflow(workflow.id);
     if (result) {
       if (result.status === 'success') {
-        alert(`Workflow "${workflow.name}" executed successfully!`);
+        toast.success(`Workflow "${workflow.name}" executed successfully!`);
       } else {
-        alert(`Workflow execution failed: ${result.error}`);
+        toast.error(`Workflow execution failed: ${result.error}`);
       }
     }
   };

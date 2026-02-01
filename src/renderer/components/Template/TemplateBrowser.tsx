@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTemplateStore } from '../../stores/templateStore';
 import { useTaskStore } from '../../stores/taskStore';
 import { TemplateCard } from './TemplateCard';
@@ -80,7 +81,7 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
       await deleteTemplate(templateId);
     } catch (error) {
       console.error('Failed to delete template:', error);
-      alert('テンプレートの削除に失敗しました');
+      toast.error('テンプレートの削除に失敗しました');
     }
   };
 
@@ -125,11 +126,11 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
         // This could be enhanced if needed
       }
 
-      alert('テンプレートからタスクを作成しました');
+      toast.success('テンプレートからタスクを作成しました');
       onClose();
     } catch (error) {
       console.error('Failed to create task from template:', error);
-      alert('テンプレートからのタスク作成に失敗しました');
+      toast.error('テンプレートからのタスク作成に失敗しました');
     }
   };
 

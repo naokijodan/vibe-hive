@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task, AgentStatus } from '../../../shared/types';
@@ -139,7 +140,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
   const handleSaveAsTemplate = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!templateName.trim()) {
-      alert('テンプレート名は必須です');
+      toast.error('テンプレート名は必須です');
       return;
     }
 
@@ -165,10 +166,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
       setTemplateDescription('');
       setTemplateCategory('');
       setShowSaveTemplateModal(false);
-      alert('テンプレートを保存しました');
+      toast.success('テンプレートを保存しました');
     } catch (error) {
       console.error('Failed to save template:', error);
-      alert('テンプレートの保存に失敗しました');
+      toast.error('テンプレートの保存に失敗しました');
     }
   };
 
