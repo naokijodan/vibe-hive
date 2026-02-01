@@ -302,6 +302,46 @@ contextBridge.exposeInMainWorld('electronAPI', {
   pluginGetDir: () => ipcRenderer.invoke('plugin:getDir'),
   pluginRefresh: () => ipcRenderer.invoke('plugin:refresh'),
 
+  // Collaboration
+  collabStartHost: (sessionId: string, settings: unknown, port?: number) => ipcRenderer.invoke('collab:startHost', sessionId, settings, port),
+  collabJoin: (host: string, port: number, settings: unknown) => ipcRenderer.invoke('collab:join', host, port, settings),
+  collabDisconnect: () => ipcRenderer.invoke('collab:disconnect'),
+  collabSendChat: (message: string) => ipcRenderer.invoke('collab:sendChat', message),
+  collabBroadcastTask: (eventType: string, payload: unknown) => ipcRenderer.invoke('collab:broadcastTask', eventType, payload),
+  collabGetStatus: () => ipcRenderer.invoke('collab:getStatus'),
+  collabGetUsers: () => ipcRenderer.invoke('collab:getUsers'),
+  collabGetChatHistory: () => ipcRenderer.invoke('collab:getChatHistory'),
+  onCollabStatus: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('collab:status', listener);
+    return () => ipcRenderer.removeListener('collab:status', listener);
+  },
+  onCollabChat: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('collab:chat', listener);
+    return () => ipcRenderer.removeListener('collab:chat', listener);
+  },
+  onCollabUserJoined: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('collab:userJoined', listener);
+    return () => ipcRenderer.removeListener('collab:userJoined', listener);
+  },
+  onCollabUserLeft: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('collab:userLeft', listener);
+    return () => ipcRenderer.removeListener('collab:userLeft', listener);
+  },
+  onCollabTaskEvent: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('collab:taskEvent', listener);
+    return () => ipcRenderer.removeListener('collab:taskEvent', listener);
+  },
+  onCollabDisconnected: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('collab:disconnected', listener);
+    return () => ipcRenderer.removeListener('collab:disconnected', listener);
+  },
+
   // Profiler
   profilerGetSummary: (filter?: unknown) => ipcRenderer.invoke('profiler:getSummary', filter),
   profilerGetExecutions: (filter?: unknown) => ipcRenderer.invoke('profiler:getExecutions', filter),
@@ -493,6 +533,21 @@ export interface ElectronAPI {
   pluginUpdateSetting: (pluginId: string, key: string, value: unknown) => Promise<unknown>;
   pluginGetDir: () => Promise<string>;
   pluginRefresh: () => Promise<unknown[]>;
+  // Collaboration
+  collabStartHost: (sessionId: string, settings: unknown, port?: number) => Promise<unknown>;
+  collabJoin: (host: string, port: number, settings: unknown) => Promise<unknown>;
+  collabDisconnect: () => Promise<void>;
+  collabSendChat: (message: string) => Promise<unknown>;
+  collabBroadcastTask: (eventType: string, payload: unknown) => Promise<void>;
+  collabGetStatus: () => Promise<unknown>;
+  collabGetUsers: () => Promise<unknown[]>;
+  collabGetChatHistory: () => Promise<unknown[]>;
+  onCollabStatus: (callback: (data: unknown) => void) => () => void;
+  onCollabChat: (callback: (data: unknown) => void) => () => void;
+  onCollabUserJoined: (callback: (data: unknown) => void) => () => void;
+  onCollabUserLeft: (callback: (data: unknown) => void) => () => void;
+  onCollabTaskEvent: (callback: (data: unknown) => void) => () => void;
+  onCollabDisconnected: (callback: (data: unknown) => void) => () => void;
   // Profiler
   profilerGetSummary: (filter?: unknown) => Promise<unknown>;
   profilerGetExecutions: (filter?: unknown) => Promise<unknown[]>;

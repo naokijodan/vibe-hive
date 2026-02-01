@@ -26,6 +26,12 @@ import type {
 } from '../../shared/types/template';
 import type { PluginInfo } from '../../shared/types/plugin';
 import type {
+  CollabConnectionStatus,
+  CollabUser,
+  CollabChatMessage,
+  CollabSettings,
+} from '../../shared/types/collaboration';
+import type {
   ProfilerSummary,
   ProfilerFilter,
   ExecutionProfile,
@@ -326,6 +332,37 @@ export const ipcBridge = {
       window.electronAPI.pluginGetDir(),
     refresh: () =>
       window.electronAPI.pluginRefresh() as Promise<PluginInfo[]>,
+  },
+
+  // Collaboration operations
+  collab: {
+    startHost: (sessionId: string, settings: CollabSettings, port?: number) =>
+      window.electronAPI.collabStartHost(sessionId, settings, port) as Promise<{ success: boolean; port: number; error?: string }>,
+    join: (host: string, port: number, settings: CollabSettings) =>
+      window.electronAPI.collabJoin(host, port, settings) as Promise<{ success: boolean; error?: string }>,
+    disconnect: () => window.electronAPI.collabDisconnect(),
+    sendChat: (message: string) =>
+      window.electronAPI.collabSendChat(message) as Promise<CollabChatMessage | null>,
+    broadcastTask: (eventType: string, payload: unknown) =>
+      window.electronAPI.collabBroadcastTask(eventType, payload),
+    getStatus: () =>
+      window.electronAPI.collabGetStatus() as Promise<CollabConnectionStatus>,
+    getUsers: () =>
+      window.electronAPI.collabGetUsers() as Promise<CollabUser[]>,
+    getChatHistory: () =>
+      window.electronAPI.collabGetChatHistory() as Promise<CollabChatMessage[]>,
+    onStatus: (callback: (data: CollabConnectionStatus) => void) =>
+      window.electronAPI.onCollabStatus(callback as (data: unknown) => void),
+    onChat: (callback: (data: CollabChatMessage) => void) =>
+      window.electronAPI.onCollabChat(callback as (data: unknown) => void),
+    onUserJoined: (callback: (data: CollabUser) => void) =>
+      window.electronAPI.onCollabUserJoined(callback as (data: unknown) => void),
+    onUserLeft: (callback: (data: CollabUser) => void) =>
+      window.electronAPI.onCollabUserLeft(callback as (data: unknown) => void),
+    onTaskEvent: (callback: (data: unknown) => void) =>
+      window.electronAPI.onCollabTaskEvent(callback),
+    onDisconnected: (callback: (data: unknown) => void) =>
+      window.electronAPI.onCollabDisconnected(callback),
   },
 
   // Profiler operations

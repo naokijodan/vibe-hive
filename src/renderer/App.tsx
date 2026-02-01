@@ -20,6 +20,7 @@ import { ClaudeHooksPanel } from './components/ClaudeHooks';
 import { ThemePanel } from './components/Theme';
 import { PluginManager } from './components/Plugin/PluginManager';
 import { ProfilerPanel } from './components/Profiler/ProfilerPanel';
+import { CollaborationPanel } from './components/Collaboration/CollaborationPanel';
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -29,7 +30,7 @@ import { useCommandPalette } from './hooks/useCommandPalette';
 import { ipcBridge } from './bridge/ipcBridge';
 import type { ExecutionRecord } from '../shared/types/execution';
 
-type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'theme' | 'plugins' | 'profiler' | 'settings';
+type ViewType = 'kanban' | 'organization' | 'dependencies' | 'execution' | 'history' | 'workflow' | 'analytics' | 'export-import' | 'notifications' | 'coordination' | 'claude-hooks' | 'theme' | 'plugins' | 'profiler' | 'collaboration' | 'settings';
 
 // ターミナルタブ用の型
 interface AgentTab {
@@ -374,6 +375,8 @@ function App(): React.ReactElement {
         return <PluginManager />;
       case 'profiler':
         return <ProfilerPanel />;
+      case 'collaboration':
+        return <CollaborationPanel />;
       case 'theme':
         return <ThemePanel />;
       case 'settings':
@@ -428,6 +431,7 @@ function App(): React.ReactElement {
             {renderNavButton('claude-hooks', '🪝', 'Hooks')}
             {renderNavButton('plugins', '🧩', 'プラグイン')}
             {renderNavButton('profiler', '⏱', 'プロファイラー')}
+            {renderNavButton('collaboration', '👥', 'コラボ')}
             {renderNavButton('theme', '🎨', 'テーマ')}
             {renderNavButton('settings', '⚙️', '設定')}
           </div>

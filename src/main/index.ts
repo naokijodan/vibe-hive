@@ -14,6 +14,8 @@ import { registerClaudeHooksHandlers } from './ipc/claudeHooksHandlers';
 import { registerThemeHandlers } from './ipc/themeHandlers';
 import { registerPluginHandlers } from './ipc/pluginHandlers';
 import { registerProfilerHandlers } from './ipc/profilerHandlers';
+import { registerCollaborationIpcHandlers } from './ipc/collaborationIpcHandlers';
+import { getCollaborationService } from './services/CollaborationService';
 import { getPluginService } from './services/PluginService';
 import { getAgentCoordinationService } from './services/AgentCoordinationService';
 import { getClaudeHooksService } from './services/ClaudeHooksService';
@@ -81,6 +83,7 @@ app.whenReady().then(() => {
   registerThemeHandlers();
   registerPluginHandlers();
   registerProfilerHandlers();
+  registerCollaborationIpcHandlers();
 
   createWindow();
 
@@ -92,6 +95,7 @@ app.whenReady().then(() => {
     workflowEngine.setMainWindow(mainWindow);
     getAgentCoordinationService().setMainWindow(mainWindow);
     getClaudeHooksService().setMainWindow(mainWindow);
+    getCollaborationService().setMainWindow(mainWindow);
   }
 
   // Initialize plugin system
@@ -127,6 +131,7 @@ app.whenReady().then(() => {
         workflowEngine.setMainWindow(mainWindow);
         getAgentCoordinationService().setMainWindow(mainWindow);
         getClaudeHooksService().setMainWindow(mainWindow);
+        getCollaborationService().setMainWindow(mainWindow);
       }
     }
   });
@@ -158,6 +163,9 @@ app.on('before-quit', async () => {
   // Stop workflow scheduler
   const workflowScheduler = getWorkflowScheduler();
   workflowScheduler.stopAll();
+
+  // Disconnect collaboration
+  getCollaborationService().disconnect();
 
   closeDatabase();
 });

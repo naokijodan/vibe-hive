@@ -80,6 +80,16 @@ export const IPC_CHANNELS = {
   PROFILER_GET_TASK_STATS: 'profiler:getTaskStats',
   PROFILER_GET_SESSION_STATS: 'profiler:getSessionStats',
   PROFILER_GET_TIMELINE: 'profiler:getTimeline',
+
+  // Collaboration channels
+  COLLAB_START_HOST: 'collab:startHost',
+  COLLAB_JOIN: 'collab:join',
+  COLLAB_DISCONNECT: 'collab:disconnect',
+  COLLAB_SEND_CHAT: 'collab:sendChat',
+  COLLAB_BROADCAST_TASK: 'collab:broadcastTask',
+  COLLAB_GET_STATUS: 'collab:getStatus',
+  COLLAB_GET_USERS: 'collab:getUsers',
+  COLLAB_GET_CHAT_HISTORY: 'collab:getChatHistory',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
