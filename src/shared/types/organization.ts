@@ -51,6 +51,7 @@ export interface OrgNode {
   position?: { x: number; y: number }; // For React Flow positioning
   executionStrategy?: ExecutionStrategy; // Team execution mode (default: parallel)
   preferredAgentType?: AgentType;        // Preferred AI model for this node
+  systemPrompt?: string;                 // Role/instruction template for this node
 }
 
 export interface OrgHierarchy {

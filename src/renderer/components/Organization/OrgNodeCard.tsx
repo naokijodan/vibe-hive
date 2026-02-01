@@ -102,6 +102,11 @@ export const OrgNodeCard: React.FC<OrgNodeCardProps> = ({ data }) => {
             {AGENT_TYPE_LABELS[node.preferredAgentType]?.icon} {AGENT_TYPE_LABELS[node.preferredAgentType]?.label}
           </span>
         )}
+        {node.systemPrompt && (
+          <span className="text-[10px] px-1.5 py-0.5 bg-cyan-900/50 text-cyan-300 rounded" title={node.systemPrompt}>
+            SP
+          </span>
+        )}
         {isTeam && node.executionStrategy && (
           <span className={`text-[10px] px-1.5 py-0.5 rounded ${
             node.executionStrategy === 'sequential'

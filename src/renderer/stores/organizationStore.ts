@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Organization, OrgNode } from '../../shared/types/organization';
-import type { NodeExecution, ExecuteNodeResult } from '../../shared/types/orchestration';
+import type { NodeExecution, ExecuteNodeResult, OrchestrationState } from '../../shared/types/orchestration';
 import ipcBridge from '../bridge/ipcBridge';
 
 // Browser-compatible UUID generator
@@ -19,6 +19,7 @@ interface OrganizationState {
   isLoading: boolean;
   error: string | null;
   nodeExecutions: Map<string, NodeExecution>;
+  orchestrationStates: Map<string, OrchestrationState>;
 
   // Actions
   loadOrganization: () => Promise<void>;
@@ -39,6 +40,12 @@ interface OrganizationState {
   stopNode: (nodeId: string) => void;
   updateNodeExecution: (execution: NodeExecution) => void;
   initOrchestrationListener: () => () => void;
+
+  // Phase 4: Orchestration
+  orchestrateNode: (nodeId: string, goal: string) => Promise<OrchestrationState>;
+  approveOrchestration: (nodeId: string) => void;
+  rejectOrchestration: (nodeId: string, feedback: string) => void;
+  updateOrchestrationState: (state: OrchestrationState) => void;
 }
 
 export const useOrganizationStore = create<OrganizationState>((set, get) => ({
@@ -48,6 +55,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   isLoading: false,
   error: null,
   nodeExecutions: new Map(),
+  orchestrationStates: new Map(),
 
   loadOrganization: async () => {
     set({ isLoading: true, error: null });
@@ -224,9 +232,40 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   },
 
   initOrchestrationListener: () => {
-    const cleanup = ipcBridge.orchestration.onStatusChange((execution) => {
+    const cleanup1 = ipcBridge.orchestration.onStatusChange((execution) => {
       get().updateNodeExecution(execution);
     });
-    return cleanup;
+    const cleanup2 = ipcBridge.orchestration.onStateChange((state) => {
+      get().updateOrchestrationState(state);
+    });
+    return () => {
+      cleanup1();
+      cleanup2();
+    };
+  },
+
+  orchestrateNode: async (nodeId, goal) => {
+    const result = await ipcBridge.orchestration.orchestrate({
+      nodeId,
+      sessionId: 'default-session',
+      goal,
+    });
+    return result;
+  },
+
+  approveOrchestration: (nodeId) => {
+    ipcBridge.orchestration.approve({ nodeId, approved: true });
+  },
+
+  rejectOrchestration: (nodeId, feedback) => {
+    ipcBridge.orchestration.approve({ nodeId, approved: false, feedback });
+  },
+
+  updateOrchestrationState: (state) => {
+    set(s => {
+      const newMap = new Map(s.orchestrationStates);
+      newMap.set(state.nodeId, state);
+      return { orchestrationStates: newMap };
+    });
   },
 }));

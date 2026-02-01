@@ -19,6 +19,7 @@ import { useOrganizationStore } from '../../stores/organizationStore';
 import { useAgentStore } from '../../stores/agentStore';
 import { OrgNodeCard } from './OrgNodeCard';
 import { AddNodeModal } from './AddNodeModal';
+import { ResultsReviewPanel } from './ResultsReviewPanel';
 import type { OrgNode } from '../../../shared/types/organization';
 
 interface OrgChartProps {
@@ -106,6 +107,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
     nodes: orgNodes,
     selectedNodeId,
     nodeExecutions,
+    orchestrationStates,
     loadOrganization,
     addNode,
     updateNode,
@@ -116,6 +118,9 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
     executeNode,
     stopNode,
     initOrchestrationListener,
+    orchestrateNode,
+    approveOrchestration,
+    rejectOrchestration,
   } = useOrganizationStore();
 
   const { agents } = useAgentStore();
@@ -123,6 +128,9 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showAgentPanel, setShowAgentPanel] = useState(false);
   const [executePrompt, setExecutePrompt] = useState('');
+  const [orchestrateGoal, setOrchestrateGoal] = useState('');
+  const [showReviewPanel, setShowReviewPanel] = useState(false);
+  const [reviewNodeId, setReviewNodeId] = useState<string | null>(null);
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -306,7 +314,80 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
                 </select>
               </div>
             )}
+
+            {/* System Prompt */}
+            <div>
+              <label className="text-[10px] text-hive-muted block mb-1">システムプロンプト</label>
+              <textarea
+                value={selectedNode.systemPrompt || ''}
+                onChange={(e) => updateNode(selectedNode.id, {
+                  systemPrompt: e.target.value || undefined,
+                })}
+                placeholder="このノードの役割・指示を記述..."
+                className="w-full text-xs px-2 py-1 bg-hive-surface border border-hive-border rounded text-white resize-none h-16"
+              />
+            </div>
           </div>
+
+          {/* Orchestrate Controls (team nodes with children) */}
+          {selectedNode.type === 'team' && orgNodes.some(n => n.parentId === selectedNode.id) && (
+            <div className="mb-4 p-3 bg-indigo-900/20 border border-indigo-700/30 rounded space-y-2">
+              <label className="text-[10px] text-indigo-300 block font-medium">オーケストレーション</label>
+              <textarea
+                value={orchestrateGoal}
+                onChange={(e) => setOrchestrateGoal(e.target.value)}
+                placeholder="チーム全体の目標を入力..."
+                className="w-full text-xs px-2 py-1.5 bg-hive-surface border border-hive-border rounded text-white resize-none h-16"
+              />
+              {(() => {
+                const orchState = orchestrationStates.get(selectedNode.id);
+                const isActive = orchState && !['approved', 'rejected'].includes(orchState.phase);
+                return (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (orchestrateGoal.trim()) {
+                            orchestrateNode(selectedNode.id, orchestrateGoal.trim());
+                          }
+                        }}
+                        disabled={!orchestrateGoal.trim() || !!isActive}
+                        className="flex-1 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        オーケストレート
+                      </button>
+                      {orchState && (
+                        <button
+                          onClick={() => {
+                            setReviewNodeId(selectedNode.id);
+                            setShowReviewPanel(true);
+                          }}
+                          className="px-3 py-1.5 bg-hive-bg border border-hive-border text-xs text-white rounded hover:bg-hive-surface"
+                        >
+                          結果
+                        </button>
+                      )}
+                    </div>
+                    {orchState && (
+                      <div className={`text-[10px] ${
+                        orchState.phase === 'pending_approval' ? 'text-amber-300' :
+                        orchState.phase === 'approved' ? 'text-green-300' :
+                        orchState.phase === 'rejected' ? 'text-red-300' :
+                        'text-blue-300'
+                      }`}>
+                        {orchState.phase === 'planning' ? '計画中...' :
+                         orchState.phase === 'executing' ? '実行中...' :
+                         orchState.phase === 'reviewing' ? 'レビュー中...' :
+                         orchState.phase === 'pending_approval' ? '承認待ち' :
+                         orchState.phase === 'approved' ? '承認済み' :
+                         orchState.phase === 'rejected' ? '却下' : orchState.phase}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
 
           {/* Execution Controls */}
           <div className="mb-4 p-3 bg-hive-bg rounded space-y-2">
@@ -435,6 +516,26 @@ export const OrgChart: React.FC<OrgChartProps> = ({ onAgentClick }) => {
         onAdd={handleAddNode}
         availableNodes={orgNodes}
       />
+
+      {/* Results Review Panel */}
+      {showReviewPanel && reviewNodeId && (() => {
+        const orchState = orchestrationStates.get(reviewNodeId);
+        if (!orchState) return null;
+        return (
+          <ResultsReviewPanel
+            state={orchState}
+            onApprove={() => {
+              approveOrchestration(reviewNodeId);
+              setShowReviewPanel(false);
+            }}
+            onReject={(feedback) => {
+              rejectOrchestration(reviewNodeId, feedback);
+              setShowReviewPanel(false);
+            }}
+            onClose={() => setShowReviewPanel(false)}
+          />
+        );
+      })()}
     </div>
   );
 };

@@ -23,6 +23,7 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
   const [selectedParentId, setSelectedParentId] = useState(parentNode?.id || '');
   const [executionStrategy, setExecutionStrategy] = useState<ExecutionStrategy>('parallel');
   const [preferredAgentType, setPreferredAgentType] = useState<AgentType | ''>('');
+  const [systemPrompt, setSystemPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +39,7 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
         parentId: selectedParentId || undefined,
         executionStrategy: type === 'team' ? executionStrategy : undefined,
         preferredAgentType: preferredAgentType || undefined,
+        systemPrompt: systemPrompt.trim() || undefined,
       });
       setName('');
       setDescription('');
@@ -45,6 +47,7 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
       setSelectedParentId('');
       setExecutionStrategy('parallel');
       setPreferredAgentType('');
+      setSystemPrompt('');
       onClose();
     } catch (error) {
       console.error('Failed to add node:', error);
@@ -182,6 +185,21 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
             </select>
             <p className="text-xs text-hive-muted mt-1">
               このノードで使用するAIモデルを指定
+            </p>
+          </div>
+
+          {/* System Prompt */}
+          <div>
+            <label className="block text-sm font-medium mb-1">システムプロンプト (オプション)</label>
+            <textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              className="w-full px-3 py-2 bg-hive-bg border border-hive-border rounded text-hive-text focus:outline-none focus:ring-2 focus:ring-hive-accent resize-none"
+              placeholder="このノードの役割・指示テンプレート..."
+              rows={3}
+            />
+            <p className="text-xs text-hive-muted mt-1">
+              オーケストレーション時にAIエージェントへの初期指示として使用
             </p>
           </div>
 

@@ -362,6 +362,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
   aiAssistantClear: () => ipcRenderer.invoke('aiAssistant:clear'),
   aiAssistantHasKey: () => ipcRenderer.invoke('aiAssistant:hasKey'),
 
+  // Orchestration
+  orchestrationExecute: (request: unknown) => ipcRenderer.invoke('orchestration:execute', request),
+  orchestrationStop: (nodeId: string) => ipcRenderer.invoke('orchestration:stop', nodeId),
+  orchestrationStatus: (nodeId: string) => ipcRenderer.invoke('orchestration:status', nodeId),
+  orchestrationStatusAll: (sessionId: string) => ipcRenderer.invoke('orchestration:statusAll', sessionId),
+  orchestrationOrchestrate: (request: unknown) => ipcRenderer.invoke('orchestration:orchestrate', request),
+  orchestrationApprove: (request: unknown) => ipcRenderer.invoke('orchestration:approve', request),
+  orchestrationGetState: (nodeId: string) => ipcRenderer.invoke('orchestration:getState', nodeId),
+  onOrchestrationStatusChange: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('orchestration:statusChange', listener);
+    return () => ipcRenderer.removeListener('orchestration:statusChange', listener);
+  },
+  onOrchestrationStateChange: (callback: (data: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
+    ipcRenderer.on('orchestration:stateChange', listener);
+    return () => ipcRenderer.removeListener('orchestration:stateChange', listener);
+  },
+
   // Context
   contextSave: (input: unknown) => ipcRenderer.invoke('context:save', input),
   contextGet: (id: string) => ipcRenderer.invoke('context:get', id),
@@ -584,7 +603,11 @@ export interface ElectronAPI {
   orchestrationStop: (nodeId: string) => Promise<void>;
   orchestrationStatus: (nodeId: string) => Promise<unknown>;
   orchestrationStatusAll: (sessionId: string) => Promise<unknown[]>;
+  orchestrationOrchestrate: (request: unknown) => Promise<unknown>;
+  orchestrationApprove: (request: unknown) => Promise<unknown>;
+  orchestrationGetState: (nodeId: string) => Promise<unknown>;
   onOrchestrationStatusChange: (callback: (data: unknown) => void) => () => void;
+  onOrchestrationStateChange: (callback: (data: unknown) => void) => () => void;
   // Context
   contextSave: (input: unknown) => Promise<unknown>;
   contextGet: (id: string) => Promise<unknown>;

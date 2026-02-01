@@ -33,6 +33,9 @@ import type {
   NodeExecution,
   ExecuteNodeRequest,
   ExecuteNodeResult,
+  OrchestrationState,
+  OrchestrateNodeRequest,
+  ApproveRejectRequest,
 } from '../../shared/types/orchestration';
 import type {
   CollabConnectionStatus,
@@ -429,6 +432,14 @@ export const ipcBridge = {
       window.electronAPI.orchestrationStatusAll(sessionId) as Promise<NodeExecution[]>,
     onStatusChange: (callback: (data: NodeExecution) => void) =>
       window.electronAPI.onOrchestrationStatusChange(callback as (data: unknown) => void),
+    orchestrate: (request: OrchestrateNodeRequest) =>
+      window.electronAPI.orchestrationOrchestrate(request) as Promise<OrchestrationState>,
+    approve: (request: ApproveRejectRequest) =>
+      window.electronAPI.orchestrationApprove(request) as Promise<OrchestrationState | null>,
+    getState: (nodeId: string) =>
+      window.electronAPI.orchestrationGetState(nodeId) as Promise<OrchestrationState | null>,
+    onStateChange: (callback: (data: OrchestrationState) => void) =>
+      window.electronAPI.onOrchestrationStateChange(callback as (data: unknown) => void),
   },
 
   // Context operations

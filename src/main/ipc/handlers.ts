@@ -9,7 +9,7 @@ import * as OrgRepo from '../services/db/OrganizationRepository';
 import * as ContextRepo from '../services/db/ContextRepository';
 import { orchestratorService } from '../services/OrchestratorService';
 import type { AgentContextCreateInput } from '../../shared/types/context';
-import type { ExecuteNodeRequest } from '../../shared/types/orchestration';
+import type { ExecuteNodeRequest, OrchestrateNodeRequest, ApproveRejectRequest } from '../../shared/types/orchestration';
 
 export function registerIpcHandlers(): void {
   const sessionService = getSessionService();
@@ -157,6 +157,18 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.ORCHESTRATION_STATUS_ALL, async (_event, sessionId: string) => {
     return orchestratorService.getAllStatus(sessionId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ORCHESTRATION_ORCHESTRATE, async (_event, request: OrchestrateNodeRequest) => {
+    return orchestratorService.orchestrateNode(request);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ORCHESTRATION_APPROVE, async (_event, request: ApproveRejectRequest) => {
+    return orchestratorService.approveOrReject(request);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ORCHESTRATION_GET_STATE, async (_event, nodeId: string) => {
+    return orchestratorService.getOrchestrationState(nodeId);
   });
 
   // Context handlers

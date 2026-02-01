@@ -100,6 +100,9 @@ export const IPC_CHANNELS = {
   ORCHESTRATION_STOP: 'orchestration:stop',
   ORCHESTRATION_STATUS: 'orchestration:status',
   ORCHESTRATION_STATUS_ALL: 'orchestration:statusAll',
+  ORCHESTRATION_ORCHESTRATE: 'orchestration:orchestrate',
+  ORCHESTRATION_APPROVE: 'orchestration:approve',
+  ORCHESTRATION_GET_STATE: 'orchestration:getState',
 
   // Context channels
   CONTEXT_SAVE: 'context:save',
