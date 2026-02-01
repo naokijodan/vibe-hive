@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import toast from 'react-hot-toast';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -8,6 +8,13 @@ import { useTaskStore } from '../../stores/taskStore';
 import { useExecutionStore } from '../../stores/executionStore';
 import { useTemplateStore } from '../../stores/templateStore';
 import ipcBridge from '../../bridge/ipcBridge';
+import {
+  FeedbackModal,
+  SubtaskModal,
+  DependencyModal,
+  RoleModal,
+  SaveTemplateModal,
+} from './TaskCardModals';
 
 interface TaskCardProps {
   task: Task;
@@ -40,7 +47,7 @@ const statusBadgeColors: Record<AgentStatus, { bg: string; text: string; label: 
   failed: { bg: 'bg-red-900', text: 'text-red-300', label: 'Failed' },
 };
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay }) => {
+export const TaskCard: React.FC<TaskCardProps> = memo(({ task, onClick, isDragOverlay }) => {
   const {
     attributes,
     listeners,
@@ -475,273 +482,52 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragOverlay
         </button>
       </div>
 
-      {/* Feedback Modal */}
+      {/* Modals */}
       {showFeedbackModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowFeedbackModal(false);
-          }}
-        >
-          <div
-            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-96 max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-white font-medium mb-3">レビューフィードバック</h3>
-            <textarea
-              value={feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="フィードバックを入力..."
-              className="w-full h-32 bg-hive-bg border border-hive-border rounded p-2 text-white text-sm resize-none focus:outline-none focus:border-hive-accent"
-            />
-            <div className="flex justify-end gap-2 mt-3">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowFeedbackModal(false);
-                }}
-                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleFeedbackSubmit}
-                className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-500 transition-colors"
-              >
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
+        <FeedbackModal
+          feedbackText={feedbackText}
+          setFeedbackText={setFeedbackText}
+          onSubmit={handleFeedbackSubmit}
+          onClose={(e) => { e.stopPropagation(); setShowFeedbackModal(false); }}
+        />
       )}
-
-      {/* Subtask Modal */}
       {showSubtaskModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowSubtaskModal(false);
-          }}
-        >
-          <div
-            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-96 max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-white font-medium mb-3">サブタスク作成</h3>
-            <p className="text-hive-muted text-xs mb-2">1行に1つのサブタスクを入力</p>
-            <textarea
-              value={subtaskText}
-              onChange={(e) => setSubtaskText(e.target.value)}
-              placeholder="サブタスク1&#10;サブタスク2&#10;サブタスク3"
-              className="w-full h-32 bg-hive-bg border border-hive-border rounded p-2 text-white text-sm resize-none focus:outline-none focus:border-hive-accent"
-            />
-            <div className="flex justify-end gap-2 mt-3">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowSubtaskModal(false);
-                }}
-                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleSubtaskSubmit}
-                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
-              >
-                作成
-              </button>
-            </div>
-          </div>
-        </div>
+        <SubtaskModal
+          subtaskText={subtaskText}
+          setSubtaskText={setSubtaskText}
+          onSubmit={handleSubtaskSubmit}
+          onClose={(e) => { e.stopPropagation(); setShowSubtaskModal(false); }}
+        />
       )}
-
-      {/* Dependency Modal */}
       {showDependencyModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowDependencyModal(false);
-          }}
-        >
-          <div
-            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-96 max-w-[90vw] max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-white font-medium mb-3">依存関係設定</h3>
-            <p className="text-hive-muted text-xs mb-3">このタスクの開始前に完了が必要なタスクを選択</p>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {availableTasks.length === 0 ? (
-                <p className="text-hive-muted text-sm">他のタスクがありません</p>
-              ) : (
-                availableTasks.map((t) => (
-                  <label
-                    key={t.id}
-                    className="flex items-center gap-2 p-2 bg-hive-bg rounded hover:bg-hive-accent/10 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedDependencies.includes(t.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedDependencies([...selectedDependencies, t.id]);
-                        } else {
-                          setSelectedDependencies(selectedDependencies.filter((id) => id !== t.id));
-                        }
-                      }}
-                      className="rounded border-hive-border"
-                    />
-                    <span className="text-white text-sm flex-1">{t.title}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                      t.status === 'done' ? 'bg-green-900 text-green-300' :
-                      t.status === 'in_progress' ? 'bg-blue-900 text-blue-300' :
-                      'bg-gray-800 text-gray-400'
-                    }`}>
-                      {t.status}
-                    </span>
-                  </label>
-                ))
-              )}
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDependencyModal(false);
-                }}
-                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleDependencySubmit}
-                className="px-3 py-1.5 text-sm bg-hive-accent text-white rounded hover:bg-hive-accent/80 transition-colors"
-              >
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
+        <DependencyModal
+          availableTasks={availableTasks}
+          selectedDependencies={selectedDependencies}
+          setSelectedDependencies={setSelectedDependencies}
+          onSubmit={handleDependencySubmit}
+          onClose={(e) => { e.stopPropagation(); setShowDependencyModal(false); }}
+        />
       )}
-
-      {/* Role Modal */}
       {showRoleModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowRoleModal(false);
-          }}
-        >
-          <div
-            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-[500px] max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-white font-medium mb-3">🎭 エージェントの役割設定</h3>
-            <p className="text-hive-muted text-xs mb-3">
-              このタスクを実行するClaude Codeに与える役割・システムプロンプトを設定します。
-              例：「あなたはTypeScriptの専門家です」「コードレビューを行うシニアエンジニアとして振る舞ってください」
-            </p>
-            <textarea
-              value={roleText}
-              onChange={(e) => setRoleText(e.target.value)}
-              placeholder="あなたはReactとTypeScriptの専門家です。コードの品質と型安全性を重視してください。"
-              className="w-full h-40 bg-hive-bg border border-hive-border rounded p-2 text-white text-sm resize-none focus:outline-none focus:border-hive-accent"
-            />
-            <div className="flex justify-end gap-2 mt-3">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowRoleModal(false);
-                }}
-                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleRoleSubmit}
-                className="px-3 py-1.5 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-500 transition-colors"
-              >
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
+        <RoleModal
+          roleText={roleText}
+          setRoleText={setRoleText}
+          onSubmit={handleRoleSubmit}
+          onClose={(e) => { e.stopPropagation(); setShowRoleModal(false); }}
+        />
       )}
-
-      {/* Save as Template Modal */}
       {showSaveTemplateModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowSaveTemplateModal(false);
-          }}
-        >
-          <div
-            className="bg-hive-surface border border-hive-border rounded-lg p-4 w-[500px] max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-white font-medium mb-3">💾 テンプレートとして保存</h3>
-            <p className="text-hive-muted text-xs mb-3">
-              このタスクをテンプレートとして保存し、後で再利用できます
-            </p>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-hive-muted mb-1">
-                  テンプレート名 *
-                </label>
-                <input
-                  type="text"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder="テンプレート名を入力"
-                  className="w-full bg-hive-bg border border-hive-border rounded p-2 text-white text-sm focus:outline-none focus:border-hive-accent"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-hive-muted mb-1">説明</label>
-                <textarea
-                  value={templateDescription}
-                  onChange={(e) => setTemplateDescription(e.target.value)}
-                  placeholder="テンプレートの説明（オプション）"
-                  className="w-full h-20 bg-hive-bg border border-hive-border rounded p-2 text-white text-sm resize-none focus:outline-none focus:border-hive-accent"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-hive-muted mb-1">カテゴリ</label>
-                <input
-                  type="text"
-                  value={templateCategory}
-                  onChange={(e) => setTemplateCategory(e.target.value)}
-                  placeholder="例：フロントエンド, バックエンド"
-                  className="w-full bg-hive-bg border border-hive-border rounded p-2 text-white text-sm focus:outline-none focus:border-hive-accent"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowSaveTemplateModal(false);
-                }}
-                className="px-3 py-1.5 text-sm text-hive-muted hover:text-white transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleSaveAsTemplate}
-                className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-500 transition-colors"
-              >
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
+        <SaveTemplateModal
+          templateName={templateName}
+          setTemplateName={setTemplateName}
+          templateDescription={templateDescription}
+          setTemplateDescription={setTemplateDescription}
+          templateCategory={templateCategory}
+          setTemplateCategory={setTemplateCategory}
+          onSubmit={handleSaveAsTemplate}
+          onClose={(e) => { e.stopPropagation(); setShowSaveTemplateModal(false); }}
+        />
       )}
     </div>
   );
-};
+});

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
@@ -14,7 +14,7 @@ interface AgentOutputPanelProps {
   onResumeConversation?: (taskId: string) => void; // Resume conversation from review
 }
 
-export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
+export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = memo(({
   taskId,
   taskTitle,
   isActive = false,
@@ -291,4 +291,4 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = ({
       </div>
     </div>
   );
-};
+});

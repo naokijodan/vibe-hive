@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -36,7 +36,7 @@ const columns: Column[] = [
   { id: 'done', title: '終了', type: 'done' },
 ];
 
-export const KanbanBoard: React.FC<KanbanBoardProps> = ({
+export const KanbanBoard: React.FC<KanbanBoardProps> = memo(({
   tasks,
   onTaskClick,
   onTaskMove,
@@ -270,4 +270,4 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       />
     </div>
   );
-};
+});

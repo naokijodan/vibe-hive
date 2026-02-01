@@ -1,28 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ViewLoadingFallback } from './components/ViewLoadingFallback';
 import { KanbanBoard } from './components/Kanban';
 import { TerminalPanel, TerminalTabs, AgentOutputPanel } from './components/Terminal';
-import { OrgChart } from './components/Organization';
 import { SessionTabs } from './components/Session';
 import { CommandPalette } from './components/CommandPalette';
 import { GitPanel } from './components/Git/GitPanel';
 import { SettingsPanel } from './components/Settings/SettingsPanel';
-import { TaskDependencyTree } from './components/TaskDependencyTree';
-import { HistoryView } from './components/HistoryView';
 import { ExecutionPanel } from './components/Execution/ExecutionPanel';
 import { ExecutionLog } from './components/Execution/ExecutionLog';
-import { WorkflowManager } from './components/Workflow/WorkflowManager';
-import { AnalyticsDashboard } from './components/Analytics';
-import { ExportImportPanel } from './components/ExportImport';
-import { NotificationSettingsPanel } from './components/NotificationSettings';
-import { CoordinationPanel } from './components/Coordination';
-import { ClaudeHooksPanel } from './components/ClaudeHooks';
-import { ThemePanel } from './components/Theme';
-import { PluginManager } from './components/Plugin/PluginManager';
-import { ProfilerPanel } from './components/Profiler/ProfilerPanel';
-import { CollaborationPanel } from './components/Collaboration/CollaborationPanel';
-import { VoiceCommandPanel } from './components/Voice/VoiceCommandPanel';
+
+// Lazy-loaded views (code splitting)
+const OrgChart = lazy(() => import('./components/Organization').then(m => ({ default: m.OrgChart })));
+const TaskDependencyTree = lazy(() => import('./components/TaskDependencyTree').then(m => ({ default: m.TaskDependencyTree })));
+const HistoryView = lazy(() => import('./components/HistoryView').then(m => ({ default: m.HistoryView })));
+const WorkflowManager = lazy(() => import('./components/Workflow/WorkflowManager').then(m => ({ default: m.WorkflowManager })));
+const AnalyticsDashboard = lazy(() => import('./components/Analytics').then(m => ({ default: m.AnalyticsDashboard })));
+const ExportImportPanel = lazy(() => import('./components/ExportImport').then(m => ({ default: m.ExportImportPanel })));
+const NotificationSettingsPanel = lazy(() => import('./components/NotificationSettings').then(m => ({ default: m.NotificationSettingsPanel })));
+const CoordinationPanel = lazy(() => import('./components/Coordination').then(m => ({ default: m.CoordinationPanel })));
+const ClaudeHooksPanel = lazy(() => import('./components/ClaudeHooks').then(m => ({ default: m.ClaudeHooksPanel })));
+const ThemePanel = lazy(() => import('./components/Theme').then(m => ({ default: m.ThemePanel })));
+const PluginManager = lazy(() => import('./components/Plugin/PluginManager').then(m => ({ default: m.PluginManager })));
+const ProfilerPanel = lazy(() => import('./components/Profiler/ProfilerPanel').then(m => ({ default: m.ProfilerPanel })));
+const CollaborationPanel = lazy(() => import('./components/Collaboration/CollaborationPanel').then(m => ({ default: m.CollaborationPanel })));
+const VoiceCommandPanel = lazy(() => import('./components/Voice/VoiceCommandPanel').then(m => ({ default: m.VoiceCommandPanel })));
 import { Task, TaskStatus, Agent } from '../shared/types';
 import { useTaskStore } from './stores/taskStore';
 import { useAgentStore } from './stores/agentStore';
@@ -289,57 +292,61 @@ function App(): React.ReactElement {
         );
       case 'organization':
         return (
-          <OrgChart
-            onAgentClick={handleAgentClick}
-          />
+          <Suspense fallback={<ViewLoadingFallback />}>
+            <OrgChart
+              onAgentClick={handleAgentClick}
+            />
+          </Suspense>
         );
       case 'dependencies':
         return (
-          <div className="h-full overflow-auto p-6">
-            {selectedTaskForDependencies ? (
-              <div>
-                <div className="mb-4 flex items-center gap-2">
-                  <button
-                    onClick={() => setSelectedTaskForDependencies(null)}
-                    className="text-hive-accent hover:text-hive-accent/80 text-sm"
-                  >
-                    ← 戻る
-                  </button>
-                </div>
-                <TaskDependencyTree taskId={selectedTaskForDependencies} />
-              </div>
-            ) : (
-              <div>
-                <h2 className="text-2xl font-bold mb-6">タスク依存関係管理</h2>
-                <p className="text-hive-muted mb-6">タスクを選択して依存関係を表示・編集します</p>
-                <div className="grid gap-3">
-                  {tasks.map(task => (
+          <Suspense fallback={<ViewLoadingFallback />}>
+            <div className="h-full overflow-auto p-6">
+              {selectedTaskForDependencies ? (
+                <div>
+                  <div className="mb-4 flex items-center gap-2">
                     <button
-                      key={task.id}
-                      onClick={() => setSelectedTaskForDependencies(task.id)}
-                      className="p-4 bg-hive-surface border border-hive-border rounded-lg hover:border-hive-accent transition-colors text-left"
+                      onClick={() => setSelectedTaskForDependencies(null)}
+                      className="text-hive-accent hover:text-hive-accent/80 text-sm"
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-white">{task.title}</div>
-                          <div className="text-sm text-hive-muted mt-1">
-                            Status: {task.status} | Priority: {task.priority}
+                      ← 戻る
+                    </button>
+                  </div>
+                  <TaskDependencyTree taskId={selectedTaskForDependencies} />
+                </div>
+              ) : (
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">タスク依存関係管理</h2>
+                  <p className="text-hive-muted mb-6">タスクを選択して依存関係を表示・編集します</p>
+                  <div className="grid gap-3">
+                    {tasks.map(task => (
+                      <button
+                        key={task.id}
+                        onClick={() => setSelectedTaskForDependencies(task.id)}
+                        className="p-4 bg-hive-surface border border-hive-border rounded-lg hover:border-hive-accent transition-colors text-left"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-white">{task.title}</div>
+                            <div className="text-sm text-hive-muted mt-1">
+                              Status: {task.status} | Priority: {task.priority}
+                            </div>
+                          </div>
+                          <div className="text-hive-muted">
+                            {task.dependsOn && task.dependsOn.length > 0 && (
+                              <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs">
+                                {task.dependsOn.length} 依存
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="text-hive-muted">
-                          {task.dependsOn && task.dependsOn.length > 0 && (
-                            <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs">
-                              {task.dependsOn.length} 依存
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </Suspense>
         );
       case 'execution':
         return (
@@ -355,29 +362,29 @@ function App(): React.ReactElement {
           </div>
         );
       case 'history':
-        return <HistoryView />;
+        return <Suspense fallback={<ViewLoadingFallback />}><HistoryView /></Suspense>;
       case 'workflow':
-        return <WorkflowManager />;
+        return <Suspense fallback={<ViewLoadingFallback />}><WorkflowManager /></Suspense>;
       case 'analytics':
-        return <AnalyticsDashboard />;
+        return <Suspense fallback={<ViewLoadingFallback />}><AnalyticsDashboard /></Suspense>;
       case 'export-import':
-        return <ExportImportPanel />;
+        return <Suspense fallback={<ViewLoadingFallback />}><ExportImportPanel /></Suspense>;
       case 'notifications':
-        return <NotificationSettingsPanel />;
+        return <Suspense fallback={<ViewLoadingFallback />}><NotificationSettingsPanel /></Suspense>;
       case 'coordination':
-        return <CoordinationPanel />;
+        return <Suspense fallback={<ViewLoadingFallback />}><CoordinationPanel /></Suspense>;
       case 'claude-hooks':
-        return <ClaudeHooksPanel />;
+        return <Suspense fallback={<ViewLoadingFallback />}><ClaudeHooksPanel /></Suspense>;
       case 'plugins':
-        return <PluginManager />;
+        return <Suspense fallback={<ViewLoadingFallback />}><PluginManager /></Suspense>;
       case 'profiler':
-        return <ProfilerPanel />;
+        return <Suspense fallback={<ViewLoadingFallback />}><ProfilerPanel /></Suspense>;
       case 'collaboration':
-        return <CollaborationPanel />;
+        return <Suspense fallback={<ViewLoadingFallback />}><CollaborationPanel /></Suspense>;
       case 'voice':
-        return <VoiceCommandPanel onViewSwitch={(v) => setCurrentView(v as ViewType)} />;
+        return <Suspense fallback={<ViewLoadingFallback />}><VoiceCommandPanel onViewSwitch={(v) => setCurrentView(v as ViewType)} /></Suspense>;
       case 'theme':
-        return <ThemePanel />;
+        return <Suspense fallback={<ViewLoadingFallback />}><ThemePanel /></Suspense>;
       case 'settings':
         // Open settings panel instead of inline view
         if (!isSettingsPanelOpen) {
