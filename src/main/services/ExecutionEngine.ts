@@ -54,9 +54,18 @@ class ExecutionEngine {
       // Send execution started event to renderer
       this.notifyRenderer('execution:started', { executionId, taskId: request.taskId });
 
-      // Execute command
-      // Add newline to execute the command
-      ptyService.write(sessionId, `cd "${workingDir}" && ${request.command}\n`);
+      // Security: Validate workingDirectory and command to prevent injection
+      const SHELL_META = /[;&|`$(){}!<>]/;
+      if (SHELL_META.test(workingDir)) {
+        throw new Error('Invalid working directory: contains shell metacharacters');
+      }
+      if (!request.command || typeof request.command !== 'string') {
+        throw new Error('Invalid command');
+      }
+
+      // Execute command with safe quoting
+      const escapedDir = workingDir.replace(/'/g, "'\\''");
+      ptyService.write(sessionId, `cd '${escapedDir}' && ${request.command}\n`);
 
       // Monitor PTY exit
       this.monitorExecution(executionId, sessionId);

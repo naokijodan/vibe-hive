@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { safeStorage } from 'electron';
 
 export interface GitSettings {
   userName: string;
@@ -65,18 +66,20 @@ const DEFAULT_SETTINGS: Settings = {
 
 export class SettingsService {
   private settingsPath: string;
+  private apiKeyPath: string;
   private settings: Settings;
 
   constructor() {
     const homeDir = os.homedir();
     const vibeHiveDir = path.join(homeDir, '.vibe-hive');
-    
+
     // Ensure directory exists
     if (!fs.existsSync(vibeHiveDir)) {
       fs.mkdirSync(vibeHiveDir, { recursive: true });
     }
 
     this.settingsPath = path.join(vibeHiveDir, 'settings.json');
+    this.apiKeyPath = path.join(vibeHiveDir, '.api-key.enc');
     this.settings = this.loadSettings();
   }
 
@@ -85,9 +88,9 @@ export class SettingsService {
       if (fs.existsSync(this.settingsPath)) {
         const data = fs.readFileSync(this.settingsPath, 'utf-8');
         const parsed = JSON.parse(data);
-        
+
         // Merge with defaults to handle new settings
-        return {
+        const settings: Settings = {
           git: { ...DEFAULT_SETTINGS.git, ...parsed.git },
           app: { ...DEFAULT_SETTINGS.app, ...parsed.app },
           agent: {
@@ -99,6 +102,18 @@ export class SettingsService {
             },
           },
         };
+
+        // Remove plaintext API key from settings file (migrate to safeStorage)
+        if (parsed.agent?.claudeApiKey) {
+          this.saveApiKey(parsed.agent.claudeApiKey);
+          // Remove from JSON file
+          delete parsed.agent.claudeApiKey;
+          fs.writeFileSync(this.settingsPath, JSON.stringify(parsed, null, 2), 'utf-8');
+        }
+
+        // Load API key from safeStorage
+        settings.agent.claudeApiKey = this.loadApiKey() || undefined;
+        return settings;
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -109,9 +124,16 @@ export class SettingsService {
 
   private saveSettings(): boolean {
     try {
+      // Save settings WITHOUT the API key (stored separately in safeStorage)
+      const settingsToSave = {
+        ...this.settings,
+        agent: { ...this.settings.agent },
+      };
+      delete settingsToSave.agent.claudeApiKey;
+
       fs.writeFileSync(
         this.settingsPath,
-        JSON.stringify(this.settings, null, 2),
+        JSON.stringify(settingsToSave, null, 2),
         'utf-8'
       );
       return true;
@@ -121,11 +143,50 @@ export class SettingsService {
     }
   }
 
+  private saveApiKey(apiKey: string): void {
+    try {
+      if (safeStorage.isEncryptionAvailable()) {
+        const encrypted = safeStorage.encryptString(apiKey);
+        fs.writeFileSync(this.apiKeyPath, encrypted);
+      } else {
+        // Fallback: save as-is (better than not saving at all)
+        fs.writeFileSync(this.apiKeyPath, apiKey, 'utf-8');
+      }
+    } catch (error) {
+      console.error('Failed to save API key:', error);
+    }
+  }
+
+  private loadApiKey(): string | null {
+    try {
+      if (!fs.existsSync(this.apiKeyPath)) return null;
+      const data = fs.readFileSync(this.apiKeyPath);
+      if (safeStorage.isEncryptionAvailable()) {
+        return safeStorage.decryptString(data);
+      }
+      // Fallback: read as plain text
+      return data.toString('utf-8');
+    } catch (error) {
+      console.error('Failed to load API key:', error);
+      return null;
+    }
+  }
+
   getSettings(): Settings {
     return this.settings;
   }
 
   updateAgentSettings(agentSettings: Partial<AgentSettings>): Settings {
+    // Handle API key separately via safeStorage
+    if (agentSettings.claudeApiKey !== undefined) {
+      if (agentSettings.claudeApiKey) {
+        this.saveApiKey(agentSettings.claudeApiKey);
+      } else {
+        // Empty string = delete key
+        try { fs.unlinkSync(this.apiKeyPath); } catch { /* ignore */ }
+      }
+    }
+
     this.settings.agent = {
       ...this.settings.agent,
       ...agentSettings,
@@ -135,10 +196,21 @@ export class SettingsService {
       },
     };
     this.saveSettings();
+    // Re-attach API key to in-memory settings
+    this.settings.agent.claudeApiKey = this.loadApiKey() || undefined;
     return this.settings;
   }
 
   updateSettings(updates: Partial<Settings>): Settings {
+    // Handle API key separately
+    if (updates.agent?.claudeApiKey !== undefined) {
+      if (updates.agent.claudeApiKey) {
+        this.saveApiKey(updates.agent.claudeApiKey);
+      } else {
+        try { fs.unlinkSync(this.apiKeyPath); } catch { /* ignore */ }
+      }
+    }
+
     this.settings = {
       git: { ...this.settings.git, ...(updates.git || {}) },
       app: { ...this.settings.app, ...(updates.app || {}) },
@@ -153,6 +225,7 @@ export class SettingsService {
     };
 
     this.saveSettings();
+    this.settings.agent.claudeApiKey = this.loadApiKey() || undefined;
     return this.settings;
   }
 
