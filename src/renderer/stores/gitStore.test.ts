@@ -139,6 +139,14 @@ describe('gitStore', () => {
       mockGit.push.mockResolvedValue(false);
 
       expect(await useGitStore.getState().push()).toBe(false);
+      expect(useGitStore.getState().error).toBe('Failed to push');
+    });
+
+    it('returns false on error', async () => {
+      mockGit.push.mockRejectedValue(new Error('push fail'));
+
+      expect(await useGitStore.getState().push()).toBe(false);
+      expect(useGitStore.getState().error).toBe('push fail');
     });
   });
 
@@ -148,6 +156,13 @@ describe('gitStore', () => {
       mockGit.status.mockResolvedValue(makeMockStatus());
 
       expect(await useGitStore.getState().pull()).toBe(true);
+    });
+
+    it('returns false on non-success', async () => {
+      mockGit.pull.mockResolvedValue(false);
+
+      expect(await useGitStore.getState().pull()).toBe(false);
+      expect(useGitStore.getState().error).toBe('Failed to pull');
     });
 
     it('returns false on error', async () => {

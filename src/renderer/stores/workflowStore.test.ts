@@ -211,6 +211,23 @@ describe('workflowStore', () => {
     });
   });
 
+  describe('saveCurrentWorkflow - error', () => {
+    it('sets error on save failure', async () => {
+      const wf = makeMockWorkflow();
+      useWorkflowStore.setState({
+        currentWorkflow: wf as any,
+        workflows: [wf] as any,
+        nodes: [{ id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: {} }] as any,
+        edges: [],
+      });
+      mockWorkflow.update.mockRejectedValue(new Error('save fail'));
+
+      await useWorkflowStore.getState().saveCurrentWorkflow();
+
+      expect(useWorkflowStore.getState().error).toBe('Failed to update workflow');
+    });
+  });
+
   describe('executeWorkflow', () => {
     it('executes workflow', async () => {
       const result = { id: 1, status: 'completed' };
@@ -239,6 +256,35 @@ describe('workflowStore', () => {
       await useWorkflowStore.getState().cancelExecution(1);
 
       expect(useWorkflowStore.getState().isExecuting).toBe(false);
+    });
+  });
+
+  describe('cancelExecution - error', () => {
+    it('sets error on cancel failure', async () => {
+      mockWorkflow.cancel.mockRejectedValue(new Error('cancel fail'));
+
+      await useWorkflowStore.getState().cancelExecution(1);
+
+      expect(useWorkflowStore.getState().error).toBe('Failed to cancel execution');
+    });
+  });
+
+  describe('loadExecution', () => {
+    it('loads execution by id', async () => {
+      const exec = { id: 1, status: 'completed' };
+      mockWorkflow.getExecution.mockResolvedValue(exec);
+
+      await useWorkflowStore.getState().loadExecution(1);
+
+      expect(useWorkflowStore.getState().currentExecution).toEqual(exec);
+    });
+
+    it('sets error on failure', async () => {
+      mockWorkflow.getExecution.mockRejectedValue(new Error('fail'));
+
+      await useWorkflowStore.getState().loadExecution(1);
+
+      expect(useWorkflowStore.getState().error).toBe('Failed to load execution');
     });
   });
 
