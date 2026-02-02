@@ -64,6 +64,23 @@ const mapAgentStatusToTabStatus = (agentStatus: Agent['status']): AgentTab['stat
 };
 
 function App(): React.ReactElement {
+  // Suppress xterm internal Viewport._innerRefresh error
+  // xterm accesses _renderService.dimensions before renderer is ready
+  // during layout changes (drag-and-drop, mount/unmount). This is an xterm bug.
+  useEffect(() => {
+    const handler = (event: ErrorEvent) => {
+      if (
+        event.message?.includes("Cannot read properties of undefined (reading 'dimensions')") &&
+        event.filename?.includes('xterm')
+      ) {
+        event.preventDefault();
+        return true;
+      }
+    };
+    window.addEventListener('error', handler);
+    return () => window.removeEventListener('error', handler);
+  }, []);
+
   const { tasks, loadTasks, updateTaskStatus } = useTaskStore();
   const { agents, loadAgents } = useAgentStore();
   const { sessions, activeSessionId, loadSessions, loadActiveSession, switchSession } = useSessionStore();

@@ -273,11 +273,12 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = memo(({
       </div>
 
       {/* Terminal Container */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden" style={{ minHeight: '1px', minWidth: '1px' }}>
         <div
           ref={containerRef}
           className="absolute inset-0 p-1"
           onClick={handleClick}
+          style={{ minHeight: '1px', minWidth: '1px' }}
         />
         {/* Loading Overlay */}
         {isLoading && !isReadOnly && (
