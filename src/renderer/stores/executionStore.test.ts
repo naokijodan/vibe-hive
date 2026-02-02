@@ -79,6 +79,25 @@ describe('executionStore', () => {
     });
   });
 
+  describe('loadRunningExecutions - error', () => {
+    it('handles error gracefully', async () => {
+      mockExecution.getRunning.mockRejectedValue(new Error('fail'));
+
+      await useExecutionStore.getState().loadRunningExecutions();
+      // Should not throw, running stays empty
+      expect(useExecutionStore.getState().runningExecutions).toEqual([]);
+    });
+  });
+
+  describe('loadExecutionsByTask - error', () => {
+    it('sets error on failure', async () => {
+      mockExecution.getByTask.mockRejectedValue(new Error('fail'));
+
+      await useExecutionStore.getState().loadExecutionsByTask('task-1');
+      expect(useExecutionStore.getState().error).toBe('fail');
+    });
+  });
+
   describe('startExecution', () => {
     it('starts execution and reloads running', async () => {
       mockExecution.start.mockResolvedValue({ executionId: 'exec-new', sessionId: 'sess-new' });
