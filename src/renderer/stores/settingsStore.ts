@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toErrorMessage } from '../../shared/utils/errorHandler';
 import ipcBridge from '../bridge/ipcBridge';
 
 export interface GitSettings {
