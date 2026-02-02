@@ -227,6 +227,60 @@ describe('organizationStore', () => {
     });
   });
 
+  describe('orchestrateNode', () => {
+    it('calls orchestrate and returns result', async () => {
+      const result = { nodeId: 'n1', status: 'planning' };
+      mockOrchestration.orchestrate.mockResolvedValue(result);
+
+      const res = await useOrganizationStore.getState().orchestrateNode('n1', 'build feature');
+
+      expect(mockOrchestration.orchestrate).toHaveBeenCalledWith({
+        nodeId: 'n1',
+        sessionId: 'default-session',
+        goal: 'build feature',
+      });
+      expect(res).toEqual(result);
+    });
+
+    it('sets error on failure', async () => {
+      mockOrchestration.orchestrate.mockRejectedValue(new Error('fail'));
+
+      await expect(
+        useOrganizationStore.getState().orchestrateNode('n1', 'x')
+      ).rejects.toThrow();
+      expect(useOrganizationStore.getState().error).toBeTruthy();
+    });
+  });
+
+  describe('approveOrchestration', () => {
+    it('calls approve with approved=true', () => {
+      useOrganizationStore.getState().approveOrchestration('n1');
+
+      expect(mockOrchestration.approve).toHaveBeenCalledWith({ nodeId: 'n1', approved: true });
+    });
+  });
+
+  describe('rejectOrchestration', () => {
+    it('calls approve with approved=false and feedback', () => {
+      useOrganizationStore.getState().rejectOrchestration('n1', 'needs changes');
+
+      expect(mockOrchestration.approve).toHaveBeenCalledWith({
+        nodeId: 'n1',
+        approved: false,
+        feedback: 'needs changes',
+      });
+    });
+  });
+
+  describe('updateOrchestrationState', () => {
+    it('updates orchestration state map', () => {
+      const state = { nodeId: 'n1', status: 'approved' };
+      useOrganizationStore.getState().updateOrchestrationState(state as any);
+
+      expect(useOrganizationStore.getState().orchestrationStates.get('n1')).toEqual(state);
+    });
+  });
+
   describe('updateNodeExecution', () => {
     it('updates execution map', () => {
       const execution = { nodeId: 'n1', status: 'running' };
