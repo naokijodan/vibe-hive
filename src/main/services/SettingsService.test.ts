@@ -102,27 +102,25 @@ describe('SettingsService', () => {
 
   it('updateSettings merges all sections', () => {
     const service = new SettingsService();
-    const before = service.getSettings();
-    const prevFontSize = before.app.terminalFontSize;
     const updated = service.updateSettings({
       app: { theme: 'light' } as any,
       git: { userName: 'new-user' } as any,
     });
     expect(updated.app.theme).toBe('light');
     expect(updated.git.userName).toBe('new-user');
-    // Non-updated fields preserved
-    expect(updated.app.terminalFontSize).toBe(prevFontSize);
+    // Other defaults preserved
+    expect(updated.app.terminalFontSize).toBe(14);
   });
 
-  it('resetSettings writes settings file', () => {
+  it('resetSettings restores defaults via deep clone', () => {
     const service = new SettingsService();
-    service.updateAppSettings({ terminalFontSize: 24 });
-    service.resetSettings();
+    service.updateAppSettings({ terminalFontSize: 24, theme: 'light' });
+    const reset = service.resetSettings();
+    expect(reset.app.terminalFontSize).toBe(14);
+    expect(reset.app.theme).toBe('dark');
     // Verify settings file was rewritten
     const settingsPath = path.join(tmpDir, '.vibe-hive', 'settings.json');
     expect(fs.existsSync(settingsPath)).toBe(true);
-    // BUG: DEFAULT_SETTINGS is mutated via direct reference assignment in resetSettings.
-    // A deep clone should be used instead. This test documents the current behavior.
   });
 
   it('getSettingsPath returns correct path', () => {
@@ -138,11 +136,9 @@ describe('SettingsService', () => {
 
     const service = new SettingsService();
     const settings = service.getSettings();
-    // Falls back to DEFAULT_SETTINGS (note: may be mutated by prior tests due to reference bug)
-    expect(settings).toBeDefined();
-    expect(settings.app).toBeDefined();
-    expect(settings.agent).toBeDefined();
-    expect(settings.git).toBeDefined();
+    // Falls back to defaults
+    expect(settings.app.theme).toBe('dark');
+    expect(settings.agent.defaultAgent).toBe('claude-code');
   });
 
   it('migrates plaintext API key to safeStorage', () => {

@@ -119,7 +119,7 @@ export class SettingsService {
       console.error('Failed to load settings:', error);
     }
 
-    return DEFAULT_SETTINGS;
+    return structuredClone(DEFAULT_SETTINGS);
   }
 
   private saveSettings(): boolean {
@@ -242,7 +242,7 @@ export class SettingsService {
   }
 
   resetSettings(): Settings {
-    this.settings = DEFAULT_SETTINGS;
+    this.settings = structuredClone(DEFAULT_SETTINGS);
     this.saveSettings();
     return this.settings;
   }

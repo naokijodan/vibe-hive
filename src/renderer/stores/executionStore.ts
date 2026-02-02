@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { ExecutionRecord, StartExecutionRequest } from '../../shared/types/execution';
+import { toErrorMessage } from '../../shared/utils/errorHandler';
 import ipcBridge from '../bridge/ipcBridge';
 
 interface ExecutionState {

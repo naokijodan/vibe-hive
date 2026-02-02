@@ -24,11 +24,6 @@ vi.mock('../../shared/utils/errorHandler', () => ({
     err instanceof Error ? err.message : fallback,
 }));
 
-// executionStore.ts uses toErrorMessage without importing it — likely a bug.
-// Provide it globally so tests can exercise error paths.
-import { toErrorMessage } from '../../shared/utils/errorHandler';
-(globalThis as any).toErrorMessage = toErrorMessage;
-
 import { useExecutionStore } from './executionStore';
 
 const makeMockExecution = (overrides = {}) => ({

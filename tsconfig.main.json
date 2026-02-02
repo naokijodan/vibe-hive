@@ -21,5 +21,5 @@
     "sourceMap": true
   },
   "include": ["src/main/**/*", "src/shared/**/*"],
-  "exclude": ["node_modules", "src/renderer/**/*"]
+  "exclude": ["node_modules", "src/renderer/**/*", "src/**/*.test.ts"]
 }
