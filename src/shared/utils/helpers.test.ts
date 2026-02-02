@@ -2,16 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { generateId, formatDate, parseDate, delay, isDefined } from './helpers';
 
 describe('generateId', () => {
-  it('returns a string', () => {
-    expect(typeof generateId()).toBe('string');
-  });
-
-  it('contains a timestamp and random part separated by hyphen', () => {
+  it('returns a string with timestamp and random part', () => {
     const id = generateId();
-    const parts = id.split('-');
-    expect(parts.length).toBe(2);
-    expect(Number(parts[0])).toBeGreaterThan(0);
-    expect(parts[1].length).toBeGreaterThan(0);
+    expect(id).toMatch(/^\d+-[a-z0-9]+$/);
   });
 
   it('generates unique IDs', () => {
@@ -22,57 +15,50 @@ describe('generateId', () => {
 
 describe('formatDate', () => {
   it('returns ISO string', () => {
-    const date = new Date('2026-01-15T10:30:00.000Z');
-    expect(formatDate(date)).toBe('2026-01-15T10:30:00.000Z');
+    const date = new Date('2026-01-01T00:00:00.000Z');
+    expect(formatDate(date)).toBe('2026-01-01T00:00:00.000Z');
   });
 });
 
 describe('parseDate', () => {
   it('parses ISO string to Date', () => {
-    const result = parseDate('2026-01-15T10:30:00.000Z');
-    expect(result).toBeInstanceOf(Date);
-    expect(result.getFullYear()).toBe(2026);
+    const date = parseDate('2026-01-01T00:00:00.000Z');
+    expect(date.getFullYear()).toBe(2026);
+    expect(date.getMonth()).toBe(0);
   });
 
   it('roundtrips with formatDate', () => {
-    const original = new Date('2026-06-01T00:00:00.000Z');
-    const result = parseDate(formatDate(original));
-    expect(result.getTime()).toBe(original.getTime());
+    const original = new Date('2026-06-15T12:30:00.000Z');
+    const roundtripped = parseDate(formatDate(original));
+    expect(roundtripped.getTime()).toBe(original.getTime());
   });
 });
 
 describe('delay', () => {
-  it('resolves after specified time', async () => {
+  it('resolves after specified ms', async () => {
     vi.useFakeTimers();
-    const promise = delay(1000);
+    const p = delay(1000);
     vi.advanceTimersByTime(1000);
-    await expect(promise).resolves.toBeUndefined();
+    await expect(p).resolves.toBeUndefined();
     vi.useRealTimers();
   });
 });
 
 describe('isDefined', () => {
-  it('returns false for null', () => {
-    expect(isDefined(null)).toBe(false);
-  });
-
-  it('returns false for undefined', () => {
-    expect(isDefined(undefined)).toBe(false);
-  });
-
-  it('returns true for 0', () => {
+  it('returns true for defined values', () => {
     expect(isDefined(0)).toBe(true);
-  });
-
-  it('returns true for empty string', () => {
     expect(isDefined('')).toBe(true);
-  });
-
-  it('returns true for false', () => {
     expect(isDefined(false)).toBe(true);
   });
 
-  it('returns true for objects', () => {
-    expect(isDefined({ key: 'value' })).toBe(true);
+  it('returns false for null and undefined', () => {
+    expect(isDefined(null)).toBe(false);
+    expect(isDefined(undefined)).toBe(false);
+  });
+
+  it('works as array filter', () => {
+    const arr = [1, null, 2, undefined, 3];
+    const filtered = arr.filter(isDefined);
+    expect(filtered).toEqual([1, 2, 3]);
   });
 });
