@@ -49,4 +49,31 @@ describe('ExecutionPanel', () => {
     expect(screen.getByText('Build Task')).toBeDefined();
     expect(screen.getByText('Deploy Task')).toBeDefined();
   });
+
+  it('shows running count badge', () => {
+    render(<ExecutionPanel />);
+    expect(screen.getByText('1 実行中')).toBeDefined();
+  });
+
+  it('shows header text', () => {
+    render(<ExecutionPanel />);
+    expect(screen.getByText('実行管理')).toBeDefined();
+  });
+
+  it('shows status for each execution', () => {
+    render(<ExecutionPanel />);
+    expect(screen.getByText('running')).toBeDefined();
+    expect(screen.getByText('completed')).toBeDefined();
+    expect(screen.getByText('failed')).toBeDefined();
+  });
+
+  it('shows cancel button for running executions', () => {
+    render(<ExecutionPanel />);
+    expect(screen.getByText('キャンセル')).toBeDefined();
+  });
+
+  it('shows refresh button', () => {
+    render(<ExecutionPanel />);
+    expect(screen.getByText('🔄 更新')).toBeDefined();
+  });
 });

@@ -37,4 +37,19 @@ describe('ClaudeHooksPanel', () => {
       expect(screen.getByText(/echo test/)).toBeDefined();
     });
   });
+
+  it('shows hook event type', async () => {
+    render(<ClaudeHooksPanel />);
+    await waitFor(() => {
+      expect(screen.getByText(/PreToolUse/)).toBeDefined();
+    });
+  });
+
+  it('shows add hook button', async () => {
+    render(<ClaudeHooksPanel />);
+    await waitFor(() => {
+      const addBtn = screen.getByText(/追加|Add/i);
+      expect(addBtn).toBeDefined();
+    });
+  });
 });

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { CoordinationPanel } from './CoordinationPanel';
 
 vi.mock('../../bridge/ipcBridge', () => ({
@@ -48,5 +48,25 @@ describe('CoordinationPanel', () => {
   it('renders panel header', () => {
     render(<CoordinationPanel />);
     expect(screen.getByText('Agent Coordination')).toBeDefined();
+  });
+
+  it('shows messages tab by default', () => {
+    render(<CoordinationPanel />);
+    const msgs = screen.getAllByText(/メッセージ/);
+    expect(msgs.length).toBeGreaterThan(0);
+  });
+
+  it('switches to delegations tab', () => {
+    render(<CoordinationPanel />);
+    const delegTabs = screen.getAllByText(/タスク委譲/);
+    fireEvent.click(delegTabs[0]);
+    expect(delegTabs.length).toBeGreaterThan(0);
+  });
+
+  it('switches to send tab', () => {
+    render(<CoordinationPanel />);
+    const sendTabs = screen.getAllByText(/送信/);
+    fireEvent.click(sendTabs[0]);
+    expect(sendTabs.length).toBeGreaterThan(0);
   });
 });

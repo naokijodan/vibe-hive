@@ -40,4 +40,19 @@ describe('AIChatPanel', () => {
     render(<AIChatPanel />);
     expect(screen.getByPlaceholderText(/メッセージを入力/)).toBeDefined();
   });
+
+  it('renders header with title', () => {
+    render(<AIChatPanel />);
+    expect(screen.getByText('AI アシスタント')).toBeDefined();
+  });
+
+  it('renders close button', () => {
+    render(<AIChatPanel />);
+    expect(screen.getByText('✕')).toBeDefined();
+  });
+
+  it('renders send button', () => {
+    render(<AIChatPanel />);
+    expect(screen.getByText('送信')).toBeDefined();
+  });
 });

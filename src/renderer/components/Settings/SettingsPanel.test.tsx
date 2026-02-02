@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { SettingsPanel } from './SettingsPanel';
 
 vi.mock('../../stores/settingsStore', () => ({
@@ -44,5 +44,35 @@ describe('SettingsPanel', () => {
   it('renders GitSettings by default', () => {
     render(<SettingsPanel isOpen={true} onClose={vi.fn()} />);
     expect(screen.getByText('GitSettings')).toBeDefined();
+  });
+
+  it('switches to App tab', () => {
+    render(<SettingsPanel isOpen={true} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('App'));
+    expect(screen.getByText('AppSettings')).toBeDefined();
+  });
+
+  it('switches to Agent tab', () => {
+    render(<SettingsPanel isOpen={true} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('AI Models'));
+    expect(screen.getByText('AgentModelSettings')).toBeDefined();
+  });
+
+  it('switches to Webhook tab', () => {
+    render(<SettingsPanel isOpen={true} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('Webhook'));
+    expect(screen.getByText('WebhookSettings')).toBeDefined();
+  });
+
+  it('switches to Notification tab', () => {
+    render(<SettingsPanel isOpen={true} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('Notification'));
+    expect(screen.getByText('NotificationSettings')).toBeDefined();
+  });
+
+  it('switches to About tab', () => {
+    render(<SettingsPanel isOpen={true} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('About'));
+    expect(screen.getByText('Settings')).toBeDefined();
   });
 });
