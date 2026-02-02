@@ -26,6 +26,16 @@ import { getDatabase, closeDatabase } from './services/db';
 import { getWebhookServer } from './services/WebhookServer';
 import { getWorkflowScheduler } from './services/WorkflowScheduler';
 
+// Prevent uncaught exceptions from showing error dialogs and crashing the app.
+// Non-critical errors (e.g., SQLite FK constraint in log persistence) should not
+// bring down the main process.
+process.on('uncaughtException', (error) => {
+  console.error('[Main] Uncaught exception:', error.message);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Main] Unhandled rejection:', reason);
+});
+
 let mainWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
