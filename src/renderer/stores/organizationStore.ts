@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toErrorMessage } from '../../shared/utils/errorHandler';
 import type { Organization, OrgNode } from '../../shared/types/organization';
 import type { NodeExecution, ExecuteNodeResult, OrchestrationState } from '../../shared/types/orchestration';
 import ipcBridge from '../bridge/ipcBridge';
