@@ -13,6 +13,10 @@ import { AgentNode } from './AgentNode';
 import { TriggerNode } from './TriggerNode';
 import { DelayNode } from './DelayNode';
 import { TaskNode } from './TaskNode';
+import { ConditionalNode } from './ConditionalNode';
+import { LoopNode } from './LoopNode';
+import { MergeNode } from './MergeNode';
+import { NotificationNode } from './NotificationNode';
 
 const baseNodeProps = {
   id: 'n1',
@@ -104,5 +108,85 @@ describe('TaskNode', () => {
   it('shows task ID when provided', () => {
     render(<TaskNode {...baseNodeProps} data={{ label: 'Build', taskId: 'task-123' } as any} />);
     expect(screen.getByText('Task ID: task-123')).toBeDefined();
+  });
+});
+
+describe('ConditionalNode', () => {
+  it('renders label', () => {
+    render(<ConditionalNode {...baseNodeProps} data={{ label: 'Check Status' } as any} />);
+    expect(screen.getByText('Check Status')).toBeDefined();
+    expect(screen.getByText('Conditional')).toBeDefined();
+  });
+
+  it('shows True/False outputs', () => {
+    render(<ConditionalNode {...baseNodeProps} data={{ label: 'If' } as any} />);
+    expect(screen.getByText('True')).toBeDefined();
+    expect(screen.getByText('False')).toBeDefined();
+  });
+
+  it('shows condition when provided', () => {
+    render(<ConditionalNode {...baseNodeProps} data={{ label: 'If', condition: { field: 'status', operator: '==', value: 'done' } } as any} />);
+    expect(screen.getByText('status == done')).toBeDefined();
+  });
+});
+
+describe('LoopNode', () => {
+  it('renders label and default type', () => {
+    render(<LoopNode {...baseNodeProps} data={{ label: 'Iterate' } as any} />);
+    expect(screen.getByText('Iterate')).toBeDefined();
+    expect(screen.getByText('For Each')).toBeDefined();
+  });
+
+  it('shows count type', () => {
+    render(<LoopNode {...baseNodeProps} data={{ label: 'L', loopConfig: { type: 'count', count: 5 } } as any} />);
+    expect(screen.getByText('Count')).toBeDefined();
+    expect(screen.getByText('5 times')).toBeDefined();
+  });
+
+  it('shows while type', () => {
+    render(<LoopNode {...baseNodeProps} data={{ label: 'L', loopConfig: { type: 'while' } } as any} />);
+    expect(screen.getByText('While')).toBeDefined();
+  });
+
+  it('shows max iterations', () => {
+    render(<LoopNode {...baseNodeProps} data={{ label: 'L', loopConfig: { type: 'forEach', maxIterations: 50 } } as any} />);
+    expect(screen.getByText('Max iterations: 50')).toBeDefined();
+  });
+});
+
+describe('MergeNode', () => {
+  it('renders label', () => {
+    render(<MergeNode {...baseNodeProps} data={{ label: 'Combine' } as any} />);
+    expect(screen.getByText('Combine')).toBeDefined();
+    expect(screen.getByText('Merge')).toBeDefined();
+  });
+
+  it('shows description', () => {
+    render(<MergeNode {...baseNodeProps} data={{ label: 'M' } as any} />);
+    expect(screen.getByText('Combines multiple inputs')).toBeDefined();
+  });
+});
+
+describe('NotificationNode', () => {
+  it('renders label with default discord type', () => {
+    render(<NotificationNode {...baseNodeProps} data={{ label: 'Notify' } as any} />);
+    expect(screen.getByText('Notify')).toBeDefined();
+    expect(screen.getByText('discord')).toBeDefined();
+  });
+
+  it('renders slack type', () => {
+    render(<NotificationNode {...baseNodeProps} data={{ label: 'N', notificationType: 'slack' } as any} />);
+    expect(screen.getByText('slack')).toBeDefined();
+  });
+
+  it('renders email type', () => {
+    render(<NotificationNode {...baseNodeProps} data={{ label: 'N', notificationType: 'email' } as any} />);
+    expect(screen.getByText('email')).toBeDefined();
+  });
+
+  it('shows title and message from config', () => {
+    render(<NotificationNode {...baseNodeProps} data={{ label: 'N', config: { title: 'Alert', message: 'Something happened' } } as any} />);
+    expect(screen.getByText('Title: Alert')).toBeDefined();
+    expect(screen.getByText(/Something happened/)).toBeDefined();
   });
 });
