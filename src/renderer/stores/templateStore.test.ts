@@ -158,6 +158,81 @@ describe('templateStore', () => {
     });
   });
 
+  describe('incrementUsageCount', () => {
+    it('increments and reloads (no filters)', async () => {
+      mockTaskTemplate.incrementUsage.mockResolvedValue(undefined);
+      mockTaskTemplate.getAll.mockResolvedValue([makeMockTemplate({ usageCount: 1 })]);
+
+      await useTemplateStore.getState().incrementUsageCount('tmpl-1');
+
+      expect(mockTaskTemplate.incrementUsage).toHaveBeenCalledWith('tmpl-1');
+      expect(mockTaskTemplate.getAll).toHaveBeenCalled();
+    });
+
+    it('reloads by category when selectedCategory set', async () => {
+      useTemplateStore.setState({ selectedCategory: 'automation' });
+      mockTaskTemplate.incrementUsage.mockResolvedValue(undefined);
+      mockTaskTemplate.getByCategory.mockResolvedValue([]);
+
+      await useTemplateStore.getState().incrementUsageCount('tmpl-1');
+
+      expect(mockTaskTemplate.getByCategory).toHaveBeenCalledWith('automation');
+    });
+
+    it('reloads by search when searchQuery set', async () => {
+      useTemplateStore.setState({ searchQuery: 'test' });
+      mockTaskTemplate.incrementUsage.mockResolvedValue(undefined);
+      mockTaskTemplate.search.mockResolvedValue([]);
+
+      await useTemplateStore.getState().incrementUsageCount('tmpl-1');
+
+      expect(mockTaskTemplate.search).toHaveBeenCalledWith('test');
+    });
+
+    it('handles error silently', async () => {
+      mockTaskTemplate.incrementUsage.mockRejectedValue(new Error('fail'));
+
+      await useTemplateStore.getState().incrementUsageCount('tmpl-1');
+      // Should not throw
+    });
+  });
+
+  describe('setSelectedCategory', () => {
+    it('sets category and loads by category', async () => {
+      mockTaskTemplate.getByCategory.mockResolvedValue([]);
+
+      useTemplateStore.getState().setSelectedCategory('automation');
+
+      expect(useTemplateStore.getState().selectedCategory).toBe('automation');
+    });
+
+    it('clears category and loads all', async () => {
+      mockTaskTemplate.getAll.mockResolvedValue([]);
+
+      useTemplateStore.getState().setSelectedCategory(null);
+
+      expect(useTemplateStore.getState().selectedCategory).toBeNull();
+    });
+  });
+
+  describe('setSearchQuery', () => {
+    it('sets query and searches', async () => {
+      mockTaskTemplate.search.mockResolvedValue([]);
+
+      useTemplateStore.getState().setSearchQuery('hello');
+
+      expect(useTemplateStore.getState().searchQuery).toBe('hello');
+    });
+
+    it('clears query and loads all', async () => {
+      mockTaskTemplate.getAll.mockResolvedValue([]);
+
+      useTemplateStore.getState().setSearchQuery('');
+
+      expect(useTemplateStore.getState().searchQuery).toBe('');
+    });
+  });
+
   describe('clearFilters', () => {
     it('resets category and search', async () => {
       mockTaskTemplate.getAll.mockResolvedValue([]);

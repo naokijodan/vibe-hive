@@ -160,6 +160,24 @@ describe('workflowTemplateStore', () => {
     });
   });
 
+  describe('setSelectedCategory', () => {
+    it('sets category and loads by category', () => {
+      mockWorkflowTemplate.getByCategory.mockResolvedValue([]);
+
+      useWorkflowTemplateStore.getState().setSelectedCategory('automation' as any);
+
+      expect(useWorkflowTemplateStore.getState().selectedCategory).toBe('automation');
+    });
+
+    it('clears category and loads all', () => {
+      mockWorkflowTemplate.getAll.mockResolvedValue([]);
+
+      useWorkflowTemplateStore.getState().setSelectedCategory(null);
+
+      expect(useWorkflowTemplateStore.getState().selectedCategory).toBeNull();
+    });
+  });
+
   describe('clearFilters', () => {
     it('resets category and reloads', async () => {
       mockWorkflowTemplate.getAll.mockResolvedValue([]);
