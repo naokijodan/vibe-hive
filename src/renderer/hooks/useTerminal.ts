@@ -54,7 +54,13 @@ export function useTerminal({ sessionId, onReady }: UseTerminalOptions) {
     terminal.loadAddon(fitAddon);
 
     terminal.open(terminalRef.current);
-    fitAddon.fit();
+    requestAnimationFrame(() => {
+      try {
+        fitAddon.fit();
+      } catch {
+        // Renderer not yet initialized
+      }
+    });
 
     xtermRef.current = terminal;
     fitAddonRef.current = fitAddon;
@@ -105,7 +111,11 @@ export function useTerminal({ sessionId, onReady }: UseTerminalOptions) {
   // Handle resize
   const handleResize = useCallback(() => {
     if (fitAddonRef.current && xtermRef.current) {
-      fitAddonRef.current.fit();
+      try {
+        fitAddonRef.current.fit();
+      } catch {
+        // Renderer not yet initialized
+      }
     }
   }, []);
 

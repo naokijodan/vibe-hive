@@ -68,7 +68,11 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
 
     // Delay fit to ensure container is sized
     setTimeout(() => {
-      fitAddon.fit();
+      try {
+        fitAddon.fit();
+      } catch {
+        // Renderer not yet initialized
+      }
     }, 100);
 
     terminalRef.current = terminal;
@@ -142,7 +146,11 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
   // Handle resize
   const handleResize = useCallback(() => {
     if (fitAddonRef.current) {
-      fitAddonRef.current.fit();
+      try {
+        fitAddonRef.current.fit();
+      } catch {
+        // Renderer not yet initialized
+      }
     }
   }, []);
 

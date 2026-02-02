@@ -37,14 +37,24 @@ export const ExecutionLog: React.FC<ExecutionLogProps> = ({ execution }) => {
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
     terminal.open(terminalRef.current);
-    fitAddon.fit();
+    requestAnimationFrame(() => {
+      try {
+        fitAddon.fit();
+      } catch {
+        // Renderer not yet initialized
+      }
+    });
 
     xtermRef.current = terminal;
     fitAddonRef.current = fitAddon;
 
     // Handle terminal resize
     const handleResize = () => {
-      fitAddon.fit();
+      try {
+        fitAddon.fit();
+      } catch {
+        // Renderer not yet initialized
+      }
     };
     window.addEventListener('resize', handleResize);
 
