@@ -81,7 +81,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => {
         set({ isLoading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to start execution',
+          error: toErrorMessage(error, 'Failed to start execution'),
           isLoading: false,
         });
         throw error;
@@ -98,7 +98,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => {
         set({ isLoading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to cancel execution',
+          error: toErrorMessage(error, 'Failed to cancel execution'),
           isLoading: false,
         });
         throw error;
@@ -112,7 +112,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => {
         set({ executions, isLoading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to load executions',
+          error: toErrorMessage(error, 'Failed to load executions'),
           isLoading: false,
         });
       }
@@ -134,7 +134,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => {
         set({ executions, isLoading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to load executions',
+          error: toErrorMessage(error, 'Failed to load executions'),
           isLoading: false,
         });
       }

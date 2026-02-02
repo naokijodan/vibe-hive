@@ -91,7 +91,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       }
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to load organization',
+        error: toErrorMessage(error, 'Failed to load organization'),
         isLoading: false,
       });
     }
@@ -104,7 +104,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       set({ organization: org, isLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to update organization',
+        error: toErrorMessage(error, 'Failed to update organization'),
         isLoading: false,
       });
     }
@@ -254,7 +254,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       });
       return result;
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to execute node' });
+      set({ error: toErrorMessage(error, 'Failed to execute node') });
       throw error;
     }
   },
@@ -263,7 +263,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       ipcBridge.orchestration.stop(nodeId);
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to stop node' });
+      set({ error: toErrorMessage(error, 'Failed to stop node') });
     }
   },
 
@@ -297,7 +297,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       });
       return result;
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to orchestrate node' });
+      set({ error: toErrorMessage(error, 'Failed to orchestrate node') });
       throw error;
     }
   },
@@ -306,7 +306,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       ipcBridge.orchestration.approve({ nodeId, approved: true });
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to approve orchestration' });
+      set({ error: toErrorMessage(error, 'Failed to approve orchestration') });
     }
   },
 
@@ -314,7 +314,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       ipcBridge.orchestration.approve({ nodeId, approved: false, feedback });
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to reject orchestration' });
+      set({ error: toErrorMessage(error, 'Failed to reject orchestration') });
     }
   },
 

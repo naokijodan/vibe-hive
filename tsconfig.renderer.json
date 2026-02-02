@@ -10,13 +10,17 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,
+    "outDir": "dist/renderer",
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["src/shared/*"],
       "@renderer/*": ["src/renderer/*"]
-    }
+    },
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true
   },
   "include": ["src/renderer/**/*", "src/shared/**/*"],
   "exclude": ["node_modules"]

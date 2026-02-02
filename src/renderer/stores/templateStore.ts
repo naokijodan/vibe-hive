@@ -45,7 +45,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         set({ templates, isLoading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to load templates',
+          error: toErrorMessage(error, 'Failed to load templates'),
           isLoading: false,
         });
       }
@@ -58,7 +58,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         set({ templates, isLoading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to load templates by category',
+          error: toErrorMessage(error, 'Failed to load templates by category'),
           isLoading: false,
         });
       }
@@ -71,7 +71,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         set({ templates, isLoading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to load popular templates',
+          error: toErrorMessage(error, 'Failed to load popular templates'),
           isLoading: false,
         });
       }
@@ -88,7 +88,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         return template;
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to create template',
+          error: toErrorMessage(error, 'Failed to create template'),
           isLoading: false,
         });
         throw error;
@@ -109,7 +109,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         }
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to update template',
+          error: toErrorMessage(error, 'Failed to update template'),
           isLoading: false,
         });
         throw error;
@@ -127,7 +127,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         }));
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to delete template',
+          error: toErrorMessage(error, 'Failed to delete template'),
           isLoading: false,
         });
         throw error;
@@ -141,7 +141,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         set({ templates, isLoading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : 'Failed to search templates',
+          error: toErrorMessage(error, 'Failed to search templates'),
           isLoading: false,
         });
       }

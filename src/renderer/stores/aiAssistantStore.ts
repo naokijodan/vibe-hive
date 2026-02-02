@@ -67,7 +67,7 @@ export const useAIAssistantStore = create<AIAssistantState>((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'AI応答の取得に失敗しました',
+        error: toErrorMessage(error, 'AI応答の取得に失敗しました'),
       });
     }
   },

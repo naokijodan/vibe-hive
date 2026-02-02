@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { WorkflowNodeData, AgentType, AgentConfig } from '../../../../shared/types/workflow';
+import type { WorkflowNodeData, AgentType, WorkflowWorkflowAgentConfig } from '../../../../shared/types/workflow';
 
 interface AgentNodeSettingsProps {
   data: WorkflowNodeData;
@@ -14,9 +14,9 @@ export const AgentNodeSettings: React.FC<AgentNodeSettingsProps> = ({ data, onCh
     timeout: 300000, // 5 minutes
   };
 
-  const [config, setConfig] = useState<AgentConfig>(agentConfig);
+  const [config, setConfig] = useState<WorkflowAgentConfig>(agentConfig);
 
-  const handleChange = (updates: Partial<AgentConfig>) => {
+  const handleChange = (updates: Partial<WorkflowAgentConfig>) => {
     const updated = { ...config, ...updates };
     setConfig(updated);
     onChange({ agentConfig: updated });

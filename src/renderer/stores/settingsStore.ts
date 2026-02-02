@@ -64,7 +64,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to load settings:', error);
       set({
-        error: error instanceof Error ? error.message : 'Failed to load settings',
+        error: toErrorMessage(error, 'Failed to load settings'),
         isLoading: false,
       });
     }
@@ -79,7 +79,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to update Git settings:', error);
       set({
-        error: error instanceof Error ? error.message : 'Failed to update Git settings',
+        error: toErrorMessage(error, 'Failed to update Git settings'),
         isLoading: false,
       });
     }
@@ -94,7 +94,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to update App settings:', error);
       set({
-        error: error instanceof Error ? error.message : 'Failed to update App settings',
+        error: toErrorMessage(error, 'Failed to update App settings'),
         isLoading: false,
       });
     }
@@ -109,7 +109,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to update Agent settings:', error);
       set({
-        error: error instanceof Error ? error.message : 'Failed to update Agent settings',
+        error: toErrorMessage(error, 'Failed to update Agent settings'),
         isLoading: false,
       });
     }
@@ -124,7 +124,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to reset settings:', error);
       set({
-        error: error instanceof Error ? error.message : 'Failed to reset settings',
+        error: toErrorMessage(error, 'Failed to reset settings'),
         isLoading: false,
       });
     }

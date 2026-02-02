@@ -55,7 +55,7 @@ export interface SubworkflowConfig {
 
 export type AgentType = 'claude-code' | 'codex' | 'gemini' | 'ollama' | 'custom';
 
-export interface AgentConfig {
+export interface WorkflowAgentConfig {
   agentType: AgentType;
   prompt: string;
   templateVariables: boolean;
@@ -113,7 +113,7 @@ export interface WorkflowNodeData {
   delayMs?: number;                   // For delay nodes
   loopConfig?: LoopConfig;            // For loop nodes
   subworkflowConfig?: SubworkflowConfig;  // For subworkflow nodes
-  agentConfig?: AgentConfig;          // For agent nodes
+  agentConfig?: WorkflowAgentConfig;   // For agent nodes
   // Error handling & retry config
   retryConfig?: RetryConfig;          // Retry configuration
   timeoutConfig?: TimeoutConfig;      // Timeout configuration

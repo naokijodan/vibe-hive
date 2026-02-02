@@ -2,6 +2,7 @@ import * as pty from 'node-pty';
 import * as path from 'path';
 import * as fs from 'fs';
 import { BrowserWindow } from 'electron';
+import { terminalLogRepository } from './db/TerminalLogRepository';
 
 export type AgentType = 'claude' | 'codex' | 'gemini' | 'ollama';
 
@@ -18,6 +19,38 @@ class AgentService {
   private sessions: Map<string, AgentSession> = new Map();
   private mainWindow: BrowserWindow | null = null;
   private silentExitSessions: Set<string> = new Set(); // Sessions that should not send exit event
+  private logBuffers: Map<string, string> = new Map(); // Buffered terminal output per session
+  private logFlushTimers: Map<string, NodeJS.Timeout> = new Map();
+  private static LOG_FLUSH_INTERVAL = 2000; // Flush every 2 seconds
+
+  private bufferLogOutput(sessionId: string, data: string): void {
+    const existing = this.logBuffers.get(sessionId) || '';
+    this.logBuffers.set(sessionId, existing + data);
+
+    if (!this.logFlushTimers.has(sessionId)) {
+      const timer = setTimeout(() => {
+        this.flushLogBuffer(sessionId);
+      }, AgentService.LOG_FLUSH_INTERVAL);
+      this.logFlushTimers.set(sessionId, timer);
+    }
+  }
+
+  private flushLogBuffer(sessionId: string): void {
+    const buffer = this.logBuffers.get(sessionId);
+    if (buffer) {
+      try {
+        terminalLogRepository.append(sessionId, buffer);
+      } catch {
+        // Log persistence is non-critical
+      }
+      this.logBuffers.delete(sessionId);
+    }
+    const timer = this.logFlushTimers.get(sessionId);
+    if (timer) {
+      clearTimeout(timer);
+      this.logFlushTimers.delete(sessionId);
+    }
+  }
 
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window;
@@ -100,6 +133,7 @@ class AgentService {
     let lastOutputTime = Date.now();
     let promptCheckTimer: NodeJS.Timeout | null = null;
     let consecutivePromptDetections = 0;
+    let lastPromptDetectionTime = 0;
     let taskCompletionSent = false;
 
 
@@ -118,6 +152,11 @@ class AgentService {
       if (outputData.includes('\r') && !outputData.includes('\n')) {
         // Replace lone \r with clear-line + \r for proper overwrite behavior
         outputData = outputData.replace(/\r/g, '\x1b[2K\r');
+      }
+
+      // Buffer output for persistent log storage (throttled)
+      if (outputData) {
+        this.bufferLogOutput(sessionId, outputData);
       }
 
       // Send output to renderer
@@ -164,63 +203,61 @@ class AgentService {
       // Task completion detection:
       // After initial prompt is sent, if Claude CLI returns to prompt state
       // We need multiple signals to avoid false positives:
-      // 1. Task must have been running for at least 5 seconds (reduced from 10)
-      // 2. Must detect prompt indicator multiple times (2+ consecutive, reduced from 3)
-      // 3. Must be idle for at least 5 seconds after last significant output (reduced from 10)
+      // 1. Task must have been running for at least 10 seconds
+      // 2. Must detect prompt indicator 3+ consecutive times with 100ms+ gaps
+      // 3. Must be idle for at least 8 seconds after last significant output
       if (taskExecutionStarted && claudeCliReady && !taskCompletionSent) {
         const timeSinceTaskStart = Date.now() - taskStartTime;
-        const MIN_TASK_DURATION = 5000; // 5 seconds minimum task duration
+        const MIN_TASK_DURATION = 10000; // 10 seconds minimum task duration
 
         // Only start checking after minimum task duration
         if (timeSinceTaskStart < MIN_TASK_DURATION) {
-          // Reset counter if we're still in early phase
           consecutivePromptDetections = 0;
         } else {
           // Check for prompt indicators (Claude's input prompt)
-          // Claude Code shows various patterns when waiting for input
+          // Only match patterns that strongly indicate a waiting-for-input state
           const hasPromptIndicator =
-            // Claude shows ">" at the start of a line when waiting for input
-            data.match(/^>/m) !== null ||
-            // Or the input box top border
-            data.includes('╭') ||
-            // The bottom border of the input box
-            data.includes('╰') ||
-            // Help hint
-            data.includes('? for') ||
-            // Empty prompt line with just cursor positioning
-            data.match(/\x1b\[\d+;\d+H>/) !== null;
+            // ANSI-positioned ">" prompt (most reliable signal)
+            data.match(/\x1b\[\d+;\d+H>/) !== null ||
+            // Claude's input box borders appearing together
+            (data.includes('╭') && data.length < 200) ||
+            (data.includes('╰') && data.length < 200) ||
+            // "? for shortcuts" help hint (only in idle state)
+            data.includes('? for shortcuts');
 
+          const now = Date.now();
           if (hasPromptIndicator) {
-            consecutivePromptDetections++;
-          } else if (data.length > 100) {
-            // Reset if we get substantial output (not just cursor movements)
+            // Require at least 100ms gap between detections to avoid counting
+            // a single burst of output as multiple detections
+            if (now - lastPromptDetectionTime >= 100) {
+              consecutivePromptDetections++;
+              lastPromptDetectionTime = now;
+            }
+          } else if (data.length > 200) {
+            // Reset if we get substantial output (real work happening)
             consecutivePromptDetections = 0;
           }
 
-          // Require 2+ consecutive prompt detections (reduced from 3)
-          if (consecutivePromptDetections >= 2) {
-            // Clear any existing timer
+          // Require 3+ consecutive prompt detections
+          if (consecutivePromptDetections >= 3) {
             if (promptCheckTimer) {
               clearTimeout(promptCheckTimer);
             }
 
-            // Set a timer to ensure we're really idle (reduced to 5 seconds)
             promptCheckTimer = setTimeout(() => {
               const idleTime = Date.now() - lastOutputTime;
-              const IDLE_THRESHOLD = 5000; // 5 seconds idle (reduced from 10)
+              const IDLE_THRESHOLD = 8000; // 8 seconds idle
 
-              // If idle for more than threshold and multiple prompts detected, task is complete
               if (idleTime >= IDLE_THRESHOLD && !taskCompletionSent) {
                 taskCompletionSent = true;
-                taskExecutionStarted = false; // Reset for next task
+                taskExecutionStarted = false;
                 consecutivePromptDetections = 0;
 
-                // Send task complete event
                 if (this.mainWindow && !this.mainWindow.isDestroyed()) {
                   this.mainWindow.webContents.send('agent:taskComplete', sessionId);
                 }
               }
-            }, 5000); // Wait 5 seconds before confirming (reduced from 10)
+            }, 8000); // Wait 8 seconds before confirming
           }
         }
       }
@@ -228,6 +265,8 @@ class AgentService {
 
     // Handle process exit
     ptyProcess.onExit(({ exitCode, signal }) => {
+      // Flush remaining log buffer before cleanup
+      this.flushLogBuffer(sessionId);
       this.sessions.delete(sessionId);
 
       // Check if this is a silent exit (from restart)

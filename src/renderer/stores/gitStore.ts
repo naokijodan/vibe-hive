@@ -50,7 +50,7 @@ export const useGitStore = create<GitStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to fetch git status:', error);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to fetch git status',
+        error: toErrorMessage(error, 'Failed to fetch git status'),
         isLoading: false 
       });
     }
@@ -70,7 +70,7 @@ export const useGitStore = create<GitStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to stage files:', error);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to stage files',
+        error: toErrorMessage(error, 'Failed to stage files'),
         isLoading: false 
       });
     }
@@ -90,7 +90,7 @@ export const useGitStore = create<GitStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to unstage files:', error);
       set({
-        error: error instanceof Error ? error.message : 'Failed to unstage files',
+        error: toErrorMessage(error, 'Failed to unstage files'),
         isLoading: false
       });
     }
@@ -111,7 +111,7 @@ export const useGitStore = create<GitStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to commit:', error);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to commit',
+        error: toErrorMessage(error, 'Failed to commit'),
         isLoading: false 
       });
       return false;
@@ -133,7 +133,7 @@ export const useGitStore = create<GitStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to push:', error);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to push',
+        error: toErrorMessage(error, 'Failed to push'),
         isLoading: false 
       });
       return false;
@@ -155,7 +155,7 @@ export const useGitStore = create<GitStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to pull:', error);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to pull',
+        error: toErrorMessage(error, 'Failed to pull'),
         isLoading: false 
       });
       return false;
