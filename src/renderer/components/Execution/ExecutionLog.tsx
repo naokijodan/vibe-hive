@@ -21,48 +21,62 @@ export const ExecutionLog: React.FC<ExecutionLogProps> = ({ execution }) => {
   useEffect(() => {
     if (!terminalRef.current) return;
 
-    const terminal = new Terminal({
-      cursorBlink: false,
-      fontSize: 12,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      theme: {
-        background: '#0a0e14',
-        foreground: '#b3b1ad',
-        cursor: '#ffcc66',
-      },
-      convertEol: true,
-      disableStdin: true, // Read-only terminal
-    });
+    const container = terminalRef.current;
+    let disposed = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const fitAddon = new FitAddon();
-    terminal.loadAddon(fitAddon);
-    terminal.open(terminalRef.current);
-    requestAnimationFrame(() => {
-      try {
-        fitAddon.fit();
-      } catch {
-        // Renderer not yet initialized
+    // Wait for container to have actual dimensions.
+    // xterm's Viewport constructor crashes if container has 0 size.
+    const tryInit = () => {
+      if (disposed || !container) return;
+      if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+        retryTimer = setTimeout(tryInit, 50);
+        return;
       }
-    });
 
-    xtermRef.current = terminal;
-    fitAddonRef.current = fitAddon;
+      const terminal = new Terminal({
+        cursorBlink: false,
+        fontSize: 12,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        theme: {
+          background: '#0a0e14',
+          foreground: '#b3b1ad',
+          cursor: '#ffcc66',
+        },
+        convertEol: true,
+        disableStdin: true,
+      });
 
-    // Handle terminal resize
-    const handleResize = () => {
-      try {
-        fitAddon.fit();
-      } catch {
-        // Renderer not yet initialized
-      }
+      const fitAddon = new FitAddon();
+      terminal.loadAddon(fitAddon);
+      terminal.open(container);
+      requestAnimationFrame(() => {
+        try { fitAddon.fit(); } catch { /* ignore */ }
+      });
+
+      xtermRef.current = terminal;
+      fitAddonRef.current = fitAddon;
+
+      const handleResize = () => {
+        try { fitAddon.fit(); } catch { /* ignore */ }
+      };
+      window.addEventListener('resize', handleResize);
+
+      cleanupFn = () => {
+        window.removeEventListener('resize', handleResize);
+        terminal.dispose();
+        xtermRef.current = null;
+        fitAddonRef.current = null;
+      };
     };
-    window.addEventListener('resize', handleResize);
+
+    let cleanupFn: (() => void) | null = null;
+    tryInit();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      terminal.dispose();
-      xtermRef.current = null;
-      fitAddonRef.current = null;
+      disposed = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      cleanupFn?.();
     };
   }, []);
 

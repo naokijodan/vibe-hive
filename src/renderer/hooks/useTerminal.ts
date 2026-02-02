@@ -17,6 +17,14 @@ export function useTerminal({ sessionId, onReady }: UseTerminalOptions) {
   const initTerminal = useCallback(async () => {
     if (!terminalRef.current || isInitializedRef.current) return;
 
+    // Wait for container to have actual dimensions.
+    // xterm's Viewport constructor crashes if container has 0 size.
+    const { offsetWidth, offsetHeight } = terminalRef.current;
+    if (offsetWidth === 0 || offsetHeight === 0) {
+      requestAnimationFrame(() => initTerminal());
+      return;
+    }
+
     // Create xterm instance
     const terminal = new Terminal({
       theme: {

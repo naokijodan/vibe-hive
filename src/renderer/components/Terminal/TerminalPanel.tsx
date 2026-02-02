@@ -24,8 +24,15 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
     // Prevent re-initialization if terminal already exists
     if (!containerRef.current) return;
     if (terminalRef.current) {
-      // Terminal exists, just refocus
       terminalRef.current.focus();
+      return;
+    }
+
+    // Wait for container to have actual dimensions.
+    // xterm's Viewport constructor crashes if container has 0 size.
+    const { offsetWidth, offsetHeight } = containerRef.current;
+    if (offsetWidth === 0 || offsetHeight === 0) {
+      requestAnimationFrame(() => initTerminal());
       return;
     }
 

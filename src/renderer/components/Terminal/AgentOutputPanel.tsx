@@ -28,6 +28,7 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = memo(({
   const fitAddonRef = useRef<FitAddon | null>(null);
   const cleanupRef = useRef<(() => void)[]>([]);
   const initializedRef = useRef(false);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(!isReadOnly);
   const sessionId = `agent-${taskId}`;
@@ -60,66 +61,83 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = memo(({
   useEffect(() => {
     // Prevent double initialization (React StrictMode)
     if (initializedRef.current || !containerRef.current) return;
-    initializedRef.current = true;
 
-    const terminal = new Terminal({
-      theme: {
-        background: '#0d1117',
-        foreground: '#c9d1d9',
-        cursor: '#f0b429',
-        cursorAccent: '#0d1117',
-        selectionBackground: '#3b82f6',
-        black: '#0d1117',
-        red: '#ff7b72',
-        green: '#7ee787',
-        yellow: '#f0b429',
-        blue: '#58a6ff',
-        magenta: '#bc8cff',
-        cyan: '#39c5cf',
-        white: '#c9d1d9',
-        brightBlack: '#6e7681',
-        brightRed: '#ffa198',
-        brightGreen: '#a5f2b8',
-        brightYellow: '#f8e3a1',
-        brightBlue: '#79c0ff',
-        brightMagenta: '#d2a8ff',
-        brightCyan: '#56d4dd',
-        brightWhite: '#ffffff',
-      },
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      fontSize: 13,
-      lineHeight: 1.2,
-      cursorBlink: !isReadOnly,
-      cursorStyle: 'block',
-      allowTransparency: true,
-      disableStdin: isReadOnly, // Disable input for read-only mode
-      convertEol: false, // Keep CR handling as-is for proper spinner behavior
-      scrollback: 5000, // Increased scrollback buffer
-    });
+    const container = containerRef.current;
 
-    const fitAddon = new FitAddon();
-    terminal.loadAddon(fitAddon);
-
-    terminal.open(containerRef.current);
-
-    // Initial fit with delay to ensure container is sized
-    setTimeout(() => {
-      try {
-        fitAddon.fit();
-        // Initial PTY size sync (only if not read-only)
-        if (!isReadOnly) {
-          const { cols, rows } = terminal;
-          if (window.electronAPI?.agentResize) {
-            window.electronAPI.agentResize(sessionId, cols, rows);
-          }
+    // Wait for container to have actual dimensions before opening terminal.
+    // xterm's Viewport constructor accesses _renderService.dimensions which
+    // crashes if the container has 0 size (renderer cannot initialize).
+    const waitForSize = (retries = 20) => {
+      const { offsetWidth, offsetHeight } = container;
+      if (offsetWidth === 0 || offsetHeight === 0) {
+        if (retries > 0) {
+          requestAnimationFrame(() => waitForSize(retries - 1));
         }
-      } catch (e) {
-        // Ignore errors
+        return;
       }
-    }, 100);
+      initTerminalInstance();
+    };
 
-    terminalRef.current = terminal;
-    fitAddonRef.current = fitAddon;
+    const initTerminalInstance = () => {
+      if (initializedRef.current || !containerRef.current) return;
+      initializedRef.current = true;
+
+      const terminal = new Terminal({
+        theme: {
+          background: '#0d1117',
+          foreground: '#c9d1d9',
+          cursor: '#f0b429',
+          cursorAccent: '#0d1117',
+          selectionBackground: '#3b82f6',
+          black: '#0d1117',
+          red: '#ff7b72',
+          green: '#7ee787',
+          yellow: '#f0b429',
+          blue: '#58a6ff',
+          magenta: '#bc8cff',
+          cyan: '#39c5cf',
+          white: '#c9d1d9',
+          brightBlack: '#6e7681',
+          brightRed: '#ffa198',
+          brightGreen: '#a5f2b8',
+          brightYellow: '#f8e3a1',
+          brightBlue: '#79c0ff',
+          brightMagenta: '#d2a8ff',
+          brightCyan: '#56d4dd',
+          brightWhite: '#ffffff',
+        },
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        fontSize: 13,
+        lineHeight: 1.2,
+        cursorBlink: !isReadOnly,
+        cursorStyle: 'block',
+        allowTransparency: true,
+        disableStdin: isReadOnly,
+        convertEol: false,
+        scrollback: 5000,
+      });
+
+      const fitAddon = new FitAddon();
+      terminal.loadAddon(fitAddon);
+
+      terminal.open(containerRef.current!);
+
+      setTimeout(() => {
+        try {
+          fitAddon.fit();
+          if (!isReadOnly) {
+            const { cols, rows } = terminal;
+            if (window.electronAPI?.agentResize) {
+              window.electronAPI.agentResize(sessionId, cols, rows);
+            }
+          }
+        } catch (e) {
+          // Ignore fit errors
+        }
+      }, 100);
+
+      terminalRef.current = terminal;
+      fitAddonRef.current = fitAddon;
 
     // Restore previous output from store
     const previousOutput = getOutputFromStore();
@@ -198,16 +216,22 @@ export const AgentOutputPanel: React.FC<AgentOutputPanelProps> = memo(({
       cleanupRef.current = [unsubscribeOutput, unsubscribeExit, unsubscribeError, unsubscribeLoading, unsubscribeTaskComplete];
     }
 
-    const resizeObserver = new ResizeObserver(() => {
-      handleResize();
-    });
+      const resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
 
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
+      if (containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+      }
+
+      resizeObserverRef.current = resizeObserver;
+    }; // end initTerminalInstance
+
+    waitForSize();
 
     return () => {
-      resizeObserver.disconnect();
+      resizeObserverRef.current?.disconnect();
+      resizeObserverRef.current = null;
       // Clean up IPC listeners
       cleanupRef.current.forEach(fn => fn());
       cleanupRef.current = [];
