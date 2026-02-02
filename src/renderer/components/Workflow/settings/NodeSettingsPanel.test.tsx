@@ -31,4 +31,47 @@ describe('NodeSettingsPanel', () => {
     render(<NodeSettingsPanel selectedNode={node as any} onClose={vi.fn()} />);
     expect(screen.getByText('TaskNodeSettings')).toBeDefined();
   });
+
+  it('renders settings for conditional node', () => {
+    const node = { id: 'n1', type: 'conditional', data: { label: 'If' }, position: { x: 0, y: 0 } };
+    render(<NodeSettingsPanel selectedNode={node as any} onClose={vi.fn()} />);
+    expect(screen.getByText('ConditionalNodeSettings')).toBeDefined();
+  });
+
+  it('renders settings for delay node', () => {
+    const node = { id: 'n1', type: 'delay', data: { label: 'Wait' }, position: { x: 0, y: 0 } };
+    render(<NodeSettingsPanel selectedNode={node as any} onClose={vi.fn()} />);
+    expect(screen.getByText('DelayNodeSettings')).toBeDefined();
+  });
+
+  it('renders settings for trigger node', () => {
+    const node = { id: 'n1', type: 'trigger', data: { label: 'Start' }, position: { x: 0, y: 0 } };
+    render(<NodeSettingsPanel selectedNode={node as any} onClose={vi.fn()} />);
+    expect(screen.getByText('TriggerNodeSettings')).toBeDefined();
+  });
+
+  it('renders settings for notification node', () => {
+    const node = { id: 'n1', type: 'notification', data: { label: 'Notify' }, position: { x: 0, y: 0 } };
+    render(<NodeSettingsPanel selectedNode={node as any} onClose={vi.fn()} />);
+    expect(screen.getByText('NotificationNodeSettings')).toBeDefined();
+  });
+
+  it('renders settings for loop node', () => {
+    const node = { id: 'n1', type: 'loop', data: { label: 'Loop' }, position: { x: 0, y: 0 } };
+    render(<NodeSettingsPanel selectedNode={node as any} onClose={vi.fn()} />);
+    expect(screen.getByText('LoopNodeSettings')).toBeDefined();
+  });
+
+  it('renders settings for subworkflow node', () => {
+    const node = { id: 'n1', type: 'subworkflow', data: { label: 'Sub' }, position: { x: 0, y: 0 } };
+    render(<NodeSettingsPanel selectedNode={node as any} onClose={vi.fn()} />);
+    expect(screen.getByText('SubworkflowNodeSettings')).toBeDefined();
+  });
+
+  it('renders settings for agent node', () => {
+    const node = { id: 'n1', type: 'agent', data: { label: 'Agent' }, position: { x: 0, y: 0 } };
+    render(<NodeSettingsPanel selectedNode={node as any} onClose={vi.fn()} />);
+    expect(screen.getByText('AgentNodeSettings')).toBeDefined();
+  });
+
 });
