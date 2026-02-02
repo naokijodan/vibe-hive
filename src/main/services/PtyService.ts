@@ -42,8 +42,12 @@ class PtyService {
 
     // Send data to renderer and save to database
     ptyProcess.onData((data: string) => {
-      // Save to database
-      terminalLogRepository.append(sessionId, data);
+      // Save to database (may fail if session not in sessions table)
+      try {
+        terminalLogRepository.append(sessionId, data);
+      } catch {
+        // Ignore DB errors — log persistence is non-critical
+      }
 
       // Send to renderer
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {

@@ -107,7 +107,11 @@ export function registerDbHandlers(): void {
 
   // Terminal log handlers
   ipcMain.handle('db:terminalLog:append', (_event, sessionId: string, data: string) => {
-    terminalLogRepository.append(sessionId, data);
+    try {
+      terminalLogRepository.append(sessionId, data);
+    } catch {
+      // Log persistence is non-critical
+    }
   });
 
   ipcMain.handle('db:terminalLog:getBySession', (_event, sessionId: string, limit?: number) => {
