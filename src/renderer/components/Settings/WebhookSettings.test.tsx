@@ -21,4 +21,19 @@ describe('WebhookSettings', () => {
       expect(screen.getAllByText(/Webhook/i).length).toBeGreaterThan(0);
     });
   });
+
+  it('shows port configuration', async () => {
+    render(<WebhookSettings />);
+    await waitFor(() => {
+      expect(screen.getByText(/Port Number/i)).toBeDefined();
+    });
+  });
+
+  it('shows start/stop button', async () => {
+    render(<WebhookSettings />);
+    await waitFor(() => {
+      const btns = screen.getAllByRole('button');
+      expect(btns.length).toBeGreaterThan(0);
+    });
+  });
 });

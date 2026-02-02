@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AppSettings } from './AppSettings';
 
 const defaultSettings = {
@@ -26,5 +26,38 @@ describe('AppSettings', () => {
     render(<AppSettings settings={defaultSettings} onUpdate={vi.fn()} isLoading={false} />);
     expect(screen.getByText('Save')).toBeDefined();
     expect(screen.getByText('Reset')).toBeDefined();
+  });
+
+  it('calls onUpdate when save clicked after change', async () => {
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    render(<AppSettings settings={defaultSettings} onUpdate={onUpdate} isLoading={false} />);
+
+    // Change theme
+    const select = screen.getByDisplayValue('Dark');
+    fireEvent.change(select, { target: { value: 'light' } });
+
+    // Click save
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ theme: 'light' }));
+    });
+  });
+
+  it('resets values when reset clicked', () => {
+    render(<AppSettings settings={defaultSettings} onUpdate={vi.fn()} isLoading={false} />);
+
+    const select = screen.getByDisplayValue('Dark');
+    fireEvent.change(select, { target: { value: 'light' } });
+
+    fireEvent.click(screen.getByText('Reset'));
+
+    expect((select as HTMLSelectElement).value).toBe('dark');
+  });
+
+  it('disables select when loading', () => {
+    render(<AppSettings settings={defaultSettings} onUpdate={vi.fn()} isLoading={true} />);
+    const select = screen.getByDisplayValue('Dark');
+    expect((select as HTMLSelectElement).disabled).toBe(true);
   });
 });

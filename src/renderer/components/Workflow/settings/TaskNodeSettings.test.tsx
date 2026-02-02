@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { TaskNodeSettings } from './TaskNodeSettings';
 
 vi.mock('../../../stores/taskStore', () => ({
@@ -30,4 +30,5 @@ describe('TaskNodeSettings', () => {
     render(<TaskNodeSettings data={{} as any} onChange={vi.fn()} />);
     expect(screen.getByText('1 task available')).toBeDefined();
   });
+
 });

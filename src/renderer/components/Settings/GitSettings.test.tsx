@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { GitSettings } from './GitSettings';
 
 const defaultSettings = {
@@ -30,5 +30,33 @@ describe('GitSettings', () => {
   it('shows Saving... when loading', () => {
     render(<GitSettings settings={defaultSettings} onUpdate={vi.fn()} isLoading={true} />);
     expect(screen.getByText('Saving...')).toBeDefined();
+  });
+
+  it('calls onUpdate when save clicked after change', async () => {
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    render(<GitSettings settings={defaultSettings} onUpdate={onUpdate} isLoading={false} />);
+
+    const nameInput = screen.getByDisplayValue('Test User');
+    fireEvent.change(nameInput, { target: { value: 'New User' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ userName: 'New User' }));
+    });
+  });
+
+  it('resets values when reset clicked', () => {
+    render(<GitSettings settings={defaultSettings} onUpdate={vi.fn()} isLoading={false} />);
+
+    const nameInput = screen.getByDisplayValue('Test User');
+    fireEvent.change(nameInput, { target: { value: 'Changed' } });
+    fireEvent.click(screen.getByText('Reset'));
+
+    expect((nameInput as HTMLInputElement).value).toBe('Test User');
+  });
+
+  it('renders email field', () => {
+    render(<GitSettings settings={defaultSettings} onUpdate={vi.fn()} isLoading={false} />);
+    expect(screen.getByDisplayValue('test@example.com')).toBeDefined();
   });
 });
