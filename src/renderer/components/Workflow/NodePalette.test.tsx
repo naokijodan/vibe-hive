@@ -30,4 +30,53 @@ describe('NodePalette', () => {
     render(<NodePalette onAddNode={vi.fn()} />);
     expect(screen.getByText('Tips')).toBeDefined();
   });
+
+  it('calls onAddNode with task type', () => {
+    const onAddNode = vi.fn();
+    render(<NodePalette onAddNode={onAddNode} />);
+    fireEvent.click(screen.getByText('Task'));
+    expect(onAddNode).toHaveBeenCalledWith('task');
+  });
+
+  it('calls onAddNode with conditional type', () => {
+    const onAddNode = vi.fn();
+    render(<NodePalette onAddNode={onAddNode} />);
+    fireEvent.click(screen.getByText('Conditional'));
+    expect(onAddNode).toHaveBeenCalledWith('conditional');
+  });
+
+  it('calls onAddNode with delay type', () => {
+    const onAddNode = vi.fn();
+    render(<NodePalette onAddNode={onAddNode} />);
+    fireEvent.click(screen.getByText('Delay'));
+    expect(onAddNode).toHaveBeenCalledWith('delay');
+  });
+
+  it('calls onAddNode with notification type', () => {
+    const onAddNode = vi.fn();
+    render(<NodePalette onAddNode={onAddNode} />);
+    fireEvent.click(screen.getByText('Notification'));
+    expect(onAddNode).toHaveBeenCalledWith('notification');
+  });
+
+  it('calls onAddNode with loop type', () => {
+    const onAddNode = vi.fn();
+    render(<NodePalette onAddNode={onAddNode} />);
+    fireEvent.click(screen.getByText('Loop'));
+    expect(onAddNode).toHaveBeenCalledWith('loop');
+  });
+
+  it('calls onAddNode with subworkflow type', () => {
+    const onAddNode = vi.fn();
+    render(<NodePalette onAddNode={onAddNode} />);
+    fireEvent.click(screen.getByText('Subworkflow'));
+    expect(onAddNode).toHaveBeenCalledWith('subworkflow');
+  });
+
+  it('calls onAddNode with agent type', () => {
+    const onAddNode = vi.fn();
+    render(<NodePalette onAddNode={onAddNode} />);
+    fireEvent.click(screen.getByText('AI Agent'));
+    expect(onAddNode).toHaveBeenCalledWith('agent');
+  });
 });
