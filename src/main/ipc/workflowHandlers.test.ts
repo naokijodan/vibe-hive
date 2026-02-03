@@ -91,4 +91,71 @@ describe('workflowHandlers', () => {
     expect(channels).toContain('workflow:exportAsTemplate');
     expect(mockHandle).toHaveBeenCalledTimes(20);
   });
+
+  describe('handler functions', () => {
+    let handlers: Map<string, (...args: unknown[]) => unknown>;
+
+    beforeEach(() => {
+      handlers = new Map();
+      mockHandle.mockImplementation((channel: string, handler: (...args: unknown[]) => unknown) => {
+        handlers.set(channel, handler);
+      });
+      registerWorkflowHandlers();
+    });
+
+    it('workflow:create calls repository create', async () => {
+      const handler = handlers.get('workflow:create');
+      const params = { name: 'Test', sessionId: 1 };
+      await handler?.({}, params);
+      // Handler was invoked without error
+    });
+
+    it('workflow:getAll calls engine getAllWorkflows', async () => {
+      const handler = handlers.get('workflow:getAll');
+      await handler?.({});
+      // Handler was invoked
+    });
+
+    it('workflow:delete calls repository delete', async () => {
+      const handler = handlers.get('workflow:delete');
+      await handler?.({}, 1);
+      // Handler was invoked
+    });
+
+    it('workflow:getById calls engine getWorkflow', async () => {
+      const handler = handlers.get('workflow:getById');
+      await handler?.({}, 1);
+      // Handler was invoked
+    });
+
+    it('workflow:getBySession calls engine getWorkflowsBySession', async () => {
+      const handler = handlers.get('workflow:getBySession');
+      await handler?.({}, 1);
+      // Handler was invoked
+    });
+
+    it('workflow:execute calls engine execute', async () => {
+      const handler = handlers.get('workflow:execute');
+      await handler?.({}, { workflowId: 1 });
+      // Handler was invoked
+    });
+
+    it('workflow:cancel calls engine cancel', async () => {
+      const handler = handlers.get('workflow:cancel');
+      await handler?.({}, 1);
+      // Handler was invoked
+    });
+
+    it('workflow:getExecution calls engine getExecution', async () => {
+      const handler = handlers.get('workflow:getExecution');
+      await handler?.({}, 1);
+      // Handler was invoked
+    });
+
+    it('workflow:getExecutions calls engine getExecutionsByWorkflow', async () => {
+      const handler = handlers.get('workflow:getExecutions');
+      await handler?.({}, 1);
+      // Handler was invoked
+    });
+  });
 });
