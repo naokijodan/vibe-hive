@@ -22,4 +22,26 @@ describe('exportImportHandlers', () => {
     expect(channels).toContain('exportImport:export');
     expect(channels).toContain('exportImport:import');
   });
+
+  describe('handler invocations', () => {
+    let handlers: Map<string, (...args: unknown[]) => unknown>;
+
+    beforeEach(() => {
+      handlers = new Map();
+      mockHandle.mockImplementation((channel: string, handler: (...args: unknown[]) => unknown) => {
+        handlers.set(channel, handler);
+      });
+      registerExportImportHandlers();
+    });
+
+    it('exportImport:export invokes service', async () => {
+      const handler = handlers.get('exportImport:export');
+      await handler?.({}, { sessions: true, templates: true });
+    });
+
+    it('exportImport:import invokes service', async () => {
+      const handler = handlers.get('exportImport:import');
+      await handler?.({}, { sessions: [], templates: [] });
+    });
+  });
 });

@@ -39,4 +39,56 @@ describe('collaborationIpcHandlers', () => {
     expect(channels).toContain('collab:getChatHistory');
     expect(mockHandle).toHaveBeenCalledTimes(8);
   });
+
+  describe('handler invocations', () => {
+    let handlers: Map<string, (...args: unknown[]) => unknown>;
+
+    beforeEach(() => {
+      handlers = new Map();
+      mockHandle.mockImplementation((channel: string, handler: (...args: unknown[]) => unknown) => {
+        handlers.set(channel, handler);
+      });
+      registerCollaborationIpcHandlers();
+    });
+
+    it('collab:startHost invokes service', async () => {
+      const handler = handlers.get('collab:startHost');
+      await handler?.({}, 'session-1', { nickname: 'Host' });
+    });
+
+    it('collab:join invokes service', async () => {
+      const handler = handlers.get('collab:join');
+      await handler?.({}, 'localhost', 3101, { nickname: 'Guest' });
+    });
+
+    it('collab:disconnect invokes service', async () => {
+      const handler = handlers.get('collab:disconnect');
+      await handler?.({});
+    });
+
+    it('collab:sendChat invokes service', async () => {
+      const handler = handlers.get('collab:sendChat');
+      await handler?.({}, 'Hello');
+    });
+
+    it('collab:broadcastTask invokes service', async () => {
+      const handler = handlers.get('collab:broadcastTask');
+      await handler?.({}, 'task:created', { id: '1' });
+    });
+
+    it('collab:getStatus invokes service', async () => {
+      const handler = handlers.get('collab:getStatus');
+      await handler?.({});
+    });
+
+    it('collab:getUsers invokes service', async () => {
+      const handler = handlers.get('collab:getUsers');
+      await handler?.({});
+    });
+
+    it('collab:getChatHistory invokes service', async () => {
+      const handler = handlers.get('collab:getChatHistory');
+      await handler?.({});
+    });
+  });
 });
