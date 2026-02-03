@@ -89,4 +89,56 @@ describe('useCommandPalette', () => {
     settingsCmd!.action();
     expect(setCurrentView).toHaveBeenCalledWith('settings');
   });
+
+  it('view-kanban command calls setCurrentView', () => {
+    const setCurrentView = vi.fn();
+    const { result } = renderHook(() =>
+      useCommandPalette({ ...defaultProps, setCurrentView })
+    );
+    const cmd = result.current.find(c => c.id === 'view-kanban');
+    cmd!.action();
+    expect(setCurrentView).toHaveBeenCalledWith('kanban');
+  });
+
+  it('view-organization command calls setCurrentView', () => {
+    const setCurrentView = vi.fn();
+    const { result } = renderHook(() =>
+      useCommandPalette({ ...defaultProps, setCurrentView })
+    );
+    const cmd = result.current.find(c => c.id === 'view-organization');
+    cmd!.action();
+    expect(setCurrentView).toHaveBeenCalledWith('organization');
+  });
+
+  it('session-new command calls setIsSessionModalOpen', () => {
+    const setIsSessionModalOpen = vi.fn();
+    const { result } = renderHook(() =>
+      useCommandPalette({ ...defaultProps, setIsSessionModalOpen })
+    );
+    const cmd = result.current.find(c => c.id === 'session-new');
+    cmd!.action();
+    expect(setIsSessionModalOpen).toHaveBeenCalledWith(true);
+  });
+
+  it('terminal-bash command calls setShowBashTerminal', () => {
+    const setShowBashTerminal = vi.fn();
+    const { result } = renderHook(() =>
+      useCommandPalette({ ...defaultProps, setShowBashTerminal })
+    );
+    const cmd = result.current.find(c => c.id === 'terminal-bash');
+    cmd!.action();
+    expect(setShowBashTerminal).toHaveBeenCalled();
+  });
+
+  it('includes view-theme command', () => {
+    const { result } = renderHook(() => useCommandPalette(defaultProps));
+    const ids = result.current.map(c => c.id);
+    expect(ids).toContain('view-theme');
+  });
+
+  it('includes view-claude-hooks command', () => {
+    const { result } = renderHook(() => useCommandPalette(defaultProps));
+    const ids = result.current.map(c => c.id);
+    expect(ids).toContain('view-claude-hooks');
+  });
 });
