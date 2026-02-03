@@ -66,4 +66,25 @@ describe('ClaudeHooksPanel', () => {
       expect(screen.getAllByText(/フック|Hooks|ログ|Logs/i).length).toBeGreaterThan(0);
     });
   });
+
+  it('renders hooks tab content', async () => {
+    render(<ClaudeHooksPanel />);
+    await waitFor(() => {
+      expect(screen.getByText(/echo test/)).toBeDefined();
+    });
+  });
+
+  it('renders hook description', async () => {
+    render(<ClaudeHooksPanel />);
+    await waitFor(() => {
+      expect(screen.getByText(/PreToolUse/)).toBeDefined();
+    });
+  });
+
+  it('renders enabled hook indicator', async () => {
+    render(<ClaudeHooksPanel />);
+    await waitFor(() => {
+      expect(screen.getByText(/echo test/)).toBeDefined();
+    });
+  });
 });

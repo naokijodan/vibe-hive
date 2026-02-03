@@ -55,4 +55,24 @@ describe('AIChatPanel', () => {
     render(<AIChatPanel />);
     expect(screen.getByText('送信')).toBeDefined();
   });
+
+  it('renders emoji in header', () => {
+    render(<AIChatPanel />);
+    expect(screen.getByText('🤖')).toBeDefined();
+  });
+
+  it('renders clear history button', () => {
+    render(<AIChatPanel />);
+    expect(screen.getByTitle('履歴をクリア')).toBeDefined();
+  });
+
+  it('renders user message bubble', () => {
+    render(<AIChatPanel />);
+    expect(screen.getByText('Hello')).toBeDefined();
+  });
+
+  it('renders assistant message bubble', () => {
+    render(<AIChatPanel />);
+    expect(screen.getByText('Hi there')).toBeDefined();
+  });
 });

@@ -45,6 +45,11 @@ describe('ExecutionLog', () => {
     expect(screen.getByText('実行ログを表示するには、')).toBeDefined();
   });
 
+  it('shows selection instruction', () => {
+    render(<ExecutionLog execution={null} />);
+    expect(screen.getByText('左側の実行一覧から選択してください')).toBeDefined();
+  });
+
   it('renders execution header when execution provided', () => {
     const execution = {
       id: 'e1',
@@ -56,5 +61,70 @@ describe('ExecutionLog', () => {
     };
     render(<ExecutionLog execution={execution as any} />);
     expect(screen.getByText('completed')).toBeDefined();
+  });
+
+  it('renders running status', () => {
+    const execution = {
+      id: 'e1',
+      taskId: 't1',
+      status: 'running' as const,
+      startedAt: Date.now(),
+      sessionId: 's1',
+    };
+    render(<ExecutionLog execution={execution as any} />);
+    expect(screen.getByText('running')).toBeDefined();
+  });
+
+  it('renders failed status', () => {
+    const execution = {
+      id: 'e1',
+      taskId: 't1',
+      status: 'failed' as const,
+      startedAt: Date.now(),
+      completedAt: Date.now(),
+      sessionId: 's1',
+      errorMessage: 'Test error',
+    };
+    render(<ExecutionLog execution={execution as any} />);
+    expect(screen.getByText('failed')).toBeDefined();
+  });
+
+  it('renders cancelled status', () => {
+    const execution = {
+      id: 'e1',
+      taskId: 't1',
+      status: 'cancelled' as const,
+      startedAt: Date.now(),
+      completedAt: Date.now(),
+      sessionId: 's1',
+    };
+    render(<ExecutionLog execution={execution as any} />);
+    expect(screen.getByText('cancelled')).toBeDefined();
+  });
+
+  it('shows Unknown Task when task not found', () => {
+    const execution = {
+      id: 'e1',
+      taskId: 'nonexistent',
+      status: 'completed' as const,
+      startedAt: Date.now(),
+      completedAt: Date.now(),
+      sessionId: 's1',
+    };
+    render(<ExecutionLog execution={execution as any} />);
+    expect(screen.getByText('Unknown Task')).toBeDefined();
+  });
+
+  it('renders terminal container', () => {
+    const execution = {
+      id: 'e1',
+      taskId: 't1',
+      status: 'completed' as const,
+      startedAt: Date.now(),
+      completedAt: Date.now(),
+      sessionId: 's1',
+    };
+    const { container } = render(<ExecutionLog execution={execution as any} />);
+    expect(container.querySelector('.h-full')).toBeDefined();
   });
 });

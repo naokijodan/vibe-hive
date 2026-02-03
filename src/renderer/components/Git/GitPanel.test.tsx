@@ -33,7 +33,13 @@ vi.mock('./CommitDialog', () => ({
 import { GitPanel } from './GitPanel';
 
 describe('GitPanel', () => {
-  beforeEach(() => { vi.useFakeTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+    storeState.status = null;
+    storeState.isLoading = false;
+    storeState.error = null;
+    vi.clearAllMocks();
+  });
   afterEach(() => { vi.useRealTimers(); });
 
   it('renders nothing when not open', () => {
@@ -44,5 +50,127 @@ describe('GitPanel', () => {
   it('renders panel when open', () => {
     render(<GitPanel isOpen={true} onClose={vi.fn()} />);
     expect(screen.getByText('Git')).toBeDefined();
+  });
+
+  it('calls fetchStatus when opened', () => {
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(storeState.fetchStatus).toHaveBeenCalled();
+  });
+
+  it('shows loading state', () => {
+    storeState.isLoading = true;
+    storeState.status = null;
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Loading...')).toBeDefined();
+  });
+
+  it('shows error banner when error exists', () => {
+    storeState.error = 'Git command failed';
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Git command failed')).toBeDefined();
+  });
+
+  it('shows not a git repository message when no status', () => {
+    storeState.status = null;
+    storeState.isLoading = false;
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Not a git repository')).toBeDefined();
+  });
+
+  it('renders GitStatusView when status exists', () => {
+    storeState.status = {
+      branch: 'main',
+      ahead: 0,
+      behind: 0,
+      staged: [],
+      modified: [],
+      untracked: [],
+    };
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('GitStatusView')).toBeDefined();
+  });
+
+  it('shows action buttons when status exists', () => {
+    storeState.status = {
+      branch: 'main',
+      ahead: 0,
+      behind: 0,
+      staged: ['file.ts'],
+      modified: [],
+      untracked: [],
+    };
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Commit')).toBeDefined();
+    expect(screen.getByText('Push')).toBeDefined();
+    expect(screen.getByText('Pull')).toBeDefined();
+    expect(screen.getByText('Refresh')).toBeDefined();
+  });
+
+  it('shows push count when ahead', () => {
+    storeState.status = {
+      branch: 'main',
+      ahead: 2,
+      behind: 0,
+      staged: [],
+      modified: [],
+      untracked: [],
+    };
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Push (2)')).toBeDefined();
+  });
+
+  it('shows pull count when behind', () => {
+    storeState.status = {
+      branch: 'main',
+      ahead: 0,
+      behind: 3,
+      staged: [],
+      modified: [],
+      untracked: [],
+    };
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Pull (3)')).toBeDefined();
+  });
+
+  it('disables commit button when no staged files', () => {
+    storeState.status = {
+      branch: 'main',
+      ahead: 0,
+      behind: 0,
+      staged: [],
+      modified: ['file.ts'],
+      untracked: [],
+    };
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    const commitButton = screen.getByText('Commit');
+    expect(commitButton).toHaveProperty('disabled', true);
+  });
+
+  it('enables commit button when staged files exist', () => {
+    storeState.status = {
+      branch: 'main',
+      ahead: 0,
+      behind: 0,
+      staged: ['file.ts'],
+      modified: [],
+      untracked: [],
+    };
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    const commitButton = screen.getByText('Commit');
+    expect(commitButton).toHaveProperty('disabled', false);
+  });
+
+  it('shows refreshing text when loading', () => {
+    storeState.isLoading = true;
+    storeState.status = {
+      branch: 'main',
+      ahead: 0,
+      behind: 0,
+      staged: [],
+      modified: [],
+      untracked: [],
+    };
+    render(<GitPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Refreshing...')).toBeDefined();
   });
 });
