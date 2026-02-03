@@ -23,4 +23,39 @@ describe('EditTemplateDialog', () => {
     );
     expect(screen.getByDisplayValue('Edit Me')).toBeDefined();
   });
+
+  it('shows dialog header', () => {
+    render(
+      <EditTemplateDialog isOpen={true} template={mockTemplate as any} onClose={vi.fn()} onSave={vi.fn()} />
+    );
+    expect(screen.getByText(/Edit Template|テンプレート編集/i)).toBeDefined();
+  });
+
+  it('shows description field', () => {
+    render(
+      <EditTemplateDialog isOpen={true} template={mockTemplate as any} onClose={vi.fn()} onSave={vi.fn()} />
+    );
+    expect(screen.getByDisplayValue('Desc')).toBeDefined();
+  });
+
+  it('shows cancel button', () => {
+    render(
+      <EditTemplateDialog isOpen={true} template={mockTemplate as any} onClose={vi.fn()} onSave={vi.fn()} />
+    );
+    expect(screen.getByText(/Cancel|キャンセル/i)).toBeDefined();
+  });
+
+  it('shows save button', () => {
+    render(
+      <EditTemplateDialog isOpen={true} template={mockTemplate as any} onClose={vi.fn()} onSave={vi.fn()} />
+    );
+    expect(screen.getByText('Update Template')).toBeDefined();
+  });
+
+  it('shows category selector', () => {
+    render(
+      <EditTemplateDialog isOpen={true} template={mockTemplate as any} onClose={vi.fn()} onSave={vi.fn()} />
+    );
+    expect(screen.getByDisplayValue(/custom/i)).toBeDefined();
+  });
 });
