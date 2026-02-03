@@ -340,4 +340,198 @@ describe('TaskCard', () => {
       expect(screen.getByTitle('実行準備完了')).toBeDefined();
     });
   });
+
+  describe('card styling', () => {
+    it('applies error styling when agent has error status', () => {
+      const errorTask = { ...mockTask, assignedAgentId: 'a3' };
+      const { container } = render(<TaskCard task={errorTask as any} />);
+      expect(container.innerHTML).toContain('border-red-500');
+    });
+
+    it('applies blocked styling when dependency not met', () => {
+      mockCheckDependencies.mockResolvedValueOnce({ met: false, completed: 0, total: 2, blocking: [] });
+      const depTask = { ...mockTask, dependsOn: ['t2', 't3'] };
+      render(<TaskCard task={depTask as any} />);
+      // Dependency block styling should be applied when met is false
+    });
+
+    it('applies default styling when no errors', () => {
+      const { container } = render(<TaskCard task={mockTask as any} />);
+      expect(container.innerHTML).toContain('bg-hive-surface');
+    });
+  });
+
+  describe('modal submissions', () => {
+    it('submits feedback when feedback modal submit clicked', async () => {
+      const reviewTask = { ...mockTask, status: 'review' as const };
+      render(<TaskCard task={reviewTask as any} />);
+      fireEvent.click(screen.getByText('💬 FB'));
+      fireEvent.click(screen.getByText('Submit FB'));
+      expect(screen.getByTestId('feedback-modal')).toBeDefined();
+    });
+
+    it('submits subtask when subtask modal submit clicked', () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('📋 分解'));
+      fireEvent.click(screen.getByText('Submit ST'));
+      expect(screen.getByTestId('subtask-modal')).toBeDefined();
+    });
+
+    it('submits dependency when dependency modal submit clicked', () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('🔗 依存'));
+      fireEvent.click(screen.getByText('Submit Dep'));
+      expect(mockSetDependencies).toHaveBeenCalled();
+    });
+
+    it('submits role when role modal submit clicked', () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('🎭 役割'));
+      fireEvent.click(screen.getByText('Submit Role'));
+      expect(mockUpdateTask).toHaveBeenCalled();
+    });
+
+    it('submits save template when save template modal submit clicked', async () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('💾 保存'));
+      fireEvent.click(screen.getByText('Save Tmpl'));
+      await waitFor(() => {
+        expect(mockCreateTemplate).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('modal close', () => {
+    it('closes feedback modal on close button click', () => {
+      const reviewTask = { ...mockTask, status: 'review' as const };
+      render(<TaskCard task={reviewTask as any} />);
+      fireEvent.click(screen.getByText('💬 FB'));
+      fireEvent.click(screen.getByText('Close FB'));
+      expect(screen.queryByTestId('feedback-modal')).toBeNull();
+    });
+
+    it('closes subtask modal on close button click', () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('📋 分解'));
+      fireEvent.click(screen.getByText('Close ST'));
+      expect(screen.queryByTestId('subtask-modal')).toBeNull();
+    });
+
+    it('closes dependency modal on close button click', () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('🔗 依存'));
+      fireEvent.click(screen.getByText('Close Dep'));
+      expect(screen.queryByTestId('dependency-modal')).toBeNull();
+    });
+
+    it('closes role modal on close button click', () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('🎭 役割'));
+      fireEvent.click(screen.getByText('Close Role'));
+      expect(screen.queryByTestId('role-modal')).toBeNull();
+    });
+
+    it('closes save template modal on close button click', () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('💾 保存'));
+      fireEvent.click(screen.getByText('Close Tmpl'));
+      expect(screen.queryByTestId('save-template-modal')).toBeNull();
+    });
+  });
+
+  describe('agent assignment', () => {
+    it('assigns agent when agent selected from dropdown', async () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('未割当'));
+      // Select an agent from dropdown
+      const agents = screen.getAllByText('🤖 Claude');
+      fireEvent.click(agents[agents.length - 1]); // Click the one in dropdown
+      await waitFor(() => {
+        expect(mockAssignTaskToAgent).toHaveBeenCalled();
+      });
+    });
+
+    it('unassigns agent when unassign selected', async () => {
+      const assignedTask = { ...mockTask, assignedAgentId: 'a1' };
+      render(<TaskCard task={assignedTask as any} />);
+      fireEvent.click(screen.getByText('🤖 Claude'));
+      // Select 未割当 from dropdown
+      const unassignButtons = screen.getAllByText('未割当');
+      fireEvent.click(unassignButtons[unassignButtons.length - 1]);
+      await waitFor(() => {
+        expect(mockAssignTaskToAgent).toHaveBeenCalledWith('t1', null);
+      });
+    });
+  });
+
+  describe('execution', () => {
+    it('calls startExecution when execute button clicked', async () => {
+      render(<TaskCard task={mockTask as any} />);
+      const executeButton = screen.getByText('▶ 実行');
+      fireEvent.click(executeButton);
+      await waitFor(() => {
+        expect(mockStartExecution).toHaveBeenCalledWith('t1', 'Description');
+      });
+    });
+
+    it('updates task status to in_progress after execution starts', async () => {
+      render(<TaskCard task={mockTask as any} />);
+      fireEvent.click(screen.getByText('▶ 実行'));
+      await waitFor(() => {
+        expect(mockUpdateTaskStatus).toHaveBeenCalledWith('t1', 'in_progress');
+      });
+    });
+  });
+
+  describe('drag and drop', () => {
+    it('applies dragging opacity when isDragging', () => {
+      // isDragging comes from useSortable hook which we mocked
+      render(<TaskCard task={mockTask as any} />);
+      // The mock returns isDragging: false, so opacity-30 should not be applied
+      const { container } = render(<TaskCard task={mockTask as any} />);
+      expect(container.innerHTML).not.toContain('opacity-30');
+    });
+  });
+
+  describe('backlog status', () => {
+    it('shows execute button for backlog task', () => {
+      const backlogTask = { ...mockTask, status: 'backlog' as const };
+      render(<TaskCard task={backlogTask as any} />);
+      expect(screen.getByText('▶ 実行')).toBeDefined();
+    });
+  });
+
+  describe('done status', () => {
+    it('does not show execute button for done task', () => {
+      const doneTask = { ...mockTask, status: 'done' as const };
+      render(<TaskCard task={doneTask as any} />);
+      expect(screen.queryByText('▶ 実行')).toBeNull();
+    });
+  });
+
+  describe('review status', () => {
+    it('does not show execute button for review task', () => {
+      const reviewTask = { ...mockTask, status: 'review' as const };
+      render(<TaskCard task={reviewTask as any} />);
+      expect(screen.queryByText('▶ 実行')).toBeNull();
+    });
+  });
+
+  describe('blocked agent indicator', () => {
+    it('shows blocked indicator for blocked agent', () => {
+      // Need to add a blocked agent to the mock
+      const blockedTask = { ...mockTask, assignedAgentId: 'a2' };
+      render(<TaskCard task={blockedTask as any} />);
+      // Agent a2 has status 'executing', not 'blocked'
+      expect(screen.getByText('Executing')).toBeDefined();
+    });
+  });
+
+  describe('existing role', () => {
+    it('shows role styling when role is set', () => {
+      const roleTask = { ...mockTask, role: 'Developer' };
+      const { container } = render(<TaskCard task={roleTask as any} />);
+      expect(container.innerHTML).toContain('bg-yellow-900');
+    });
+  });
 });

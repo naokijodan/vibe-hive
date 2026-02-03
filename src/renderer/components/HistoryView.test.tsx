@@ -75,4 +75,111 @@ describe('HistoryView', () => {
       expect(sessionTab.length).toBeGreaterThan(0);
     });
   });
+
+  describe('tab switching', () => {
+    it('switches to agents tab when clicked', async () => {
+      render(<HistoryView />);
+      await waitFor(() => {
+        const agentTab = screen.getByText('エージェント履歴');
+        fireEvent.click(agentTab);
+      });
+      await waitFor(() => {
+        expect(screen.getByText('Agent 1')).toBeDefined();
+      });
+    });
+
+    it('switches to sessions tab when clicked', async () => {
+      render(<HistoryView />);
+      await waitFor(() => {
+        const sessionTab = screen.getByText('セッション履歴');
+        fireEvent.click(sessionTab);
+      });
+      await waitFor(() => {
+        expect(screen.getByText('Session 1')).toBeDefined();
+      });
+    });
+
+    it('switches back to tasks tab', async () => {
+      render(<HistoryView />);
+      await waitFor(() => {
+        fireEvent.click(screen.getByText('エージェント履歴'));
+      });
+      await waitFor(() => {
+        fireEvent.click(screen.getByText('タスク履歴'));
+      });
+      await waitFor(() => {
+        expect(screen.getByText('Task 1')).toBeDefined();
+      });
+    });
+  });
+
+  describe('task display', () => {
+    it('shows task priority', async () => {
+      render(<HistoryView />);
+      await waitFor(() => {
+        expect(screen.getByText(/優先度: high/)).toBeDefined();
+      });
+    });
+
+    it('shows task creation date', async () => {
+      const { container } = render(<HistoryView />);
+      await waitFor(() => {
+        expect(container.innerHTML).toContain('作成:');
+      });
+    });
+  });
+
+  describe('agent display', () => {
+    it('shows agent name', async () => {
+      render(<HistoryView />);
+      await waitFor(() => {
+        fireEvent.click(screen.getByText('エージェント履歴'));
+      });
+      await waitFor(() => {
+        expect(screen.getByText('Agent 1')).toBeDefined();
+      });
+    });
+  });
+
+  describe('session display', () => {
+    it('shows session name and working directory', async () => {
+      render(<HistoryView />);
+      await waitFor(() => {
+        fireEvent.click(screen.getByText('セッション履歴'));
+      });
+      await waitFor(() => {
+        expect(screen.getByText('Session 1')).toBeDefined();
+        expect(screen.getByText('/home')).toBeDefined();
+      });
+    });
+
+    it('shows session status', async () => {
+      render(<HistoryView />);
+      await waitFor(() => {
+        fireEvent.click(screen.getByText('セッション履歴'));
+      });
+      await waitFor(() => {
+        expect(screen.getByText('active')).toBeDefined();
+      });
+    });
+  });
+
+  describe('header', () => {
+    it('displays history header', async () => {
+      render(<HistoryView />);
+      expect(screen.getByText('履歴')).toBeDefined();
+    });
+  });
+
+  describe('styling', () => {
+    it('has full height layout', () => {
+      const { container } = render(<HistoryView />);
+      expect(container.innerHTML).toContain('h-full');
+    });
+
+    it('has flex column layout', () => {
+      const { container } = render(<HistoryView />);
+      expect(container.innerHTML).toContain('flex-col');
+    });
+  });
 });

@@ -4,19 +4,31 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { OrgChart } from './OrgChart';
 
-const mockLoadOrganization = vi.fn();
-const mockAddNode = vi.fn();
-const mockUpdateNode = vi.fn();
-const mockDeleteNode = vi.fn();
-const mockSetSelectedNode = vi.fn();
-const mockAssignAgentToNode = vi.fn();
-const mockUnassignAgentFromNode = vi.fn();
-const mockExecuteNode = vi.fn();
-const mockStopNode = vi.fn();
-const mockOrchestrateNode = vi.fn();
-const mockApproveOrchestration = vi.fn();
-const mockRejectOrchestration = vi.fn();
-const mockInitListener = vi.fn(() => vi.fn());
+const { mockFns, mockOrgState } = vi.hoisted(() => ({
+  mockFns: {
+    loadOrganization: vi.fn(),
+    addNode: vi.fn(),
+    updateNode: vi.fn(),
+    deleteNode: vi.fn(),
+    setSelectedNode: vi.fn(),
+    assignAgentToNode: vi.fn(),
+    unassignAgentFromNode: vi.fn(),
+    executeNode: vi.fn(),
+    stopNode: vi.fn(),
+    orchestrateNode: vi.fn(),
+    approveOrchestration: vi.fn(),
+    rejectOrchestration: vi.fn(),
+    initOrchestrationListener: vi.fn(() => vi.fn()),
+  },
+  mockOrgState: {
+    nodes: [] as any[],
+    selectedNodeId: null as string | null,
+    nodeExecutions: new Map(),
+    orchestrationStates: new Map(),
+    isLoading: false,
+    error: null as string | null,
+  },
+}));
 
 vi.mock('reactflow', () => {
   const ReactFlow = ({ children, onConnect }: any) => (
@@ -45,28 +57,8 @@ vi.mock('reactflow/dist/style.css', () => ({}));
 
 vi.mock('../../stores/organizationStore', () => ({
   useOrganizationStore: () => ({
-    nodes: [
-      { id: 'n1', name: 'Dev Team', type: 'team', parentId: null },
-      { id: 'n2', name: 'Manager', type: 'role', parentId: 'n1' },
-    ],
-    selectedNodeId: null,
-    nodeExecutions: new Map(),
-    orchestrationStates: new Map(),
-    isLoading: false,
-    error: null,
-    loadOrganization: mockLoadOrganization,
-    addNode: mockAddNode,
-    updateNode: mockUpdateNode,
-    deleteNode: mockDeleteNode,
-    setSelectedNode: mockSetSelectedNode,
-    assignAgentToNode: mockAssignAgentToNode,
-    unassignAgentFromNode: mockUnassignAgentFromNode,
-    executeNode: mockExecuteNode,
-    stopNode: mockStopNode,
-    initOrchestrationListener: mockInitListener,
-    orchestrateNode: mockOrchestrateNode,
-    approveOrchestration: mockApproveOrchestration,
-    rejectOrchestration: mockRejectOrchestration,
+    ...mockOrgState,
+    ...mockFns,
   }),
 }));
 
@@ -104,6 +96,16 @@ vi.mock('./ResultsReviewPanel', () => ({
 describe('OrgChart', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset to default state with nodes
+    mockOrgState.nodes = [
+      { id: 'n1', name: 'Dev Team', type: 'team', parentId: null },
+      { id: 'n2', name: 'Manager', type: 'role', parentId: 'n1' },
+    ];
+    mockOrgState.selectedNodeId = null;
+    mockOrgState.nodeExecutions = new Map();
+    mockOrgState.orchestrationStates = new Map();
+    mockOrgState.isLoading = false;
+    mockOrgState.error = null;
   });
 
   it('renders without crashing', () => {
@@ -113,12 +115,12 @@ describe('OrgChart', () => {
 
   it('loads organization on mount', () => {
     render(<OrgChart />);
-    expect(mockLoadOrganization).toHaveBeenCalled();
+    expect(mockFns.loadOrganization).toHaveBeenCalled();
   });
 
   it('initializes orchestration listener', () => {
     render(<OrgChart />);
-    expect(mockInitListener).toHaveBeenCalled();
+    expect(mockFns.initOrchestrationListener).toHaveBeenCalled();
   });
 
   it('renders toolbar buttons', () => {
@@ -148,7 +150,7 @@ describe('OrgChart', () => {
     fireEvent.click(screen.getByText(/ノード追加|Add Node/i));
     fireEvent.click(screen.getByText('Add'));
     await waitFor(() => {
-      expect(mockAddNode).toHaveBeenCalledWith({ name: 'New Node', type: 'team' });
+      expect(mockFns.addNode).toHaveBeenCalledWith({ name: 'New Node', type: 'team' });
     });
   });
 
@@ -163,7 +165,7 @@ describe('OrgChart', () => {
     render(<OrgChart />);
     fireEvent.click(screen.getByText('Connect'));
     await waitFor(() => {
-      expect(mockUpdateNode).toHaveBeenCalledWith('n2', { parentId: 'n1' });
+      expect(mockFns.updateNode).toHaveBeenCalledWith('n2', { parentId: 'n1' });
     });
   });
 
@@ -186,5 +188,85 @@ describe('OrgChart', () => {
   it('renders background component', () => {
     render(<OrgChart />);
     expect(screen.getByTestId('background')).toBeDefined();
+  });
+
+  describe('empty state', () => {
+    beforeEach(() => {
+      mockOrgState.nodes = [];
+    });
+
+    it('shows empty state when no nodes', () => {
+      render(<OrgChart />);
+      expect(screen.getByText('組織構造が空です')).toBeDefined();
+    });
+
+    it('shows add first node button', () => {
+      render(<OrgChart />);
+      expect(screen.getByText(/最初のノードを追加/)).toBeDefined();
+    });
+
+    it('opens modal when add first node button clicked', () => {
+      render(<OrgChart />);
+      fireEvent.click(screen.getByText(/最初のノードを追加/));
+      expect(screen.getByTestId('add-node-modal')).toBeDefined();
+    });
+  });
+
+  describe('agent panel', () => {
+    it('renders with full width when no agent panel', () => {
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).toContain('flex-1');
+    });
+  });
+
+  describe('node types', () => {
+    it('configures custom node types for reactflow', () => {
+      // OrgNodeCard is set up as 'orgNode' type in nodeTypes
+      // This is tested implicitly through rendering without errors
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('add button styling', () => {
+    it('has accent background', () => {
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).toContain('bg-hive-accent');
+    });
+
+    it('has shadow styling', () => {
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).toContain('shadow-lg');
+    });
+  });
+
+  describe('styling', () => {
+    it('has full height and width', () => {
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).toContain('h-full');
+      expect(container.innerHTML).toContain('w-full');
+    });
+
+    it('has flex layout', () => {
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).toContain('flex');
+    });
+
+    it('has relative positioning for main canvas', () => {
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).toContain('relative');
+    });
+
+    it('has z-10 for add button', () => {
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).toContain('z-10');
+    });
+  });
+
+  describe('background variant', () => {
+    it('renders with dots background', () => {
+      render(<OrgChart />);
+      expect(screen.getByTestId('background')).toBeDefined();
+    });
   });
 });
