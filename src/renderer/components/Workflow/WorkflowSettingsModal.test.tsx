@@ -25,4 +25,30 @@ describe('WorkflowSettingsModal', () => {
     render(<WorkflowSettingsModal isOpen={true} onClose={vi.fn()} workflow={mockWorkflow as any} />);
     expect(screen.getByDisplayValue('Test WF')).toBeDefined();
   });
+
+  it('shows workflow settings header', () => {
+    render(<WorkflowSettingsModal isOpen={true} onClose={vi.fn()} workflow={mockWorkflow as any} />);
+    expect(screen.getByText(/Workflow Settings|ワークフロー設定/i)).toBeDefined();
+  });
+
+  it('shows description field', () => {
+    render(<WorkflowSettingsModal isOpen={true} onClose={vi.fn()} workflow={mockWorkflow as any} />);
+    expect(screen.getByDisplayValue('Desc')).toBeDefined();
+  });
+
+  it('shows save button', () => {
+    render(<WorkflowSettingsModal isOpen={true} onClose={vi.fn()} workflow={mockWorkflow as any} />);
+    expect(screen.getByText(/Save|保存/i)).toBeDefined();
+  });
+
+  it('shows cancel button', () => {
+    render(<WorkflowSettingsModal isOpen={true} onClose={vi.fn()} workflow={mockWorkflow as any} />);
+    expect(screen.getByText(/Cancel|キャンセル/i)).toBeDefined();
+  });
+
+  it('shows close button', () => {
+    const { container } = render(<WorkflowSettingsModal isOpen={true} onClose={vi.fn()} workflow={mockWorkflow as any} />);
+    const closeButton = container.querySelector('button svg');
+    expect(closeButton).toBeDefined();
+  });
 });

@@ -29,4 +29,25 @@ describe('WorkflowExecutionList', () => {
       expect(screen.getByText('success')).toBeDefined();
     });
   });
+
+  it('shows history header', async () => {
+    render(<WorkflowExecutionList workflowId={1} />);
+    await waitFor(() => {
+      expect(screen.getByText('Execution History')).toBeDefined();
+    });
+  });
+
+  it('renders execution status', async () => {
+    render(<WorkflowExecutionList workflowId={1} />);
+    await waitFor(() => {
+      expect(screen.getByText('success')).toBeDefined();
+    });
+  });
+
+  it('renders container with workflow id', async () => {
+    const { container } = render(<WorkflowExecutionList workflowId={1} />);
+    await waitFor(() => {
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
 });
