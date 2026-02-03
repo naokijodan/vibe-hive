@@ -1,18 +1,20 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { WorkflowCanvas } from './WorkflowCanvas';
 
 vi.mock('@xyflow/react', () => {
-  const ReactFlow = ({ children }: any) => <div data-testid="xyflow">{children}</div>;
+  const ReactFlow = ({ children }: any) => (
+    <div data-testid="xyflow">{children}</div>
+  );
   return {
     ReactFlow,
-    Background: () => null,
-    Controls: () => null,
-    MiniMap: () => null,
-    Panel: ({ children }: any) => <div>{children}</div>,
-    addEdge: vi.fn(),
+    Background: () => <div data-testid="background" />,
+    Controls: () => <div data-testid="controls" />,
+    MiniMap: () => <div data-testid="minimap" />,
+    Panel: ({ children }: any) => <div data-testid="panel">{children}</div>,
+    addEdge: vi.fn((edge, edges) => [...edges, edge]),
     useNodesState: vi.fn(() => [[], vi.fn(), vi.fn()]),
     useEdgesState: vi.fn(() => [[], vi.fn(), vi.fn()]),
   };
@@ -21,23 +23,23 @@ vi.mock('@xyflow/react', () => {
 vi.mock('@xyflow/react/dist/style.css', () => ({}));
 
 vi.mock('./nodes', () => ({
-  TaskNode: () => null,
-  TriggerNode: () => null,
-  ConditionalNode: () => null,
-  NotificationNode: () => null,
-  MergeNode: () => null,
-  DelayNode: () => null,
-  LoopNode: () => null,
-  SubworkflowNode: () => null,
-  AgentNode: () => null,
+  TaskNode: () => <div>TaskNode</div>,
+  TriggerNode: () => <div>TriggerNode</div>,
+  ConditionalNode: () => <div>ConditionalNode</div>,
+  NotificationNode: () => <div>NotificationNode</div>,
+  MergeNode: () => <div>MergeNode</div>,
+  DelayNode: () => <div>DelayNode</div>,
+  LoopNode: () => <div>LoopNode</div>,
+  SubworkflowNode: () => <div>SubworkflowNode</div>,
+  AgentNode: () => <div>AgentNode</div>,
 }));
 
 vi.mock('./NodePalette', () => ({
-  NodePalette: () => <div>NodePalette</div>,
+  NodePalette: () => <div data-testid="node-palette">NodePalette</div>,
 }));
 
 vi.mock('./settings/NodeSettingsPanel', () => ({
-  NodeSettingsPanel: () => null,
+  NodeSettingsPanel: () => <div data-testid="node-settings" />,
 }));
 
 vi.mock('./WorkflowSettingsModal', () => ({
@@ -86,7 +88,22 @@ describe('WorkflowCanvas', () => {
   });
 
   it('shows empty state text when no workflow', () => {
-    const { getByText } = render(<WorkflowCanvas />);
-    expect(getByText('No Workflow Selected')).toBeDefined();
+    render(<WorkflowCanvas />);
+    expect(screen.getByText('No Workflow Selected')).toBeDefined();
+  });
+
+  it('shows workflow selection instruction', () => {
+    render(<WorkflowCanvas />);
+    expect(screen.getByText(/Select a workflow/i)).toBeDefined();
+  });
+
+  it('renders empty state container', () => {
+    const { container } = render(<WorkflowCanvas />);
+    expect(container.querySelector('svg')).toBeDefined();
+  });
+
+  it('renders flex container', () => {
+    const { container } = render(<WorkflowCanvas />);
+    expect(container.innerHTML).toContain('flex');
   });
 });
