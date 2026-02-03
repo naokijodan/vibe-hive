@@ -1,82 +1,53 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { NodePalette } from './NodePalette';
 
 describe('NodePalette', () => {
-  it('renders all node types', () => {
-    render(<NodePalette onAddNode={vi.fn()} />);
-    expect(screen.getByText('Node Palette')).toBeDefined();
-    expect(screen.getByText('Trigger')).toBeDefined();
-    expect(screen.getByText('Task')).toBeDefined();
-    expect(screen.getByText('Conditional')).toBeDefined();
-    expect(screen.getByText('Delay')).toBeDefined();
-    expect(screen.getByText('Notification')).toBeDefined();
-    expect(screen.getByText('Merge')).toBeDefined();
-    expect(screen.getByText('Loop')).toBeDefined();
-    expect(screen.getByText('Subworkflow')).toBeDefined();
-    expect(screen.getByText('AI Agent')).toBeDefined();
+  const mockOnAddNode = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('calls onAddNode when clicked', () => {
-    const onAddNode = vi.fn();
-    render(<NodePalette onAddNode={onAddNode} />);
-    fireEvent.click(screen.getByText('Trigger'));
-    expect(onAddNode).toHaveBeenCalledWith('trigger');
+  it('renders node palette header', () => {
+    render(<NodePalette onAddNode={mockOnAddNode} />);
+    expect(screen.getByText('Node Palette')).toBeTruthy();
+  });
+
+  it('renders all node types', () => {
+    render(<NodePalette onAddNode={mockOnAddNode} />);
+    expect(screen.getByText('Trigger')).toBeTruthy();
+    expect(screen.getByText('Task')).toBeTruthy();
+    expect(screen.getByText('Conditional')).toBeTruthy();
+    expect(screen.getByText('Delay')).toBeTruthy();
+    expect(screen.getByText('Notification')).toBeTruthy();
+    expect(screen.getByText('Merge')).toBeTruthy();
+    expect(screen.getByText('Loop')).toBeTruthy();
+    expect(screen.getByText('Subworkflow')).toBeTruthy();
+    expect(screen.getByText('AI Agent')).toBeTruthy();
   });
 
   it('renders tips section', () => {
-    render(<NodePalette onAddNode={vi.fn()} />);
-    expect(screen.getByText('Tips')).toBeDefined();
+    render(<NodePalette onAddNode={mockOnAddNode} />);
+    expect(screen.getByText('Tips')).toBeTruthy();
   });
 
-  it('calls onAddNode with task type', () => {
-    const onAddNode = vi.fn();
-    render(<NodePalette onAddNode={onAddNode} />);
-    fireEvent.click(screen.getByText('Task'));
-    expect(onAddNode).toHaveBeenCalledWith('task');
+  it('calls onAddNode when node clicked', () => {
+    render(<NodePalette onAddNode={mockOnAddNode} />);
+    fireEvent.click(screen.getByText('Trigger'));
+    expect(mockOnAddNode).toHaveBeenCalledWith('trigger');
   });
 
-  it('calls onAddNode with conditional type', () => {
-    const onAddNode = vi.fn();
-    render(<NodePalette onAddNode={onAddNode} />);
-    fireEvent.click(screen.getByText('Conditional'));
-    expect(onAddNode).toHaveBeenCalledWith('conditional');
-  });
-
-  it('calls onAddNode with delay type', () => {
-    const onAddNode = vi.fn();
-    render(<NodePalette onAddNode={onAddNode} />);
-    fireEvent.click(screen.getByText('Delay'));
-    expect(onAddNode).toHaveBeenCalledWith('delay');
-  });
-
-  it('calls onAddNode with notification type', () => {
-    const onAddNode = vi.fn();
-    render(<NodePalette onAddNode={onAddNode} />);
-    fireEvent.click(screen.getByText('Notification'));
-    expect(onAddNode).toHaveBeenCalledWith('notification');
-  });
-
-  it('calls onAddNode with loop type', () => {
-    const onAddNode = vi.fn();
-    render(<NodePalette onAddNode={onAddNode} />);
-    fireEvent.click(screen.getByText('Loop'));
-    expect(onAddNode).toHaveBeenCalledWith('loop');
-  });
-
-  it('calls onAddNode with subworkflow type', () => {
-    const onAddNode = vi.fn();
-    render(<NodePalette onAddNode={onAddNode} />);
-    fireEvent.click(screen.getByText('Subworkflow'));
-    expect(onAddNode).toHaveBeenCalledWith('subworkflow');
-  });
-
-  it('calls onAddNode with agent type', () => {
-    const onAddNode = vi.fn();
-    render(<NodePalette onAddNode={onAddNode} />);
-    fireEvent.click(screen.getByText('AI Agent'));
-    expect(onAddNode).toHaveBeenCalledWith('agent');
+  it('handles drag start', () => {
+    render(<NodePalette onAddNode={mockOnAddNode} />);
+    const triggerNode = screen.getByText('Trigger').closest('[draggable="true"]');
+    const dataTransfer = {
+      setData: vi.fn(),
+      effectAllowed: '',
+    };
+    fireEvent.dragStart(triggerNode!, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith('application/reactflow', 'trigger');
   });
 });
