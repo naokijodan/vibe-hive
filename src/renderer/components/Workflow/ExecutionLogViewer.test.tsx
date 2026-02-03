@@ -22,4 +22,29 @@ describe('ExecutionLogViewer', () => {
     render(<ExecutionLogViewer execution={execution as any} selectedNodeId={null} />);
     expect(screen.getAllByText(/ノード|ログ|select|node/i).length).toBeGreaterThan(0);
   });
+
+  it('renders container', () => {
+    const { container } = render(<ExecutionLogViewer execution={null} selectedNodeId={null} />);
+    expect(container.innerHTML).not.toBe('');
+  });
+
+  it('renders with execution and node selected', () => {
+    const execution = {
+      id: 1,
+      status: 'completed',
+      executionData: { node1: { logs: ['Log entry 1'] } },
+    };
+    const { container } = render(
+      <ExecutionLogViewer execution={execution as any} selectedNodeId="node1" />
+    );
+    expect(container.innerHTML).not.toBe('');
+  });
+
+  it('renders without crashing with empty executionData', () => {
+    const execution = { id: 1, status: 'completed', executionData: {} };
+    const { container } = render(
+      <ExecutionLogViewer execution={execution as any} selectedNodeId="node1" />
+    );
+    expect(container.innerHTML).not.toBe('');
+  });
 });

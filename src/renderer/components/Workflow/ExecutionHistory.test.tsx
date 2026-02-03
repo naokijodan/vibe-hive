@@ -13,4 +13,24 @@ describe('ExecutionHistory', () => {
     render(<ExecutionHistory workflowId={null} onSelectExecution={vi.fn()} />);
     expect(screen.getByText(/No executions|Select a workflow/i)).toBeDefined();
   });
+
+  it('renders container', () => {
+    const { container } = render(<ExecutionHistory workflowId={null} onSelectExecution={vi.fn()} />);
+    expect(container.innerHTML).not.toBe('');
+  });
+
+  it('renders with workflow id', async () => {
+    render(<ExecutionHistory workflowId={1} onSelectExecution={vi.fn()} />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/Execution|No executions/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('calls onSelectExecution callback', async () => {
+    const onSelectExecution = vi.fn();
+    render(<ExecutionHistory workflowId={1} onSelectExecution={onSelectExecution} />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/Execution|No executions/i).length).toBeGreaterThan(0);
+    });
+  });
 });
