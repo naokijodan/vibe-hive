@@ -52,4 +52,18 @@ describe('ClaudeHooksPanel', () => {
       expect(addBtn).toBeDefined();
     });
   });
+
+  it('shows hook matcher', async () => {
+    render(<ClaudeHooksPanel />);
+    await waitFor(() => {
+      expect(screen.getByText('*')).toBeDefined();
+    });
+  });
+
+  it('shows tabs', async () => {
+    render(<ClaudeHooksPanel />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/フック|Hooks|ログ|Logs/i).length).toBeGreaterThan(0);
+    });
+  });
 });
