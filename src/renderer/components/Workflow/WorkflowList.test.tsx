@@ -39,4 +39,24 @@ describe('WorkflowList', () => {
     expect(screen.getByText('Execute')).toBeDefined();
     expect(screen.getByText('Delete')).toBeDefined();
   });
+
+  it('renders workflow description', () => {
+    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
+    expect(screen.getByText('Desc')).toBeDefined();
+  });
+
+  it('renders new button', () => {
+    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
+    expect(screen.getByText('+ New')).toBeDefined();
+  });
+
+  it('renders workflow status', () => {
+    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
+    expect(screen.getByText('active')).toBeDefined();
+  });
+
+  it('renders node count', () => {
+    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
+    expect(screen.getByText('2 nodes')).toBeDefined();
+  });
 });

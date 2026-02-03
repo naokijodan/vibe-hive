@@ -65,4 +65,29 @@ describe('WorkflowManager', () => {
     render(<WorkflowManager />);
     expect(screen.getAllByText(/Canvas|キャンバス|canvas/i).length).toBeGreaterThan(0);
   });
+
+  it('renders new workflow button', () => {
+    render(<WorkflowManager />);
+    expect(screen.getByText('New')).toBeDefined();
+  });
+
+  it('renders workflow canvas component', () => {
+    render(<WorkflowManager />);
+    expect(screen.getByText('WorkflowCanvas')).toBeDefined();
+  });
+
+  it('renders execution history tab', () => {
+    render(<WorkflowManager />);
+    expect(screen.getAllByText(/History|実行履歴/i).length).toBeGreaterThan(0);
+  });
+
+  it('renders templates tab', () => {
+    render(<WorkflowManager />);
+    expect(screen.getAllByText(/Template/i).length).toBeGreaterThan(0);
+  });
+
+  it('renders container', () => {
+    const { container } = render(<WorkflowManager />);
+    expect(container.innerHTML).not.toBe('');
+  });
 });
