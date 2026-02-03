@@ -96,4 +96,30 @@ describe('WorkflowScheduler', () => {
       expect(scheduler.isScheduled(99)).toBe(false);
     });
   });
+
+  describe('updateSchedule', () => {
+    it('updates existing schedule', () => {
+      scheduler.scheduleWorkflow(1, '* * * * *');
+      scheduler.updateSchedule(1, '0 * * * *');
+
+      expect(mockStop).toHaveBeenCalled();
+      expect(scheduler.isScheduled(1)).toBe(true);
+    });
+  });
+
+  describe('initialize', () => {
+    it('loads workflows on init', async () => {
+      await scheduler.initialize();
+      // Should not throw
+    });
+  });
+});
+
+describe('getWorkflowScheduler', () => {
+  it('returns singleton instance', async () => {
+    const { getWorkflowScheduler } = await import('./WorkflowScheduler');
+    const instance1 = getWorkflowScheduler();
+    const instance2 = getWorkflowScheduler();
+    expect(instance1).toBe(instance2);
+  });
 });
