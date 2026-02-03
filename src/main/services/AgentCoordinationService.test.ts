@@ -101,4 +101,59 @@ describe('AgentCoordinationService', () => {
     expect(svc.getMessages()).toHaveLength(0);
     expect(svc.getDelegations()).toHaveLength(0);
   });
+
+  it('setMainWindow sets window', () => {
+    const svc = getAgentCoordinationService();
+    const mockWindow = { isDestroyed: vi.fn(), webContents: { send: vi.fn() } };
+    svc.setMainWindow(mockWindow as any);
+    // No error should occur
+  });
+
+  it('sendMessage with metadata', () => {
+    const svc = getAgentCoordinationService();
+    const msg = svc.sendMessage('a1', 'a2', 'request', 'data', { key: 'value' });
+
+    expect(msg.metadata).toEqual({ key: 'value' });
+  });
+
+  it('sendMessage notifies renderer when window set', () => {
+    const svc = getAgentCoordinationService();
+    const mockSend = vi.fn();
+    const mockWindow = {
+      isDestroyed: vi.fn().mockReturnValue(false),
+      webContents: { send: mockSend },
+    };
+    svc.setMainWindow(mockWindow as any);
+    svc.sendMessage('a1', 'a2', 'message', 'hi');
+
+    expect(mockSend).toHaveBeenCalledWith('coordination:message', expect.any(Object));
+  });
+
+  it('does not notify renderer when window destroyed', () => {
+    const svc = getAgentCoordinationService();
+    const mockSend = vi.fn();
+    const mockWindow = {
+      isDestroyed: vi.fn().mockReturnValue(true),
+      webContents: { send: mockSend },
+    };
+    svc.setMainWindow(mockWindow as any);
+    svc.sendMessage('a1', 'a2', 'message', 'hi');
+
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  it('delegateTask without reason', () => {
+    const svc = getAgentCoordinationService();
+    const delegation = svc.delegateTask('t1', 'a1', 'a2');
+
+    expect(delegation.reason).toBeUndefined();
+  });
+
+  it('getMessagesByAgent includes fromAgentId', () => {
+    const svc = getAgentCoordinationService();
+    svc.sendMessage('a1', 'a2', 'message', 'hello');
+
+    const msgs = svc.getMessagesByAgent('a1');
+    expect(msgs).toHaveLength(1);
+  });
 });
