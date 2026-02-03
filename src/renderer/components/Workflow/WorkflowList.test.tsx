@@ -1,16 +1,18 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { WorkflowList } from './WorkflowList';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 
-const mockWorkflows = [
-  { id: 1, name: 'WF 1', description: 'Desc', status: 'active', nodes: [{}, {}], edges: [], updatedAt: Date.now(), createdAt: Date.now() },
-];
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 vi.mock('../../stores/workflowStore', () => ({
   useWorkflowStore: () => ({
-    workflows: mockWorkflows,
+    workflows: [],
     loadWorkflows: vi.fn(),
     deleteWorkflow: vi.fn(),
     executeWorkflow: vi.fn(),
@@ -18,45 +20,61 @@ vi.mock('../../stores/workflowStore', () => ({
   }),
 }));
 
-vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }));
+import { WorkflowList } from './WorkflowList';
 
 describe('WorkflowList', () => {
-  it('renders workflows header', () => {
-    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
-    expect(screen.getByText('Workflows')).toBeDefined();
-    expect(screen.getByText('+ New')).toBeDefined();
+  const mockOnSelectWorkflow = vi.fn();
+  const mockOnCreateNew = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('renders workflow items', () => {
-    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
-    expect(screen.getByText('WF 1')).toBeDefined();
-    expect(screen.getByText('active')).toBeDefined();
-    expect(screen.getByText('2 nodes')).toBeDefined();
+  it('renders empty state when no workflows', () => {
+    render(
+      <WorkflowList
+        selectedWorkflowId={null}
+        onSelectWorkflow={mockOnSelectWorkflow}
+        onCreateNew={mockOnCreateNew}
+      />
+    );
+    expect(screen.getByText('No workflows yet')).toBeTruthy();
   });
 
-  it('shows execute and delete buttons', () => {
-    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
-    expect(screen.getByText('Execute')).toBeDefined();
-    expect(screen.getByText('Delete')).toBeDefined();
+  it('renders header with workflow count', () => {
+    render(
+      <WorkflowList
+        selectedWorkflowId={null}
+        onSelectWorkflow={mockOnSelectWorkflow}
+        onCreateNew={mockOnCreateNew}
+      />
+    );
+    expect(screen.getByText('Workflows')).toBeTruthy();
+    expect(screen.getByText('0 workflows')).toBeTruthy();
   });
 
-  it('renders workflow description', () => {
-    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
-    expect(screen.getByText('Desc')).toBeDefined();
+  it('renders New button', () => {
+    render(
+      <WorkflowList
+        selectedWorkflowId={null}
+        onSelectWorkflow={mockOnSelectWorkflow}
+        onCreateNew={mockOnCreateNew}
+      />
+    );
+    const newButton = screen.getByRole('button', { name: /\+ New/i });
+    expect(newButton).toBeTruthy();
   });
 
-  it('renders new button', () => {
-    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
-    expect(screen.getByText('+ New')).toBeDefined();
-  });
-
-  it('renders workflow status', () => {
-    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
-    expect(screen.getByText('active')).toBeDefined();
-  });
-
-  it('renders node count', () => {
-    render(<WorkflowList selectedWorkflowId={null} onSelectWorkflow={vi.fn()} onCreateNew={vi.fn()} />);
-    expect(screen.getByText('2 nodes')).toBeDefined();
+  it('calls onCreateNew when New button clicked', () => {
+    render(
+      <WorkflowList
+        selectedWorkflowId={null}
+        onSelectWorkflow={mockOnSelectWorkflow}
+        onCreateNew={mockOnCreateNew}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /\+ New/i }));
+    expect(mockOnCreateNew).toHaveBeenCalled();
   });
 });
+

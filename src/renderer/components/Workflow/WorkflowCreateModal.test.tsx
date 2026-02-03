@@ -1,25 +1,55 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { WorkflowCreateModal } from './WorkflowCreateModal';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 vi.mock('../../stores/sessionStore', () => ({
-  useSessionStore: () => ({ activeSessionId: 's1' }),
+  useSessionStore: () => ({
+    activeSessionId: '1',
+  }),
 }));
 
 vi.mock('../../stores/workflowStore', () => ({
-  useWorkflowStore: () => ({ createWorkflow: vi.fn() }),
+  useWorkflowStore: () => ({
+    createWorkflow: vi.fn().mockResolvedValue({ id: 1 }),
+  }),
 }));
 
+import { WorkflowCreateModal } from './WorkflowCreateModal';
+
 describe('WorkflowCreateModal', () => {
-  it('renders nothing when not open', () => {
-    const { container } = render(<WorkflowCreateModal isOpen={false} onClose={vi.fn()} />);
-    expect(container.innerHTML).toBe('');
+  const mockOnClose = vi.fn();
+  const mockOnCreated = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('renders form when open', () => {
-    render(<WorkflowCreateModal isOpen={true} onClose={vi.fn()} />);
-    expect(screen.getAllByText(/Create/i).length).toBeGreaterThan(0);
+  it('renders nothing when not open', () => {
+    const { container } = render(
+      <WorkflowCreateModal isOpen={false} onClose={mockOnClose} />
+    );
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('renders modal when open', () => {
+    render(
+      <WorkflowCreateModal isOpen={true} onClose={mockOnClose} />
+    );
+    expect(screen.getByText('Create New Workflow')).toBeTruthy();
+  });
+
+  it('renders form fields', () => {
+    render(
+      <WorkflowCreateModal isOpen={true} onClose={mockOnClose} />
+    );
+    expect(screen.getAllByRole('textbox').length).toBeGreaterThan(0);
+  });
+
+  it('renders buttons', () => {
+    render(
+      <WorkflowCreateModal isOpen={true} onClose={mockOnClose} />
+    );
+    expect(screen.getAllByRole('button').length).toBeGreaterThan(0);
   });
 });
