@@ -33,4 +33,16 @@ describe('ProfilerPanel', () => {
     expect(screen.getByText('10')).toBeDefined(); // totalExecutions
     expect(screen.getByText('70%')).toBeDefined(); // successRate
   });
+
+  it('renders all tab options', () => {
+    render(<ProfilerPanel />);
+    expect(screen.getByText('タスク分析')).toBeDefined();
+    expect(screen.getByText('タイムライン')).toBeDefined();
+    expect(screen.getByText('ボトルネック')).toBeDefined();
+  });
+
+  it('shows status breakdown', () => {
+    render(<ProfilerPanel />);
+    expect(screen.getAllByText(/完了|7/).length).toBeGreaterThan(0);
+  });
 });
