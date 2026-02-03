@@ -44,4 +44,15 @@ describe('TerminalPanel', () => {
     const { container } = render(<TerminalPanel agentName="Test Agent" agentId="a1" />);
     expect(container.innerHTML).not.toBe('');
   });
+
+  it('renders terminal container', () => {
+    const { container } = render(<TerminalPanel />);
+    const terminalDiv = container.querySelector('div');
+    expect(terminalDiv).not.toBeNull();
+  });
+
+  it('renders with session ID', () => {
+    const { container } = render(<TerminalPanel sessionId="s1" />);
+    expect(container.innerHTML).not.toBe('');
+  });
 });
