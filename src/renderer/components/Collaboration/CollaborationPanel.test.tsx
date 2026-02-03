@@ -58,4 +58,19 @@ describe('CollaborationPanel', () => {
     render(<CollaborationPanel />);
     expect(screen.getByText('未接続')).toBeDefined();
   });
+
+  it('renders host button', () => {
+    render(<CollaborationPanel />);
+    expect(screen.getAllByText(/ホスト|Host/i).length).toBeGreaterThan(0);
+  });
+
+  it('renders join button', () => {
+    render(<CollaborationPanel />);
+    expect(screen.getAllByText(/参加|Join/i).length).toBeGreaterThan(0);
+  });
+
+  it('renders port input', () => {
+    render(<CollaborationPanel />);
+    expect(screen.getByDisplayValue('3101')).toBeDefined();
+  });
 });
