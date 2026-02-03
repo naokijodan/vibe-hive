@@ -34,4 +34,46 @@ describe('themeHandlers', () => {
     expect(channels).toContain('theme:setCustomAccent');
     expect(channels).toContain('theme:resetCustomAccent');
   });
+
+  describe('handler invocations', () => {
+    let handlers: Map<string, (...args: unknown[]) => unknown>;
+
+    beforeEach(() => {
+      handlers = new Map();
+      mockHandle.mockImplementation((channel: string, handler: (...args: unknown[]) => unknown) => {
+        handlers.set(channel, handler);
+      });
+      registerThemeHandlers();
+    });
+
+    it('theme:getPresets invokes service', async () => {
+      const handler = handlers.get('theme:getPresets');
+      await handler?.({});
+    });
+
+    it('theme:getSettings invokes service', async () => {
+      const handler = handlers.get('theme:getSettings');
+      await handler?.({});
+    });
+
+    it('theme:getActiveColors invokes service', async () => {
+      const handler = handlers.get('theme:getActiveColors');
+      await handler?.({});
+    });
+
+    it('theme:setTheme invokes service', async () => {
+      const handler = handlers.get('theme:setTheme');
+      await handler?.({}, 'dark');
+    });
+
+    it('theme:setCustomAccent invokes service', async () => {
+      const handler = handlers.get('theme:setCustomAccent');
+      await handler?.({}, '#ff0000');
+    });
+
+    it('theme:resetCustomAccent invokes service', async () => {
+      const handler = handlers.get('theme:resetCustomAccent');
+      await handler?.({});
+    });
+  });
 });

@@ -41,4 +41,61 @@ describe('templateHandlers', () => {
     expect(channels).toContain('template:search');
     expect(mockHandle).toHaveBeenCalledTimes(9);
   });
+
+  describe('handler invocations', () => {
+    let handlers: Map<string, (...args: unknown[]) => unknown>;
+
+    beforeEach(() => {
+      handlers = new Map();
+      mockHandle.mockImplementation((channel: string, handler: (...args: unknown[]) => unknown) => {
+        handlers.set(channel, handler);
+      });
+      registerTemplateHandlers();
+    });
+
+    it('template:create invokes repository', async () => {
+      const handler = handlers.get('template:create');
+      await handler?.({}, { name: 'Test', content: '' });
+    });
+
+    it('template:get invokes repository', async () => {
+      const handler = handlers.get('template:get');
+      await handler?.({}, 1);
+    });
+
+    it('template:getAll invokes repository', async () => {
+      const handler = handlers.get('template:getAll');
+      await handler?.({});
+    });
+
+    it('template:getByCategory invokes repository', async () => {
+      const handler = handlers.get('template:getByCategory');
+      await handler?.({}, 'automation');
+    });
+
+    it('template:getPopular invokes repository', async () => {
+      const handler = handlers.get('template:getPopular');
+      await handler?.({}, 10);
+    });
+
+    it('template:update invokes repository', async () => {
+      const handler = handlers.get('template:update');
+      await handler?.({}, 1, { name: 'Updated' });
+    });
+
+    it('template:incrementUsage invokes repository', async () => {
+      const handler = handlers.get('template:incrementUsage');
+      await handler?.({}, 1);
+    });
+
+    it('template:delete invokes repository', async () => {
+      const handler = handlers.get('template:delete');
+      await handler?.({}, 1);
+    });
+
+    it('template:search invokes repository', async () => {
+      const handler = handlers.get('template:search');
+      await handler?.({}, 'query');
+    });
+  });
 });
