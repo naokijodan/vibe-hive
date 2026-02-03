@@ -299,4 +299,118 @@ describe('TerminalPanel', () => {
       expect(container.innerHTML).toContain('bg-green-500');
     });
   });
+
+  describe('window.electronAPI', () => {
+    it('ptyCreate is available', () => {
+      expect((window as any).electronAPI.ptyCreate).toBeDefined();
+    });
+
+    it('ptyWrite is available', () => {
+      expect((window as any).electronAPI.ptyWrite).toBeDefined();
+    });
+
+    it('ptyResize is available', () => {
+      expect((window as any).electronAPI.ptyResize).toBeDefined();
+    });
+
+    it('onPtyData is available', () => {
+      expect((window as any).electronAPI.onPtyData).toBeDefined();
+    });
+
+    it('onPtyExit is available', () => {
+      expect((window as any).electronAPI.onPtyExit).toBeDefined();
+    });
+  });
+
+  describe('session id', () => {
+    it('renders with different agent IDs without errors', () => {
+      const { rerender, container } = render(<TerminalPanel agentId="agent1" />);
+      expect(container.innerHTML).toContain('agent1');
+
+      rerender(<TerminalPanel agentId="agent2" />);
+      expect(container.innerHTML).toContain('agent2');
+    });
+
+    it('handles empty string agentId', () => {
+      const { container } = render(<TerminalPanel agentId="" />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('terminal focus', () => {
+    it('allows clicking the terminal container', () => {
+      const { container } = render(<TerminalPanel />);
+      const terminalArea = container.querySelector('.flex-1');
+      expect(() => fireEvent.click(terminalArea!)).not.toThrow();
+    });
+  });
+
+  describe('text styling', () => {
+    it('has agent name font styling', () => {
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).toContain('font-medium');
+    });
+
+    it('has gray text for agent id', () => {
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).toContain('text-gray-500');
+    });
+
+    it('has gray text for agent name', () => {
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).toContain('text-gray-300');
+    });
+  });
+
+  describe('button functionality', () => {
+    it('clear button has proper title/role', () => {
+      render(<TerminalPanel />);
+      const clearBtn = screen.getByText('Clear');
+      expect(clearBtn).toBeTruthy();
+    });
+
+    it('clear button parent has padding', () => {
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).toContain('p-1');
+    });
+  });
+
+  describe('combined props', () => {
+    it('handles all props together', () => {
+      render(
+        <TerminalPanel
+          agentId="test-agent"
+          agentName="Test Terminal"
+          isActive={true}
+        />
+      );
+      expect(screen.getByText('Test Terminal')).toBeTruthy();
+      expect(screen.getByText('(test-agent)')).toBeTruthy();
+    });
+
+    it('handles minimal props', () => {
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).toContain('Terminal');
+      expect(container.innerHTML).toContain('(default)');
+    });
+  });
+
+  describe('gap styling', () => {
+    it('has gap in header left section', () => {
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).toContain('gap-2');
+    });
+
+    it('has gap in button section', () => {
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).toContain('gap-1');
+    });
+  });
+
+  describe('terminal container padding', () => {
+    it('has padding on terminal container', () => {
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).toContain('p-1');
+    });
+  });
 });

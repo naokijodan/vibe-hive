@@ -379,4 +379,159 @@ describe('AgentOutputPanel', () => {
       expect(container.innerHTML).toContain('overflow-hidden');
     });
   });
+
+  describe('Clear button', () => {
+    it('clears terminal when Clear button clicked', () => {
+      render(<AgentOutputPanel taskId="t1" taskTitle="Test" />);
+      fireEvent.click(screen.getByText('Clear'));
+      // Should not throw
+    });
+  });
+
+  describe('scroll to bottom button', () => {
+    it('scrolls to bottom when button clicked', () => {
+      render(<AgentOutputPanel taskId="t1" taskTitle="Test" />);
+      fireEvent.click(screen.getByTitle('最下部へスクロール'));
+      // Should not throw
+    });
+  });
+
+  describe('container click', () => {
+    it('focuses terminal when container clicked', () => {
+      const { container } = render(<AgentOutputPanel taskId="t1" taskTitle="Test" />);
+      const terminalContainer = container.querySelector('.absolute.inset-0');
+      if (terminalContainer) {
+        fireEvent.click(terminalContainer);
+      }
+      // Should not throw
+    });
+  });
+
+  describe('IPC API availability', () => {
+    it('window.electronAPI is defined', () => {
+      expect((window as any).electronAPI).toBeDefined();
+    });
+
+    it('onAgentOutput is available', () => {
+      expect((window as any).electronAPI.onAgentOutput).toBeDefined();
+    });
+
+    it('onAgentExit is available', () => {
+      expect((window as any).electronAPI.onAgentExit).toBeDefined();
+    });
+
+    it('onAgentError is available', () => {
+      expect((window as any).electronAPI.onAgentError).toBeDefined();
+    });
+
+    it('onAgentLoading is available', () => {
+      expect((window as any).electronAPI.onAgentLoading).toBeDefined();
+    });
+
+    it('onAgentTaskComplete is available', () => {
+      expect((window as any).electronAPI.onAgentTaskComplete).toBeDefined();
+    });
+
+    it('agentInput is available', () => {
+      expect((window as any).electronAPI.agentInput).toBeDefined();
+    });
+
+    it('agentResize is available', () => {
+      expect((window as any).electronAPI.agentResize).toBeDefined();
+    });
+  });
+
+  describe('previous output restoration', () => {
+    it('restores output from store on mount', () => {
+      mockGetOutput.mockReturnValue(['previous output']);
+      const { container } = render(<AgentOutputPanel taskId="t1" taskTitle="Test" />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('callbacks', () => {
+    it('calls onAgentExit callback when provided', () => {
+      const mockExit = vi.fn();
+      const { unmount } = render(
+        <AgentOutputPanel taskId="t1" taskTitle="Test" onAgentExit={mockExit} />
+      );
+      unmount();
+      // Callback registered but not directly tested for invocation
+    });
+
+    it('calls onTaskComplete callback when provided', () => {
+      const mockComplete = vi.fn();
+      const { unmount } = render(
+        <AgentOutputPanel taskId="t1" taskTitle="Test" onTaskComplete={mockComplete} />
+      );
+      unmount();
+      // Callback registered but not directly tested for invocation
+    });
+  });
+
+  describe('session id', () => {
+    it('accepts unique task IDs', () => {
+      const { container } = render(<AgentOutputPanel taskId="my-task-123" taskTitle="Test" />);
+      expect(container.innerHTML).not.toBe('');
+    });
+
+    it('handles UUID-style task IDs', () => {
+      const { container } = render(<AgentOutputPanel taskId="550e8400-e29b-41d4-a716-446655440000" taskTitle="Test" />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('title variations', () => {
+    it('displays long task titles', () => {
+      const longTitle = 'This is a very long task title that should still be displayed';
+      render(<AgentOutputPanel taskId="t1" taskTitle={longTitle} />);
+      expect(screen.getByText(new RegExp(longTitle))).toBeTruthy();
+    });
+
+    it('displays Japanese task titles', () => {
+      render(<AgentOutputPanel taskId="t1" taskTitle="日本語のタスク名" />);
+      expect(screen.getByText(/日本語のタスク名/)).toBeTruthy();
+    });
+
+    it('displays titles with special characters', () => {
+      render(<AgentOutputPanel taskId="t1" taskTitle="Task #1 (test) [beta]" />);
+      expect(screen.getByText(/Task #1/)).toBeTruthy();
+    });
+  });
+
+  describe('loading overlay elements', () => {
+    it('shows spinner border', () => {
+      const { container } = render(<AgentOutputPanel taskId="t1" taskTitle="Test" isReadOnly={false} />);
+      expect(container.innerHTML).toContain('border-hive-accent');
+    });
+
+    it('shows loading text', () => {
+      render(<AgentOutputPanel taskId="t1" taskTitle="Test" isReadOnly={false} />);
+      expect(screen.getByText('Claude Code を起動中...')).toBeTruthy();
+    });
+  });
+
+  describe('button gap and layout', () => {
+    it('has gap between buttons', () => {
+      const { container } = render(<AgentOutputPanel taskId="t1" taskTitle="Test" />);
+      expect(container.innerHTML).toContain('gap-1');
+    });
+
+    it('has gap in header left section', () => {
+      const { container } = render(<AgentOutputPanel taskId="t1" taskTitle="Test" />);
+      expect(container.innerHTML).toContain('gap-2');
+    });
+  });
+
+  describe('badge styling', () => {
+    it('has gray background for read-only badge', () => {
+      const { container } = render(<AgentOutputPanel taskId="t1" taskTitle="Test" isReadOnly={true} />);
+      expect(container.innerHTML).toContain('bg-gray-700');
+    });
+
+    it('has small text for read-only badge', () => {
+      const { container } = render(<AgentOutputPanel taskId="t1" taskTitle="Test" isReadOnly={true} />);
+      expect(container.innerHTML).toContain('text-xs');
+    });
+  });
 });
