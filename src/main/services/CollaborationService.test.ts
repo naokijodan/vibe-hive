@@ -70,4 +70,39 @@ describe('CollaborationService', () => {
     const svc = getCollaborationService();
     svc.broadcastTaskEvent('task:created', { id: '1' }); // should not throw
   });
+
+  it('setMainWindow sets window', () => {
+    const svc = getCollaborationService();
+    const mockWindow = {} as any;
+    svc.setMainWindow(mockWindow);
+    // No error should occur
+  });
+
+  it('startHost returns error when already running', async () => {
+    const svc = getCollaborationService();
+    // Mock internal state to simulate already running
+    (svc as any).wss = {};
+    const result = await svc.startHost('sess-1', { nickname: 'Host' });
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Server already running');
+  });
+
+  it('joinRoom returns error when already connected', async () => {
+    const svc = getCollaborationService();
+    // Mock internal state to simulate already connected
+    (svc as any).guestWs = {};
+    const result = await svc.joinRoom('localhost', 3101, { nickname: 'Guest' });
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Already connected');
+  });
+
+  it('getUsers returns empty array', () => {
+    const svc = getCollaborationService();
+    expect(svc.getUsers()).toHaveLength(0);
+  });
+
+  it('getChatHistory returns empty array', () => {
+    const svc = getCollaborationService();
+    expect(svc.getChatHistory()).toHaveLength(0);
+  });
 });
