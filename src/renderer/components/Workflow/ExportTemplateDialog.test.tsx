@@ -26,4 +26,39 @@ describe('ExportTemplateDialog', () => {
     );
     expect(screen.getAllByText(/Template|Export|Save/i).length).toBeGreaterThan(0);
   });
+
+  it('shows dialog title', () => {
+    render(
+      <ExportTemplateDialog isOpen={true} workflowId={1} workflowName="My WF" onClose={vi.fn()} onSuccess={vi.fn()} />
+    );
+    expect(screen.getByText('Save as Template')).toBeDefined();
+  });
+
+  it('shows workflow name', () => {
+    render(
+      <ExportTemplateDialog isOpen={true} workflowId={1} workflowName="My WF" onClose={vi.fn()} onSuccess={vi.fn()} />
+    );
+    expect(screen.getByText('My WF')).toBeDefined();
+  });
+
+  it('shows category selector', () => {
+    render(
+      <ExportTemplateDialog isOpen={true} workflowId={1} workflowName="My WF" onClose={vi.fn()} onSuccess={vi.fn()} />
+    );
+    expect(screen.getByText('Category')).toBeDefined();
+  });
+
+  it('shows close button', () => {
+    render(
+      <ExportTemplateDialog isOpen={true} workflowId={1} workflowName="My WF" onClose={vi.fn()} onSuccess={vi.fn()} />
+    );
+    expect(screen.getByText('✕')).toBeDefined();
+  });
+
+  it('shows workflow info label', () => {
+    render(
+      <ExportTemplateDialog isOpen={true} workflowId={1} workflowName="My WF" onClose={vi.fn()} onSuccess={vi.fn()} />
+    );
+    expect(screen.getByText('Workflow')).toBeDefined();
+  });
 });

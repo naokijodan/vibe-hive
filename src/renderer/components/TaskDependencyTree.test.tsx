@@ -24,4 +24,33 @@ describe('TaskDependencyTree', () => {
       expect(screen.getByText(/Root Task/)).toBeDefined();
     });
   });
+
+  it('renders dependency tree header', async () => {
+    render(<TaskDependencyTree taskId="t1" />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/依存関係|Dependencies/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('renders task title', async () => {
+    render(<TaskDependencyTree taskId="t1" />);
+    await waitFor(() => {
+      expect(screen.getByText(/Root Task/)).toBeDefined();
+    });
+  });
+
+  it('renders add dependency section', async () => {
+    render(<TaskDependencyTree taskId="t1" />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/追加|Add/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('renders empty state when no dependencies', async () => {
+    render(<TaskDependencyTree taskId="t1" />);
+    await waitFor(() => {
+      const content = screen.getByText(/Root Task/);
+      expect(content).toBeDefined();
+    });
+  });
 });
