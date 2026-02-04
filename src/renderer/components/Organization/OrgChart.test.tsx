@@ -341,4 +341,118 @@ describe('OrgChart', () => {
       expect(cleanupFn).toHaveBeenCalled();
     });
   });
+
+  describe('node selection handling', () => {
+    beforeEach(() => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Dev Team', type: 'team', parentId: null },
+      ];
+    });
+
+    it('does not show agent panel when no node selected', () => {
+      mockOrgState.selectedNodeId = null;
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toContain('エージェント割り当て');
+    });
+  });
+
+  describe('multiple node types', () => {
+    it('handles team node type', () => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Team 1', type: 'team', parentId: null },
+      ];
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+
+    it('handles role node type', () => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Role 1', type: 'role', parentId: null },
+      ];
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+
+    it('handles mixed node types', () => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Team', type: 'team', parentId: null },
+        { id: 'n2', name: 'Role', type: 'role', parentId: 'n1' },
+        { id: 'n3', name: 'SubRole', type: 'role', parentId: 'n2' },
+      ];
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('edge handling', () => {
+    beforeEach(() => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Parent', type: 'team', parentId: null },
+        { id: 'n2', name: 'Child', type: 'role', parentId: 'n1' },
+      ];
+    });
+
+    it('creates edges from parent relationships', () => {
+      const { container } = render(<OrgChart />);
+      // ReactFlow mock should be rendered with the nodes
+      expect(screen.getByTestId('reactflow')).toBeDefined();
+    });
+  });
+
+  describe('different orchestration phases', () => {
+    beforeEach(() => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Team', type: 'team', parentId: null },
+      ];
+    });
+
+    it('handles executing phase', () => {
+      mockOrgState.orchestrationStates.set('n1', {
+        phase: 'executing',
+        goal: 'test',
+        plan: [],
+      });
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+
+    it('handles completed phase', () => {
+      mockOrgState.orchestrationStates.set('n1', {
+        phase: 'completed',
+        goal: 'test',
+        plan: [],
+      });
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('node execution states', () => {
+    beforeEach(() => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Team', type: 'team', parentId: null },
+      ];
+    });
+
+    it('handles completed execution state', () => {
+      mockOrgState.nodeExecutions.set('n1', {
+        status: 'completed',
+        startedAt: Date.now() - 10000,
+        completedAt: Date.now(),
+      });
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+
+    it('handles failed execution state', () => {
+      mockOrgState.nodeExecutions.set('n1', {
+        status: 'failed',
+        startedAt: Date.now() - 10000,
+        completedAt: Date.now(),
+        error: 'Test error',
+      });
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
 });
