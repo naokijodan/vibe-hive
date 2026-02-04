@@ -269,4 +269,76 @@ describe('OrgChart', () => {
       expect(screen.getByTestId('background')).toBeDefined();
     });
   });
+
+  describe('agent panel', () => {
+    beforeEach(() => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Dev Team', type: 'team', parentId: null, assignedAgentIds: ['a1'] },
+        { id: 'n2', name: 'Manager', type: 'role', parentId: 'n1' },
+      ];
+      mockOrgState.selectedNodeId = 'n1';
+    });
+
+    it('does not render agent panel when no node selected', () => {
+      mockOrgState.selectedNodeId = null;
+      render(<OrgChart />);
+      expect(screen.queryByText('エージェント割り当て')).toBeNull();
+    });
+  });
+
+  describe('loading state', () => {
+    it('renders without error when loading', () => {
+      mockOrgState.isLoading = true;
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('error state', () => {
+    it('renders without error when error exists', () => {
+      mockOrgState.error = 'Failed to load';
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('with orchestration state', () => {
+    it('handles node with orchestration state', () => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Team', type: 'team', parentId: null },
+        { id: 'n2', name: 'Child', type: 'role', parentId: 'n1' },
+      ];
+      mockOrgState.orchestrationStates.set('n1', {
+        phase: 'pending_approval',
+        goal: 'test',
+        plan: [],
+      });
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('with node executions', () => {
+    it('handles node with execution state', () => {
+      mockOrgState.nodes = [
+        { id: 'n1', name: 'Team', type: 'team', parentId: null },
+      ];
+      mockOrgState.nodeExecutions.set('n1', {
+        status: 'running',
+        startedAt: Date.now(),
+      });
+      const { container } = render(<OrgChart />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('cleanup', () => {
+    it('cleans up orchestration listener on unmount', () => {
+      const cleanupFn = vi.fn();
+      mockFns.initOrchestrationListener.mockReturnValue(cleanupFn);
+      const { unmount } = render(<OrgChart />);
+      unmount();
+      expect(cleanupFn).toHaveBeenCalled();
+    });
+  });
 });
