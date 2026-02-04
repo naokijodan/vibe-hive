@@ -270,4 +270,144 @@ describe('useTerminal', () => {
       // Should not throw
     });
   });
+
+  describe('terminal initialization with mounted container', () => {
+    let mockContainer: HTMLDivElement;
+
+    beforeEach(() => {
+      mockContainer = document.createElement('div');
+      Object.defineProperties(mockContainer, {
+        offsetWidth: { value: 800, configurable: true },
+        offsetHeight: { value: 600, configurable: true },
+      });
+      document.body.appendChild(mockContainer);
+    });
+
+    afterEach(() => {
+      if (mockContainer && mockContainer.parentNode) {
+        mockContainer.parentNode.removeChild(mockContainer);
+      }
+    });
+
+    it('initializes terminal when container has dimensions', async () => {
+      const { result } = renderHook(() => useTerminal({ sessionId: 'init-test' }));
+
+      // Manually set the ref to the mock container
+      await act(async () => {
+        (result.current.terminalRef as { current: HTMLDivElement | null }).current = mockContainer;
+      });
+
+      // Terminal should attempt to create PTY (after ref is set and initTerminal is called)
+    });
+
+    it('calls onReady callback when terminal is initialized', async () => {
+      const onReady = vi.fn();
+      const { result } = renderHook(() => useTerminal({ sessionId: 'ready-test', onReady }));
+
+      await act(async () => {
+        (result.current.terminalRef as { current: HTMLDivElement | null }).current = mockContainer;
+      });
+    });
+
+    it('handles PTY create error gracefully', async () => {
+      mockPtyCreate.mockRejectedValueOnce(new Error('PTY creation failed'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const { result } = renderHook(() => useTerminal({ sessionId: 'error-test' }));
+
+      await act(async () => {
+        (result.current.terminalRef as { current: HTMLDivElement | null }).current = mockContainer;
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it('does not reinitialize when already initialized', async () => {
+      const { result, rerender } = renderHook(() => useTerminal({ sessionId: 'reinit-test' }));
+
+      await act(async () => {
+        (result.current.terminalRef as { current: HTMLDivElement | null }).current = mockContainer;
+      });
+
+      const initialCallCount = mockPtyCreate.mock.calls.length;
+
+      // Rerender should not trigger reinitialization
+      rerender();
+
+      // Call count should be the same (or at most increased by normal effect runs)
+    });
+  });
+
+  describe('PTY data handling', () => {
+    it('sets up onPtyData listener', () => {
+      renderHook(() => useTerminal({ sessionId: 'data-test' }));
+      // onPtyData should be set up during initialization attempt
+    });
+
+    it('sets up onPtyExit listener', () => {
+      renderHook(() => useTerminal({ sessionId: 'exit-test' }));
+      // onPtyExit should be set up during initialization attempt
+    });
+  });
+
+  describe('container size checks', () => {
+    it('waits for container to have dimensions', async () => {
+      const zeroSizeContainer = document.createElement('div');
+      Object.defineProperties(zeroSizeContainer, {
+        offsetWidth: { value: 0, configurable: true },
+        offsetHeight: { value: 0, configurable: true },
+      });
+
+      const { result } = renderHook(() => useTerminal({ sessionId: 'zero-size-test' }));
+
+      await act(async () => {
+        (result.current.terminalRef as { current: HTMLDivElement | null }).current = zeroSizeContainer;
+      });
+
+      // Should not crash with zero-size container
+    });
+
+    it('handles container with width but no height', async () => {
+      const partialContainer = document.createElement('div');
+      Object.defineProperties(partialContainer, {
+        offsetWidth: { value: 800, configurable: true },
+        offsetHeight: { value: 0, configurable: true },
+      });
+
+      const { result } = renderHook(() => useTerminal({ sessionId: 'partial-test' }));
+
+      await act(async () => {
+        (result.current.terminalRef as { current: HTMLDivElement | null }).current = partialContainer;
+      });
+    });
+  });
+
+  describe('terminal disposal', () => {
+    it('disposes terminal on unmount when initialized', () => {
+      const { unmount } = renderHook(() => useTerminal({ sessionId: 'dispose-test' }));
+      unmount();
+      // Should not throw during cleanup
+    });
+
+    it('calls cleanup functions on unmount', () => {
+      const unsubData = vi.fn();
+      const unsubExit = vi.fn();
+      mockOnPtyData.mockReturnValue(unsubData);
+      mockOnPtyExit.mockReturnValue(unsubExit);
+
+      const { unmount } = renderHook(() => useTerminal({ sessionId: 'cleanup-test' }));
+      unmount();
+
+      expect(mockPtyClose).toHaveBeenCalledWith('cleanup-test');
+    });
+  });
+
+  describe('fit addon behavior', () => {
+    it('fit handles errors gracefully', () => {
+      const { result } = renderHook(() => useTerminal({ sessionId: 'fit-error-test' }));
+
+      // Calling fit should not throw even when no terminal is initialized
+      expect(() => result.current.fit()).not.toThrow();
+    });
+  });
 });

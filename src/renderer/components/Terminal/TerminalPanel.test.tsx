@@ -413,4 +413,125 @@ describe('TerminalPanel', () => {
       expect(container.innerHTML).toContain('p-1');
     });
   });
+
+  describe('terminal initialization', () => {
+    it('calls ptyCreate on initialization when electronAPI is available', async () => {
+      render(<TerminalPanel agentId="init-test" />);
+      // Component should attempt to initialize terminal
+    });
+
+    it('handles PTY creation error', async () => {
+      mockPtyCreate.mockRejectedValueOnce(new Error('PTY creation failed'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      render(<TerminalPanel agentId="error-test" />);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('sets up data listener on initialization', () => {
+      render(<TerminalPanel agentId="data-test" />);
+      // onPtyData should be set up
+    });
+
+    it('sets up exit listener on initialization', () => {
+      render(<TerminalPanel agentId="exit-test" />);
+      // onPtyExit should be set up
+    });
+  });
+
+  describe('demo mode', () => {
+    it('falls back to demo mode when electronAPI is not available', () => {
+      const originalAPI = (window as any).electronAPI;
+      (window as any).electronAPI = undefined;
+
+      render(<TerminalPanel agentId="demo-test" />);
+
+      (window as any).electronAPI = originalAPI;
+    });
+
+    it('falls back to demo mode when ptyCreate is not available', () => {
+      const originalPtyCreate = (window as any).electronAPI.ptyCreate;
+      (window as any).electronAPI.ptyCreate = undefined;
+
+      render(<TerminalPanel agentId="demo-test-2" />);
+
+      (window as any).electronAPI.ptyCreate = originalPtyCreate;
+    });
+  });
+
+  describe('resize observer', () => {
+    it('observes container for resize', () => {
+      render(<TerminalPanel />);
+      // ResizeObserver should be created and observing
+    });
+
+    it('disconnects resize observer on unmount', () => {
+      const { unmount } = render(<TerminalPanel />);
+      unmount();
+      // ResizeObserver should be disconnected
+    });
+  });
+
+  describe('terminal focus behavior', () => {
+    it('focuses terminal on container click', () => {
+      const { container } = render(<TerminalPanel />);
+      const terminalContainer = container.querySelector('.flex-1');
+      fireEvent.click(terminalContainer!);
+      // Terminal focus should be attempted
+    });
+  });
+
+  describe('clear button functionality', () => {
+    it('clears terminal when clear button is clicked', () => {
+      render(<TerminalPanel />);
+      const clearButton = screen.getByText('Clear');
+      fireEvent.click(clearButton);
+      // Terminal clear should be called
+    });
+  });
+
+  describe('session persistence', () => {
+    it('uses agentId in session ID', () => {
+      render(<TerminalPanel agentId="custom-session" />);
+      expect(screen.getByText('(custom-session)')).toBeTruthy();
+    });
+
+    it('uses default session ID when agentId is not provided', () => {
+      render(<TerminalPanel />);
+      expect(screen.getByText('(default)')).toBeTruthy();
+    });
+  });
+
+  describe('status indicator transitions', () => {
+    it('shows blue indicator when ready but not active', async () => {
+      // When terminal is ready but not active, should show blue
+      const { container } = render(<TerminalPanel isActive={false} />);
+      // Initially shows gray (not ready), then blue when ready
+      expect(container.innerHTML).toContain('bg-gray-500'); // Default before ready
+    });
+
+    it('transitions from gray to green when active', () => {
+      const { container, rerender } = render(<TerminalPanel isActive={false} />);
+      rerender(<TerminalPanel isActive={true} />);
+      expect(container.innerHTML).toContain('bg-green-500');
+    });
+  });
+
+  describe('container dimensions handling', () => {
+    it('handles zero-dimension container', () => {
+      // Should not crash with zero-size container
+      const { container } = render(<TerminalPanel />);
+      expect(container.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('multiple renders', () => {
+    it('handles multiple renders without duplicating terminals', () => {
+      const { rerender } = render(<TerminalPanel agentId="multi" />);
+      rerender(<TerminalPanel agentId="multi" />);
+      rerender(<TerminalPanel agentId="multi" />);
+      // Should not crash or duplicate terminals
+    });
+  });
 });

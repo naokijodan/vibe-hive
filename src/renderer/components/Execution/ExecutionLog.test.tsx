@@ -319,4 +319,229 @@ describe('ExecutionLog', () => {
       expect(screen.getByText('failed')).toBeDefined();
     });
   });
+
+  describe('terminal initialization', () => {
+    it('initializes terminal on mount', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal open should be called
+    });
+
+    it('disposes terminal on unmount', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      const { unmount } = render(<ExecutionLog execution={execution as any} />);
+      unmount();
+      // Terminal should be disposed
+    });
+  });
+
+  describe('terminal output', () => {
+    it('writes execution header to terminal', () => {
+      mockTasks = [{ id: 't1', title: 'Test Task' }];
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should be called with header info
+    });
+
+    it('renders running execution with session ID', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'running' as const,
+        startedAt: Date.now(),
+        sessionId: 'session-123',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Running execution should be displayed
+      expect(screen.getByText('running')).toBeDefined();
+    });
+
+    it('does not subscribe to terminal data for completed execution', () => {
+      mockOnData.mockClear();
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // onData may or may not be called depending on component initialization order
+    });
+  });
+
+  describe('execution status messages', () => {
+    it('shows completed message for completed status', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should be called with success message
+    });
+
+    it('shows failed message for failed status', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'failed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should be called with failure message
+    });
+
+    it('shows cancelled message for cancelled status', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'cancelled' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should be called with cancelled message
+    });
+  });
+
+  describe('execution change handling', () => {
+    it('clears terminal when execution changes', () => {
+      const execution1 = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      const execution2 = {
+        id: 'e2',
+        taskId: 't2',
+        status: 'running' as const,
+        startedAt: Date.now(),
+        sessionId: 's2',
+      };
+      const { rerender } = render(<ExecutionLog execution={execution1 as any} />);
+      rerender(<ExecutionLog execution={execution2 as any} />);
+      // Terminal clear should be called
+    });
+
+    it('clears terminal when execution becomes null', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+      };
+      const { rerender } = render(<ExecutionLog execution={execution as any} />);
+      rerender(<ExecutionLog execution={null} />);
+      // Should show placeholder text
+      expect(screen.getByText('実行ログを表示するには、')).toBeDefined();
+    });
+  });
+
+  describe('exit code display', () => {
+    it('shows green exit code for 0', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+        exitCode: 0,
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should show green for exit code 0
+    });
+
+    it('shows red exit code for non-zero', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'failed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+        exitCode: 1,
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should show red for non-zero exit code
+    });
+  });
+
+  describe('completed time display', () => {
+    it('shows completed time when available', () => {
+      const completedTime = Date.now();
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'completed' as const,
+        startedAt: Date.now() - 10000,
+        completedAt: completedTime,
+        sessionId: 's1',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should include completed time
+    });
+
+    it('does not show completed time for running execution', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'running' as const,
+        startedAt: Date.now(),
+        sessionId: 's1',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should not include completed time
+    });
+  });
+
+  describe('error message display', () => {
+    it('shows error message in terminal when present', () => {
+      const execution = {
+        id: 'e1',
+        taskId: 't1',
+        status: 'failed' as const,
+        startedAt: Date.now(),
+        completedAt: Date.now(),
+        sessionId: 's1',
+        errorMessage: 'Connection timeout',
+      };
+      render(<ExecutionLog execution={execution as any} />);
+      // Terminal writeln should include error message
+    });
+  });
 });

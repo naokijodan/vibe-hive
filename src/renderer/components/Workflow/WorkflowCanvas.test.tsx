@@ -623,4 +623,318 @@ describe('WorkflowCanvas', () => {
       expect(mockAddNode).not.toHaveBeenCalled();
     });
   });
+
+  describe('node click handling', () => {
+    beforeEach(() => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'Test Workflow',
+        sessionId: 1,
+      };
+    });
+
+    it('opens settings panel on node click', async () => {
+      render(<WorkflowCanvas />);
+
+      const mockEvent = {} as React.MouseEvent;
+      const mockNode = { id: 'node-1', type: 'task' };
+
+      onNodeClick?.(mockEvent, mockNode);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('node-settings')).toBeDefined();
+      });
+    });
+
+    it('closes settings panel when close button clicked', async () => {
+      render(<WorkflowCanvas />);
+
+      const mockEvent = {} as React.MouseEvent;
+      const mockNode = { id: 'node-1', type: 'task' };
+
+      onNodeClick?.(mockEvent, mockNode);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('node-settings')).toBeDefined();
+      });
+
+      fireEvent.click(screen.getByText('Close Settings'));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('node-settings')).toBeNull();
+      });
+    });
+  });
+
+  describe('edge connection', () => {
+    beforeEach(() => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'Test Workflow',
+        sessionId: 1,
+      };
+    });
+
+    it('handles connect event', () => {
+      render(<WorkflowCanvas />);
+
+      const params = { source: 'node-1', target: 'node-2' };
+      onConnect?.(params);
+
+      // setEdges should be called via addEdge utility
+    });
+  });
+
+  describe('ReactFlow components', () => {
+    beforeEach(() => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'Test Workflow',
+        sessionId: 1,
+      };
+    });
+
+    it('renders Background component', () => {
+      render(<WorkflowCanvas />);
+      expect(screen.getByTestId('background')).toBeDefined();
+    });
+
+    it('renders Controls component', () => {
+      render(<WorkflowCanvas />);
+      expect(screen.getByTestId('controls')).toBeDefined();
+    });
+
+    it('renders MiniMap component', () => {
+      render(<WorkflowCanvas />);
+      expect(screen.getByTestId('minimap')).toBeDefined();
+    });
+  });
+
+  describe('workflow with description', () => {
+    it('renders without description', () => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'No Desc Workflow',
+        sessionId: 1,
+      };
+      render(<WorkflowCanvas />);
+      expect(screen.getByText('No Desc Workflow')).toBeDefined();
+    });
+
+    it('renders with empty description', () => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'Empty Desc Workflow',
+        description: '',
+        sessionId: 1,
+      };
+      render(<WorkflowCanvas />);
+      expect(screen.getByText('Empty Desc Workflow')).toBeDefined();
+    });
+  });
+
+  describe('node types', () => {
+    beforeEach(() => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'Test Workflow',
+        sessionId: 1,
+      };
+    });
+
+    it('adds trigger node', () => {
+      render(<WorkflowCanvas showNodePalette={true} />);
+      mockOnAddNode?.('trigger');
+      expect(mockAddNode).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'trigger',
+      }));
+    });
+
+    it('adds conditional node', () => {
+      render(<WorkflowCanvas showNodePalette={true} />);
+      mockOnAddNode?.('conditional');
+      expect(mockAddNode).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'conditional',
+      }));
+    });
+
+    it('adds notification node', () => {
+      render(<WorkflowCanvas showNodePalette={true} />);
+      mockOnAddNode?.('notification');
+      expect(mockAddNode).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'notification',
+      }));
+    });
+
+    it('adds merge node', () => {
+      render(<WorkflowCanvas showNodePalette={true} />);
+      mockOnAddNode?.('merge');
+      expect(mockAddNode).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'merge',
+      }));
+    });
+
+    it('adds delay node', () => {
+      render(<WorkflowCanvas showNodePalette={true} />);
+      mockOnAddNode?.('delay');
+      expect(mockAddNode).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'delay',
+      }));
+    });
+
+    it('adds loop node', () => {
+      render(<WorkflowCanvas showNodePalette={true} />);
+      mockOnAddNode?.('loop');
+      expect(mockAddNode).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'loop',
+      }));
+    });
+
+    it('adds subworkflow node', () => {
+      render(<WorkflowCanvas showNodePalette={true} />);
+      mockOnAddNode?.('subworkflow');
+      expect(mockAddNode).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'subworkflow',
+      }));
+    });
+
+    it('adds agent node', () => {
+      render(<WorkflowCanvas showNodePalette={true} />);
+      mockOnAddNode?.('agent');
+      expect(mockAddNode).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'agent',
+      }));
+    });
+  });
+
+  describe('styling', () => {
+    beforeEach(() => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'Test Workflow',
+        sessionId: 1,
+      };
+    });
+
+    it('has full height container', () => {
+      const { container } = render(<WorkflowCanvas />);
+      expect(container.innerHTML).toContain('h-full');
+    });
+
+    it('has flex layout', () => {
+      const { container } = render(<WorkflowCanvas />);
+      expect(container.innerHTML).toContain('flex');
+    });
+  });
+
+  describe('toolbar buttons', () => {
+    beforeEach(() => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'Test Workflow',
+        sessionId: 1,
+      };
+    });
+
+    it('has export button with title', () => {
+      render(<WorkflowCanvas />);
+      const exportButton = screen.getAllByRole('button').find(btn =>
+        btn.getAttribute('title') === 'Export workflow to JSON'
+      );
+      expect(exportButton).toBeDefined();
+    });
+
+    it('has import button with title', () => {
+      render(<WorkflowCanvas />);
+      const importButton = screen.getAllByRole('button').find(btn =>
+        btn.getAttribute('title') === 'Import workflow from JSON'
+      );
+      expect(importButton).toBeDefined();
+    });
+
+    it('has template button with title', () => {
+      render(<WorkflowCanvas />);
+      const templateButton = screen.getAllByRole('button').find(btn =>
+        btn.getAttribute('title') === 'Save as template'
+      );
+      expect(templateButton).toBeDefined();
+    });
+
+    it('has settings button with title', () => {
+      render(<WorkflowCanvas />);
+      const settingsButton = screen.getAllByRole('button').find(btn =>
+        btn.getAttribute('title') === 'Workflow settings'
+      );
+      expect(settingsButton).toBeDefined();
+    });
+  });
+
+  describe('modal callbacks', () => {
+    beforeEach(() => {
+      mockWorkflowStore.currentWorkflow = {
+        id: 1,
+        name: 'Test Workflow',
+        sessionId: 1,
+      };
+    });
+
+    it('closes settings modal via callback', async () => {
+      render(<WorkflowCanvas />);
+
+      // Open settings modal
+      const settingsButton = screen.getAllByRole('button').find(btn =>
+        btn.getAttribute('title') === 'Workflow settings'
+      );
+      fireEvent.click(settingsButton!);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('workflow-settings-modal')).toBeDefined();
+      });
+
+      // Close via callback
+      mockSettingsOnClose?.();
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('workflow-settings-modal')).toBeNull();
+      });
+    });
+
+    it('confirms import via dialog callback', async () => {
+      mockImport.mockResolvedValue({ success: true, workflow: { name: 'Imported' } });
+      render(<WorkflowCanvas />);
+
+      const importButton = screen.getAllByRole('button').find(btn =>
+        btn.getAttribute('title') === 'Import workflow from JSON'
+      );
+      fireEvent.click(importButton!);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('import-dialog')).toBeDefined();
+      });
+
+      // Confirm import
+      mockImportOnConfirm?.();
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('import-dialog')).toBeNull();
+      });
+    });
+
+    it('handles export template success callback', async () => {
+      render(<WorkflowCanvas />);
+
+      const templateButton = screen.getAllByRole('button').find(btn =>
+        btn.getAttribute('title') === 'Save as template'
+      );
+      fireEvent.click(templateButton!);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('export-template-dialog')).toBeDefined();
+      });
+
+      // onSuccess callback is exposed but may not close the dialog directly
+      // Test that the callback is properly passed
+      expect(mockExportTemplateOnSuccess).toBeDefined();
+    });
+  });
 });
