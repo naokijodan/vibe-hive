@@ -28,11 +28,12 @@ vi.mock('./TaskCard', () => ({
 }));
 
 vi.mock('../Template', () => ({
-  TemplateBrowser: ({ onClose }: { onClose: () => void }) => (
-    <div data-testid="template-browser">
-      <button onClick={onClose}>Close Browser</button>
-    </div>
-  ),
+  TemplateBrowser: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
+    isOpen ? (
+      <div data-testid="template-browser">
+        <button onClick={onClose}>Close Browser</button>
+      </div>
+    ) : null,
 }));
 
 vi.mock('../../stores/taskStore', () => ({
@@ -225,5 +226,131 @@ describe('KanbanBoard', () => {
     render(<KanbanBoard tasks={[]} />);
     fireEvent.click(screen.getByText('+ 新規タスク'));
     expect(screen.getByText('優先度')).toBeDefined();
+  });
+
+  it('shows priority dropdown options', () => {
+    render(<KanbanBoard tasks={[]} />);
+    fireEvent.click(screen.getByText('+ 新規タスク'));
+    const select = screen.getByDisplayValue('中');
+    expect(select).toBeDefined();
+  });
+
+  it('changes priority in form', () => {
+    render(<KanbanBoard tasks={[]} />);
+    fireEvent.click(screen.getByText('+ 新規タスク'));
+    const select = screen.getByDisplayValue('中');
+    fireEvent.change(select, { target: { value: 'high' } });
+    expect(screen.getByDisplayValue('高')).toBeDefined();
+  });
+
+  it('sets description in form', () => {
+    render(<KanbanBoard tasks={[]} />);
+    fireEvent.click(screen.getByText('+ 新規タスク'));
+    const textarea = screen.getByPlaceholderText('説明を入力...');
+    fireEvent.change(textarea, { target: { value: 'Test description' } });
+    expect(textarea).toHaveProperty('value', 'Test description');
+  });
+
+  it('resets form on cancel', () => {
+    render(<KanbanBoard tasks={[]} />);
+    fireEvent.click(screen.getByText('+ 新規タスク'));
+    fireEvent.change(screen.getByPlaceholderText('タスク名を入力...'), {
+      target: { value: 'Test' },
+    });
+    fireEvent.click(screen.getByText('キャンセル'));
+    fireEvent.click(screen.getByText('+ 新規タスク'));
+    expect(screen.getByPlaceholderText('タスク名を入力...')).toHaveProperty('value', '');
+  });
+
+  it('enables create button when title is entered', () => {
+    render(<KanbanBoard tasks={[]} />);
+    fireEvent.click(screen.getByText('+ 新規タスク'));
+    fireEvent.change(screen.getByPlaceholderText('タスク名を入力...'), {
+      target: { value: 'New Task Title' },
+    });
+    const createButton = screen.getByText('作成');
+    expect(createButton).toHaveProperty('disabled', false);
+  });
+
+  describe('filtering', () => {
+    it('starts with showOnlyReady false', () => {
+      render(<KanbanBoard tasks={mockTasks} />);
+      expect(screen.getByText('すべて表示')).toBeDefined();
+    });
+
+    it('toggles to ready only mode', () => {
+      render(<KanbanBoard tasks={mockTasks} />);
+      fireEvent.click(screen.getByText('すべて表示'));
+      expect(screen.getByText('✓ Ready のみ')).toBeDefined();
+    });
+
+    it('toggles back to all tasks', () => {
+      render(<KanbanBoard tasks={mockTasks} />);
+      fireEvent.click(screen.getByText('すべて表示'));
+      fireEvent.click(screen.getByText('✓ Ready のみ'));
+      expect(screen.getByText('すべて表示')).toBeDefined();
+    });
+  });
+
+  describe('template browser', () => {
+    it('opens template browser', () => {
+      render(<KanbanBoard tasks={[]} />);
+      fireEvent.click(screen.getByText(/テンプレート/));
+      expect(screen.getByTestId('template-browser')).toBeDefined();
+    });
+
+    it('closes template browser when close button clicked', () => {
+      render(<KanbanBoard tasks={[]} />);
+      fireEvent.click(screen.getByText(/テンプレート/));
+      expect(screen.getByTestId('template-browser')).toBeDefined();
+      fireEvent.click(screen.getByText('Close Browser'));
+      expect(screen.queryByTestId('template-browser')).toBeNull();
+    });
+  });
+
+  describe('styling', () => {
+    it('has full height container', () => {
+      const { container } = render(<KanbanBoard tasks={[]} />);
+      expect(container.innerHTML).toContain('h-full');
+    });
+
+    it('has overflow-x-auto', () => {
+      const { container } = render(<KanbanBoard tasks={[]} />);
+      expect(container.innerHTML).toContain('overflow-x-auto');
+    });
+
+    it('has flex layout for columns', () => {
+      const { container } = render(<KanbanBoard tasks={[]} />);
+      expect(container.innerHTML).toContain('flex');
+    });
+  });
+
+  describe('with review status tasks', () => {
+    it('shows tasks in review column', () => {
+      const tasksWithReview = [
+        ...mockTasks,
+        {
+          id: 't4',
+          sessionId: 's1',
+          title: 'Review Task',
+          description: 'Needs review',
+          status: 'review' as const,
+          priority: 'high' as const,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      render(<KanbanBoard tasks={tasksWithReview} />);
+      expect(screen.getByTestId('count-確認待ち').textContent).toBe('1');
+    });
+  });
+
+  describe('modal overlay', () => {
+    it('renders modal overlay when adding task', () => {
+      const { container } = render(<KanbanBoard tasks={[]} />);
+      fireEvent.click(screen.getByText('+ 新規タスク'));
+      expect(container.innerHTML).toContain('fixed inset-0');
+      expect(container.innerHTML).toContain('bg-black/50');
+    });
   });
 });
