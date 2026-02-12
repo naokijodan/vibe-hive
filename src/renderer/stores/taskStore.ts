@@ -2,6 +2,9 @@ import { toErrorMessage } from '../../shared/utils/errorHandler';
 import { create } from 'zustand';
 import { Task, TaskCreateInput, TaskStatus } from '../../shared/types/task';
 
+// Check if running in Electron environment
+const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
+
 interface DependencyCheckResult {
   met: boolean;
   completed: number;
@@ -40,6 +43,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   error: null,
 
   loadTasks: async () => {
+    if (!isElectron) {
+      set({ tasks: [], isLoading: false });
+      return;
+    }
     set({ isLoading: true, error: null });
     try {
       const tasks = await window.electronAPI.dbTaskGetAll() as Task[];

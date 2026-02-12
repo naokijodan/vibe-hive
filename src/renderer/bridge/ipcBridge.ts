@@ -1,5 +1,27 @@
 // IPC Bridge - Renderer process API abstraction
 // This module provides type-safe access to Electron IPC
+
+// Check if running in Electron environment
+const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
+
+// Helper to safely call electronAPI methods
+function safeCall<T>(fn: () => T, fallback: T): T {
+  if (!isElectron) {
+    console.warn('[ipcBridge] Not running in Electron, returning fallback');
+    return fallback;
+  }
+  return fn();
+}
+
+// Helper for async calls
+function safeCallAsync<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  if (!isElectron) {
+    console.warn('[ipcBridge] Not running in Electron, returning fallback');
+    return Promise.resolve(fallback);
+  }
+  return fn();
+}
+
 import type { Task, TaskCreateInput, TaskStatus } from '../../shared/types/task';
 import type {
   ExecutionRecord,
@@ -55,12 +77,12 @@ import type {
 export const ipcBridge = {
   // Session operations
   session: {
-    create: (config: unknown) => window.electronAPI.createSession(config),
-    get: (id: string) => window.electronAPI.getSession(id),
-    list: () => window.electronAPI.listSessions(),
-    delete: (id: string) => window.electronAPI.deleteSession(id),
-    switch: (id: string) => window.electronAPI.switchSession(id),
-    getActive: () => window.electronAPI.getActiveSession(),
+    create: (config: unknown) => safeCallAsync(() => window.electronAPI.createSession(config), null),
+    get: (id: string) => safeCallAsync(() => window.electronAPI.getSession(id), null),
+    list: () => safeCallAsync(() => window.electronAPI.listSessions(), []),
+    delete: (id: string) => safeCallAsync(() => window.electronAPI.deleteSession(id), undefined),
+    switch: (id: string) => safeCallAsync(() => window.electronAPI.switchSession(id), undefined),
+    getActive: () => safeCallAsync(() => window.electronAPI.getActiveSession(), null),
   },
 
   // Terminal operations
@@ -100,27 +122,27 @@ export const ipcBridge = {
 
   // Task operations
   task: {
-    create: (input: TaskCreateInput) => window.electronAPI.dbTaskCreate(input) as Promise<Task>,
-    get: (id: string) => window.electronAPI.dbTaskGet(id) as Promise<Task | null>,
-    getBySession: (sessionId: string) => window.electronAPI.dbTaskGetBySession(sessionId) as Promise<Task[]>,
-    getByStatus: (status: TaskStatus) => window.electronAPI.dbTaskGetByStatus(status) as Promise<Task[]>,
-    getAll: () => window.electronAPI.dbTaskGetAll() as Promise<Task[]>,
-    update: (id: string, updates: Partial<Task>) => window.electronAPI.dbTaskUpdate(id, updates) as Promise<Task | null>,
-    updateStatus: (id: string, status: TaskStatus) => window.electronAPI.dbTaskUpdateStatus(id, status) as Promise<Task | null>,
-    delete: (id: string) => window.electronAPI.dbTaskDelete(id),
+    create: (input: TaskCreateInput) => safeCallAsync(() => window.electronAPI.dbTaskCreate(input) as Promise<Task>, null as unknown as Task),
+    get: (id: string) => safeCallAsync(() => window.electronAPI.dbTaskGet(id) as Promise<Task | null>, null),
+    getBySession: (sessionId: string) => safeCallAsync(() => window.electronAPI.dbTaskGetBySession(sessionId) as Promise<Task[]>, []),
+    getByStatus: (status: TaskStatus) => safeCallAsync(() => window.electronAPI.dbTaskGetByStatus(status) as Promise<Task[]>, []),
+    getAll: () => safeCallAsync(() => window.electronAPI.dbTaskGetAll() as Promise<Task[]>, []),
+    update: (id: string, updates: Partial<Task>) => safeCallAsync(() => window.electronAPI.dbTaskUpdate(id, updates) as Promise<Task | null>, null),
+    updateStatus: (id: string, status: TaskStatus) => safeCallAsync(() => window.electronAPI.dbTaskUpdateStatus(id, status) as Promise<Task | null>, null),
+    delete: (id: string) => safeCallAsync(() => window.electronAPI.dbTaskDelete(id), undefined),
     // Subtasks
-    getSubtasks: (parentId: string) => window.electronAPI.dbTaskGetSubtasks(parentId) as Promise<Task[]>,
-    createSubtasks: (parentId: string, titles: string[]) => window.electronAPI.dbTaskCreateSubtasks(parentId, titles) as Promise<Task[]>,
+    getSubtasks: (parentId: string) => safeCallAsync(() => window.electronAPI.dbTaskGetSubtasks(parentId) as Promise<Task[]>, []),
+    createSubtasks: (parentId: string, titles: string[]) => safeCallAsync(() => window.electronAPI.dbTaskCreateSubtasks(parentId, titles) as Promise<Task[]>, []),
     // Dependencies
-    checkDependencies: (taskId: string) => window.electronAPI.dbTaskCheckDependencies(taskId),
-    wouldCreateCircularDependency: (taskId: string, newDependencyId: string) => window.electronAPI.dbTaskWouldCreateCircularDependency(taskId, newDependencyId),
-    getDependentTasks: (taskId: string) => window.electronAPI.dbTaskGetDependentTasks(taskId) as Promise<Task[]>,
-    getDependencyTree: (taskId: string) => window.electronAPI.dbTaskGetDependencyTree(taskId),
+    checkDependencies: (taskId: string) => safeCallAsync(() => window.electronAPI.dbTaskCheckDependencies(taskId), { ready: true, blockedBy: [] }),
+    wouldCreateCircularDependency: (taskId: string, newDependencyId: string) => safeCallAsync(() => window.electronAPI.dbTaskWouldCreateCircularDependency(taskId, newDependencyId), false),
+    getDependentTasks: (taskId: string) => safeCallAsync(() => window.electronAPI.dbTaskGetDependentTasks(taskId) as Promise<Task[]>, []),
+    getDependencyTree: (taskId: string) => safeCallAsync(() => window.electronAPI.dbTaskGetDependencyTree(taskId), { task: null, dependencies: [], dependents: [] }),
     // Review Feedback
-    clearReviewFeedback: (taskId: string) => window.electronAPI.dbTaskClearReviewFeedback(taskId) as Promise<Task | null>,
+    clearReviewFeedback: (taskId: string) => safeCallAsync(() => window.electronAPI.dbTaskClearReviewFeedback(taskId) as Promise<Task | null>, null),
     // Ready to Execute
-    isReadyToExecute: (taskId: string) => window.electronAPI.dbTaskIsReadyToExecute(taskId) as Promise<boolean>,
-    getReadyTasks: () => window.electronAPI.dbTaskGetReadyTasks() as Promise<Task[]>,
+    isReadyToExecute: (taskId: string) => safeCallAsync(() => window.electronAPI.dbTaskIsReadyToExecute(taskId) as Promise<boolean>, false),
+    getReadyTasks: () => safeCallAsync(() => window.electronAPI.dbTaskGetReadyTasks() as Promise<Task[]>, []),
   },
 
   // Settings operations
@@ -136,20 +158,20 @@ export const ipcBridge = {
   // Execution operations
   execution: {
     start: (request: StartExecutionRequest) =>
-      window.electronAPI.executionStart(request) as Promise<StartExecutionResponse>,
-    cancel: (executionId: string) => window.electronAPI.executionCancel(executionId),
+      safeCallAsync(() => window.electronAPI.executionStart(request) as Promise<StartExecutionResponse>, { success: false, error: 'Not in Electron' } as StartExecutionResponse),
+    cancel: (executionId: string) => safeCallAsync(() => window.electronAPI.executionCancel(executionId), undefined),
     get: (executionId: string) =>
-      window.electronAPI.executionGet(executionId) as Promise<ExecutionRecord | null>,
+      safeCallAsync(() => window.electronAPI.executionGet(executionId) as Promise<ExecutionRecord | null>, null),
     getByTask: (taskId: string) =>
-      window.electronAPI.executionGetByTask(taskId) as Promise<ExecutionRecord[]>,
-    getAll: () => window.electronAPI.executionGetAll() as Promise<ExecutionRecord[]>,
-    getRunning: () => window.electronAPI.executionGetRunning() as Promise<ExecutionRecord[]>,
+      safeCallAsync(() => window.electronAPI.executionGetByTask(taskId) as Promise<ExecutionRecord[]>, []),
+    getAll: () => safeCallAsync(() => window.electronAPI.executionGetAll() as Promise<ExecutionRecord[]>, []),
+    getRunning: () => safeCallAsync(() => window.electronAPI.executionGetRunning() as Promise<ExecutionRecord[]>, []),
     onStarted: (callback: (data: { executionId: string; taskId: string }) => void) =>
-      window.electronAPI.onExecutionStarted(callback),
+      isElectron ? window.electronAPI.onExecutionStarted(callback) : (() => {}),
     onCompleted: (callback: (execution: ExecutionRecord) => void) =>
-      window.electronAPI.onExecutionCompleted(callback),
+      isElectron ? window.electronAPI.onExecutionCompleted(callback) : (() => {}),
     onCancelled: (callback: (execution: ExecutionRecord) => void) =>
-      window.electronAPI.onExecutionCancelled(callback),
+      isElectron ? window.electronAPI.onExecutionCancelled(callback) : (() => {}),
   },
 
   // Task Template operations
@@ -311,21 +333,35 @@ export const ipcBridge = {
   // Theme operations
   theme: {
     getPresets: () =>
-      window.electronAPI.themeGetPresets() as Promise<Array<{
-        id: string; name: string; colors: Record<string, string>;
-      }>>,
+      safeCallAsync(
+        () => window.electronAPI.themeGetPresets() as Promise<Array<{ id: string; name: string; colors: Record<string, string> }>>,
+        []
+      ),
     getSettings: () =>
-      window.electronAPI.themeGetSettings() as Promise<{
-        activeThemeId: string; customAccent?: string;
-      }>,
+      safeCallAsync(
+        () => window.electronAPI.themeGetSettings() as Promise<{ activeThemeId: string; customAccent?: string }>,
+        { activeThemeId: 'default' }
+      ),
     getActiveColors: () =>
-      window.electronAPI.themeGetActiveColors() as Promise<Record<string, string>>,
+      safeCallAsync(
+        () => window.electronAPI.themeGetActiveColors() as Promise<Record<string, string>>,
+        {}
+      ),
     setTheme: (themeId: string) =>
-      window.electronAPI.themeSetTheme(themeId) as Promise<Record<string, string>>,
+      safeCallAsync(
+        () => window.electronAPI.themeSetTheme(themeId) as Promise<Record<string, string>>,
+        {}
+      ),
     setCustomAccent: (color: string) =>
-      window.electronAPI.themeSetCustomAccent(color) as Promise<Record<string, string>>,
+      safeCallAsync(
+        () => window.electronAPI.themeSetCustomAccent(color) as Promise<Record<string, string>>,
+        {}
+      ),
     resetCustomAccent: () =>
-      window.electronAPI.themeResetCustomAccent() as Promise<Record<string, string>>,
+      safeCallAsync(
+        () => window.electronAPI.themeResetCustomAccent() as Promise<Record<string, string>>,
+        {}
+      ),
   },
 
   // Plugin operations
