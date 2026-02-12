@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import type { Agent, AgentConfig, AgentStatus } from '../../shared/types/agent';
 
-// Check if running in Electron environment
-const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
+// Check if running in Electron environment (evaluated at runtime)
+const isElectron = () => typeof window !== 'undefined' && window.electronAPI !== undefined;
 
 interface AgentStore {
   agents: Agent[];
@@ -25,7 +25,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   error: null,
 
   loadAgents: async () => {
-    if (!isElectron) {
+    if (!isElectron()) {
       set({ agents: [], isLoading: false });
       return;
     }
@@ -40,7 +40,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   },
 
   createAgent: async (config: AgentConfig) => {
-    if (!isElectron) return null;
+    if (!isElectron()) return null;
     set({ error: null });
     try {
       const agent = await window.electronAPI.dbAgentCreate(config) as Agent;
@@ -54,7 +54,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   },
 
   updateAgent: async (id: string, updates: Partial<Agent>) => {
-    if (!isElectron) return null;
+    if (!isElectron()) return null;
     set({ error: null });
     try {
       const agent = await window.electronAPI.dbAgentUpdate(id, updates) as Agent;
@@ -72,7 +72,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   },
 
   deleteAgent: async (id: string) => {
-    if (!isElectron) return false;
+    if (!isElectron()) return false;
     set({ error: null });
     try {
       const success = await window.electronAPI.dbAgentDelete(id);
@@ -90,7 +90,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   },
 
   assignTaskToAgent: async (taskId: string, agentId: string | null) => {
-    if (!isElectron) return;
+    if (!isElectron()) return;
     set({ error: null });
     try {
       await window.electronAPI.dbTaskUpdate(taskId, { assignedAgentId: agentId });
@@ -112,7 +112,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   },
 
   initStatusListener: () => {
-    if (!isElectron) return () => {};
+    if (!isElectron()) return () => {};
     const cleanup = window.electronAPI.onAgentStatus((sessionId: string, status: string) => {
       get().updateAgentStatus(sessionId, status as AgentStatus);
     });

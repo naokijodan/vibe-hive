@@ -1,12 +1,12 @@
 // IPC Bridge - Renderer process API abstraction
 // This module provides type-safe access to Electron IPC
 
-// Check if running in Electron environment
-const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
+// Check if running in Electron environment (evaluated at runtime)
+const isElectron = () => typeof window !== 'undefined' && window.electronAPI !== undefined;
 
 // Helper to safely call electronAPI methods
 function safeCall<T>(fn: () => T, fallback: T): T {
-  if (!isElectron) {
+  if (!isElectron()) {
     console.warn('[ipcBridge] Not running in Electron, returning fallback');
     return fallback;
   }
@@ -15,7 +15,7 @@ function safeCall<T>(fn: () => T, fallback: T): T {
 
 // Helper for async calls
 function safeCallAsync<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
-  if (!isElectron) {
+  if (!isElectron()) {
     console.warn('[ipcBridge] Not running in Electron, returning fallback');
     return Promise.resolve(fallback);
   }
@@ -167,11 +167,11 @@ export const ipcBridge = {
     getAll: () => safeCallAsync(() => window.electronAPI.executionGetAll() as Promise<ExecutionRecord[]>, []),
     getRunning: () => safeCallAsync(() => window.electronAPI.executionGetRunning() as Promise<ExecutionRecord[]>, []),
     onStarted: (callback: (data: { executionId: string; taskId: string }) => void) =>
-      isElectron ? window.electronAPI.onExecutionStarted(callback) : (() => {}),
+      isElectron() ? window.electronAPI.onExecutionStarted(callback) : (() => {}),
     onCompleted: (callback: (execution: ExecutionRecord) => void) =>
-      isElectron ? window.electronAPI.onExecutionCompleted(callback) : (() => {}),
+      isElectron() ? window.electronAPI.onExecutionCompleted(callback) : (() => {}),
     onCancelled: (callback: (execution: ExecutionRecord) => void) =>
-      isElectron ? window.electronAPI.onExecutionCancelled(callback) : (() => {}),
+      isElectron() ? window.electronAPI.onExecutionCancelled(callback) : (() => {}),
   },
 
   // Task Template operations
